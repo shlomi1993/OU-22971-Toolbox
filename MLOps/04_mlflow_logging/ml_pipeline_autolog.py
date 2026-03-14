@@ -1,11 +1,10 @@
 """
 ml_pipeline_autolog.py
 
-Scripted version of the ML logic originally developed
-in an exploratory Jupyter notebook.
+Scripted version of the ML logic originally developed in an exploratory Jupyter notebook.
 
-This script does not generate or clean data. It consumes files produced by
-generate_data.py from a data directory (default: ./data/) and runs:
+This script does not generate or clean data. It consumes files produced by generate_data.py from a data directory
+(default: ./data/) and runs:
 
 - train/test split
 - sklearn Pipeline: StandardScaler + SVC
@@ -24,11 +23,6 @@ Example:
 import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
-
-# Use a non-interactive backend by default.
-# This prevents matplotlib from trying to open GUI windows,
-plt.switch_backend("Agg")
-
 import mlflow
 import mlflow.sklearn
 
@@ -36,21 +30,18 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
-from sklearn.metrics import (
-    classification_report,
-    ConfusionMatrixDisplay,
-    accuracy_score,
-    f1_score,
-)
+from sklearn.metrics import classification_report, ConfusionMatrixDisplay
+
+
+# Use a non-interactive backend by default. This prevents matplotlib from trying to open GUI windows,
+plt.switch_backend("Agg")
 
 
 def train_and_evaluate(df: pd.DataFrame) -> None:
     X = df[["x1", "x2"]].values
     y = df["y"].values
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.25, random_state=0, stratify=y
-    )
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)
 
     pipe = make_pipeline(StandardScaler(), SVC())
 
@@ -97,8 +88,8 @@ def main() -> None:
     parser.add_argument(
         "--tracking-uri",
         type=str,
-        default="http://localhost:5000",
-        help="MLflow tracking server URI (default: http://localhost:5000)",
+        default="http://localhost:5001",
+        help="MLflow tracking server URI (default: http://localhost:5001)",
     )
     parser.add_argument(
         "--experiment",

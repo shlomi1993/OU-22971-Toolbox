@@ -1,0 +1,13 @@
+name: 22971-mlflow
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.12
+  - numpy=2.4.*
+  - pandas=2.3.*
+  - scikit-learn=1.8.*
+  - matplotlib=3.10.*
+  - pip
+  - pip:
+      - mlflow==3.8

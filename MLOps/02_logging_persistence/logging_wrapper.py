@@ -1,8 +1,8 @@
 """
 Minimal experiment wrapper.
 
-Creates a timestamped run directory, executes the existing training pipeline
-inside it, and captures all side effects (artifacts and logs) in one place.
+Creates a timestamped run directory, executes the existing training pipeline inside it, and captures all side effects
+(artifacts and logs) in one place.
 
 Example
 --------
@@ -11,6 +11,7 @@ Run with default data path:
 """
 import argparse
 import subprocess
+
 from datetime import datetime
 from pathlib import Path
 
