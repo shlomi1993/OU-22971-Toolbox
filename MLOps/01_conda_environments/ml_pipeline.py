@@ -1,11 +1,10 @@
 """
 ml_pipeline.py
 
-Scripted version of the ML logic originally developed
-in an exploratory Jupyter notebook.
+Scripted version of the ML logic originally developed in an exploratory Jupyter notebook.
 
-This script does not generate or clean data. It consumes files produced by
-generate_data.py from a data directory (default: ./data/) and runs:
+This script does not generate or clean data. It consumes files produced by `generate_data.py` from a data directory
+(default: ./data/) and runs:
 
 - train/test split
 - sklearn Pipeline: StandardScaler + SVC
@@ -23,10 +22,7 @@ Example:
 import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
-
-# Use a non-interactive backend by default.
-# This prevents matplotlib from trying to open GUI windows,
-plt.switch_backend("Agg")
+import pickle
 
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.pipeline import make_pipeline
@@ -35,13 +31,16 @@ from sklearn.svm import SVC
 from sklearn.metrics import classification_report, ConfusionMatrixDisplay
 
 
+# Use a non-interactive backend by default.
+# This prevents matplotlib from trying to open GUI windows,
+plt.switch_backend("Agg")
+
+
 def train_and_evaluate(df: pd.DataFrame) -> None:
     X = df[["x1", "x2"]].values
     y = df["y"].values
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.25, random_state=0, stratify=y
-    )
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0, stratify=y)
 
     pipe = make_pipeline(StandardScaler(), SVC())
 
@@ -53,6 +52,9 @@ def train_and_evaluate(df: pd.DataFrame) -> None:
 
     grid = GridSearchCV(pipe, param_grid, cv=5, n_jobs=-1)
     grid.fit(X_train, y_train)
+
+    with open("model.pkl", "wb") as f:
+        pickle.dump(grid.best_estimator_, f)
 
     print("Best parameters:", grid.best_params_)
     print("Best CV score:", grid.best_score_)

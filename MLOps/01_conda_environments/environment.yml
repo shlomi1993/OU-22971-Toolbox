@@ -1,0 +1,10 @@
+name: 22971-mlflow
+channels:
+  - defaults
+dependencies:
+  - python=3.12
+  - matplotlib
+  - scikit-learn
+  - numpy
+  - pandas
+prefix: /Users/shlomibenshushan/miniconda3/envs/22971-mlflow
