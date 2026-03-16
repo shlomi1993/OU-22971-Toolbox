@@ -1,2 +1,3 @@
 .vscode
 /mlflow_tracking
+*.pyc
