@@ -11,7 +11,7 @@ conda activate 22971-mlflow
 ```powershell
  mlflow server --workers 1 --port 5000 --backend-store-uri sqlite:///mlflow_tracking/mlflow.db --default-artifact-root mlflow_tracking/mlruns
  ```
-3) Open the UI: http://localhost:5000 → **Models**.
+3) Open the UI: http://localhost:5001 → **Models**.
 
 ---
 
@@ -40,7 +40,7 @@ This creates a single registered model family with two versions:
 In a *new terminal* (keep it open):
 1. Set URI environment var:
     ```powershell
-    $env:MLFLOW_TRACKING_URI = "http://localhost:5000"
+    $env:MLFLOW_TRACKING_URI = "http://localhost:5001"
     ```
 2. Serve the model:
     ```powershell

@@ -1,20 +1,20 @@
 """
 Unit 06 (Drift): shared utilities.
-
 """
 
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
-
+import matplotlib.pyplot as plt
+import mlflow
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
-import mlflow
+from dataclasses import dataclass
 from mlflow.tracking import MlflowClient
+from pathlib import Path
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 
 RAW_DATETIME_COLS = ["lpep_pickup_datetime", "lpep_dropoff_datetime"]
@@ -54,6 +54,7 @@ RANGE_SPECS: List[Tuple[str, Optional[float], Optional[float]]] = [
     # duration_min is derived; if absent, range checks will skip it (datetime sanity covers duration too).
     ("duration_min", 0.0, 360.0),
 ]
+
 
 def cast_ints_to_float(X: pd.DataFrame) -> pd.DataFrame:
     """Avoid MLflow evaluate/SHAP issues with pandas nullable Int64 by logging features as float64."""
@@ -101,6 +102,7 @@ def add_datetime_features(df: pd.DataFrame) -> pd.DataFrame:
     for c in RAW_DATETIME_COLS:
         if c not in out.columns:
             continue
+
         dt = pd.to_datetime(out[c], errors="coerce")
         prefix = c.replace("_datetime", "")
         out[f"{prefix}_year"] = dt.dt.year.astype("Int64")
@@ -115,9 +117,7 @@ def add_datetime_features(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def make_tip_frame(
-    df_raw: pd.DataFrame, *, credit_card_only: bool = True
-) -> Tuple[pd.DataFrame, np.ndarray, List[str]]:
+def make_tip_frame(df_raw: pd.DataFrame, *, credit_card_only: bool = True) -> Tuple[pd.DataFrame, np.ndarray, List[str]]:
     """Return (X, y, feature_cols) for a simple tip regression task using numeric-only features."""
     df = add_datetime_features(df_raw)
 
@@ -128,11 +128,7 @@ def make_tip_frame(
         raise ValueError("Expected column 'tip_amount'.")
 
     # Robust target extraction: do NOT depend on tip_amount being numeric dtype already.
-    y = (
-        pd.to_numeric(df["tip_amount"], errors="coerce")
-        .fillna(0.0)
-        .to_numpy(dtype=float)
-    )
+    y = pd.to_numeric(df["tip_amount"], errors="coerce").fillna(0.0).to_numpy(dtype=float)
 
     # Numeric-only features; drop obvious post-hoc leakage totals.
     num = df.select_dtypes(include=["number"]).copy()
@@ -186,12 +182,8 @@ def _family_ok(actual_dtype: Any, expected: str) -> bool:
     return str(actual_dtype) == str(expected)
 
 
-def run_integrity_checks(
-    df_raw: pd.DataFrame,
-    *,
-    expected_schema: Optional[Dict[str, str]] = None,
-    zone_lookup_path: Optional[Path] = None,
-) -> CheckResult:
+def run_integrity_checks(df_raw: pd.DataFrame, *, expected_schema: Optional[Dict[str, str]] = None,
+                         zone_lookup_path: Optional[Path] = None,) -> CheckResult:
     """Run cheap schema/range/domain/datetime checks and return loggable tables + scalar metrics."""
     df = df_raw.copy()
     metrics: Dict[str, float] = {}
@@ -223,15 +215,13 @@ def run_integrity_checks(
         if not exact_ok:
             bad_exact += 1
 
-        dtype_rows.append(
-            {
-                "column": col,
-                "expected_dtype": str(exp_dtype),
-                "actual_dtype": actual_str,
-                "family_ok": bool(family_ok),
-                "exact_match": bool(exact_ok),
-            }
-        )
+        dtype_rows.append({
+            "column": col,
+            "expected_dtype": str(exp_dtype),
+            "actual_dtype": actual_str,
+            "family_ok": bool(family_ok),
+            "exact_match": bool(exact_ok),
+        })
 
     tables["schema_presence"] = pd.DataFrame({"missing_column": missing})
     tables["schema_extra_columns"] = pd.DataFrame({"extra_column": extra})
@@ -247,20 +237,16 @@ def run_integrity_checks(
 
     # ---- missingness
     if df.shape[1] == 0:
-        tables["missingness"] = pd.DataFrame(
-            columns=["dtype", "missing_frac", "missing_count", "n_unique"]
-        )
+        tables["missingness"] = pd.DataFrame(columns=["dtype", "missing_frac", "missing_count", "n_unique"])
         metrics["missing_frac_mean"] = float("nan")
         metrics["missing_frac_max"] = float("nan")
     else:
-        miss = pd.DataFrame(
-            {
-                "dtype": df.dtypes.astype(str),
-                "missing_frac": df.isna().mean(),
-                "missing_count": df.isna().sum(),
-                "n_unique": df.nunique(dropna=False),
-            }
-        ).sort_values("missing_frac", ascending=False)
+        miss = pd.DataFrame({
+            "dtype": df.dtypes.astype(str),
+            "missing_frac": df.isna().mean(),
+            "missing_count": df.isna().sum(),
+            "n_unique": df.nunique(dropna=False),
+        }).sort_values("missing_frac", ascending=False)
         tables["missingness"] = miss
         metrics["missing_frac_mean"] = float(np.nanmean(df.isna().mean().to_numpy()))
         metrics["missing_frac_max"] = float(np.nanmax(df.isna().mean().to_numpy()))
@@ -274,24 +260,25 @@ def run_integrity_checks(
     def bad_frac_num(col: str, lo: Optional[float], hi: Optional[float]) -> Tuple[float, float, float]:
         if col not in df.columns:
             return np.nan, np.nan, np.nan
+
         x = pd.to_numeric(df[col], errors="coerce")
         valid = x.dropna()
         if valid.empty:
             return 1.0, np.nan, np.nan
+
         bad = pd.Series(False, index=valid.index)
         if lo is not None:
             bad |= valid < lo
         if hi is not None:
             bad |= valid > hi
+
         return float(bad.mean()), float(valid.min()), float(valid.max())
 
     rows: List[Dict[str, Any]] = []
     for col, lo, hi in RANGE_SPECS:
         bf, mn, mx = bad_frac_num(col, lo, hi)
         if not np.isnan(bf):
-            rows.append(
-                {"column": col, "lo": lo, "hi": hi, "bad_frac": bf, "min": mn, "max": mx}
-            )
+            rows.append({"column": col, "lo": lo, "hi": hi, "bad_frac": bf, "min": mn, "max": mx})
 
     if rows:
         rng = pd.DataFrame(rows).sort_values("bad_frac", ascending=False)
@@ -339,24 +326,17 @@ def run_integrity_checks(
         metrics["duration_over_6h_frac"] = float((dur > 360).mean()) if len(dur) else 0.0
         metrics["duration_nan_frac"] = float(dur.isna().mean()) if len(dur) else 0.0
 
-        tables["datetime_checks"] = pd.DataFrame(
-            [
-                {"check": "duration_negative", "frac": metrics["duration_neg_frac"]},
-                {"check": "duration_over_6h", "frac": metrics["duration_over_6h_frac"]},
-                {"check": "duration_nan", "frac": metrics["duration_nan_frac"]},
-            ]
-        )
+        tables["datetime_checks"] = pd.DataFrame([
+            {"check": "duration_negative", "frac": metrics["duration_neg_frac"]},
+            {"check": "duration_over_6h", "frac": metrics["duration_over_6h_frac"]},
+            {"check": "duration_nan", "frac": metrics["duration_nan_frac"]},
+        ])
 
     # ---- zone validity (optional)
     if zone_lookup_path and Path(zone_lookup_path).exists():
         zones = pd.read_csv(zone_lookup_path)
         if "LocationID" in zones.columns:
-            valid_ids = set(
-                pd.to_numeric(zones["LocationID"], errors="coerce")
-                .dropna()
-                .astype(int)
-                .tolist()
-            )
+            valid_ids = set(pd.to_numeric(zones["LocationID"], errors="coerce").dropna().astype(int).tolist())
             for col in ["PULocationID", "DOLocationID"]:
                 if col in df.columns:
                     s = pd.to_numeric(df[col], errors="coerce").dropna().astype(int)
@@ -420,16 +400,8 @@ def js_divergence_categorical(ref: pd.Series, cur: pd.Series, *, eps: float = 1e
     if len(keys) == 0:
         return float("nan")
 
-    pr = (
-        r.value_counts(normalize=True)
-        .reindex(keys, fill_value=0.0)
-        .to_numpy(dtype=float)
-    )
-    pc = (
-        c.value_counts(normalize=True)
-        .reindex(keys, fill_value=0.0)
-        .to_numpy(dtype=float)
-    )
+    pr = r.value_counts(normalize=True).reindex(keys, fill_value=0.0).to_numpy(dtype=float)
+    pc = c.value_counts(normalize=True).reindex(keys, fill_value=0.0).to_numpy(dtype=float)
 
     pr = np.clip(pr, eps, 1.0)
     pc = np.clip(pc, eps, 1.0)
@@ -439,24 +411,17 @@ def js_divergence_categorical(ref: pd.Series, cur: pd.Series, *, eps: float = 1e
     m = 0.5 * (pr + pc)
 
     def kl(a: np.ndarray, b: np.ndarray) -> float:
+        """Compute KL divergence from b to a, i.e. how well b approximates a, assuming a and b are valid probability vectors."""
         return float(np.sum(a * np.log(a / b)))
 
     return float(0.5 * kl(pr, m) + 0.5 * kl(pc, m))
 
 
-def compute_drift_report(
-    ref_df: pd.DataFrame,
-    cur_df: pd.DataFrame,
-    *,
-    numeric_cols: Optional[List[str]] = None,
-    categorical_cols: Optional[List[str]] = None,
-    bins: int = 10,
-) -> Tuple[pd.DataFrame, Dict[str, float]]:
+def compute_drift_report(ref_df: pd.DataFrame, cur_df: pd.DataFrame, *, numeric_cols: Optional[List[str]] = None,
+                         categorical_cols: Optional[List[str]] = None, bins: int = 10) -> Tuple[pd.DataFrame, Dict[str, float]]:
     """Build a per-feature drift table and summary metrics comparing a reference dataframe to a current dataframe."""
     if numeric_cols is None:
-        numeric_cols = [
-            c for c in ref_df.columns if pd.api.types.is_numeric_dtype(ref_df[c])
-        ]
+        numeric_cols = [c for c in ref_df.columns if pd.api.types.is_numeric_dtype(ref_df[c])]
     if categorical_cols is None:
         categorical_cols = [c for c in ref_df.columns if c not in numeric_cols]
 
@@ -466,27 +431,23 @@ def compute_drift_report(
         if c in ref_df.columns and c in cur_df.columns:
             ref_x = ref_df[c]
             cur_x = cur_df[c]
-            rows.append(
-                {
-                    "feature": c,
-                    "type": "numeric",
-                    "psi": psi_numeric(ref_x.to_numpy(), cur_x.to_numpy(), bins=bins),
-                    "ref_mean": float(np.nanmean(pd.to_numeric(ref_x, errors="coerce"))),
-                    "cur_mean": float(np.nanmean(pd.to_numeric(cur_x, errors="coerce"))),
-                }
-            )
+            rows.append({
+                "feature": c,
+                "type": "numeric",
+                "psi": psi_numeric(ref_x.to_numpy(), cur_x.to_numpy(), bins=bins),
+                "ref_mean": float(np.nanmean(pd.to_numeric(ref_x, errors="coerce"))),
+                "cur_mean": float(np.nanmean(pd.to_numeric(cur_x, errors="coerce"))),
+            })
 
     for c in categorical_cols:
         if c in ref_df.columns and c in cur_df.columns:
-            rows.append(
-                {
-                    "feature": c,
-                    "type": "categorical",
-                    "jsd": js_divergence_categorical(ref_df[c], cur_df[c]),
-                    "ref_unique": int(ref_df[c].nunique(dropna=True)),
-                    "cur_unique": int(cur_df[c].nunique(dropna=True)),
-                }
-            )
+            rows.append({
+                "feature": c,
+                "type": "categorical",
+                "jsd": js_divergence_categorical(ref_df[c], cur_df[c]),
+                "ref_unique": int(ref_df[c].nunique(dropna=True)),
+                "cur_unique": int(cur_df[c].nunique(dropna=True)),
+            })
 
     drift = pd.DataFrame(rows)
     if not drift.empty:
@@ -508,15 +469,11 @@ def compute_drift_report(
 
     return drift, metrics
 
+
 ### Violin plots for selected numeric features (credit card only)
-def log_violin_plots_ref_vs_cur(
-    df_ref: pd.DataFrame,
-    df_cur: pd.DataFrame,
-    *,
-    columns=("tip_amount", "fare_amount", "trip_distance"),
-    artifact_file="plots/violin_ref_vs_cur_cc_only.png",
-    clip_q: float = 0.995,
-):
+def log_violin_plots_ref_vs_cur(df_ref: pd.DataFrame, df_cur: pd.DataFrame, *,
+                                columns=("tip_amount", "fare_amount", "trip_distance"),
+                                artifact_file="plots/violin_ref_vs_cur_cc_only.png", clip_q: float = 0.995) -> None:
     """
     CC-only violins (ref vs cur) for selected columns.
     - Clips extreme high tail per feature at clip_q.
@@ -524,9 +481,6 @@ def log_violin_plots_ref_vs_cur(
       but logs + annotates the <=0 fraction for each split/feature.
     Assumes it's called inside an active `mlflow.start_run()` context.
     """
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-
     def _prep(df: pd.DataFrame, split: str):
         if "payment_type" in df.columns:
             df = df[df["payment_type"] == 1].copy()  # CC only
@@ -601,9 +555,7 @@ def log_violin_plots_ref_vs_cur(
 # -----------------------------
 
 
-def corrupt_current_slice(
-    df_raw: pd.DataFrame, *, seed: int = 0, severity: str = "medium"
-) -> pd.DataFrame:
+def corrupt_current_slice(df_raw: pd.DataFrame, *, seed: int = 0, severity: str = "medium") -> pd.DataFrame:
     """Inject controlled issues into a slice (missingness/range/domain/schema/datetime) for demo purposes."""
     rng = np.random.default_rng(seed)
     df = df_raw.copy()
@@ -706,7 +658,7 @@ def latest_model_uri(client: MlflowClient, experiment_id: str) -> Tuple[str, str
         experiment_ids=[experiment_id],
         filter_string="attributes.status = 'FINISHED'",
         order_by=["attributes.start_time DESC"],
-        max_results=200,  
+        max_results=200,
     )
 
     for r in runs:

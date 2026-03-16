@@ -13,7 +13,7 @@
    ```powershell
    mlflow server --workers 1 --port 5000 --backend-store-uri sqlite:///mlflow_tracking/mlflow.db --default-artifact-root mlflow_tracking/mlruns
    ```
-3. Open the UI at http://localhost:5000.
+3. Open the UI at http://localhost:5001.
 
 ---
 ## Prerequisites

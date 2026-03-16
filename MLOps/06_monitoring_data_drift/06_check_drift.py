@@ -15,9 +15,9 @@ Example:
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
-
 import mlflow
+
+from pathlib import Path
 from mlflow.tracking import MlflowClient
 from mlflow.data.sources import LocalArtifactDatasetSource
 
@@ -37,12 +37,11 @@ from green_taxi_drift_lib import (
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
-    p.add_argument("--tracking-uri", default="http://localhost:5000")
+    p.add_argument("--tracking-uri", default="http://localhost:5001")
     p.add_argument("--experiment", default="06_green_taxi_drift")
     p.add_argument("--run-name", default=None)
-    
-    p.add_argument("--model-uri", default=None)
 
+    p.add_argument("--model-uri", default=None)
 
     p.add_argument("--ref-parquet", type=Path, required=True)
     p.add_argument("--cur-parquet", type=Path, required=True)
@@ -51,6 +50,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--severity", choices=["low", "medium", "high"], default="medium")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--drift-bins", type=int, default=10)
+
     return p.parse_args()
 
 
@@ -77,11 +77,7 @@ def main() -> None:
     else:
         model_uri, model_source_run_id = latest_model_uri(client, exp.experiment_id)
 
-    model_feature_cols = (
-        load_feature_cols_from_run(model_source_run_id)
-        if model_source_run_id
-        else None
-    )
+    model_feature_cols = (load_feature_cols_from_run(model_source_run_id) if model_source_run_id else None)
 
     run_name = args.run_name or "monitor"
     with mlflow.start_run(run_name=run_name):
@@ -119,13 +115,7 @@ def main() -> None:
             "domain_worst_bad_frac",
             "duration_neg_frac",
         ]
-        mlflow.log_metrics(
-            {
-                f"integrity_{k}": checks.metrics.get(k, float("nan"))
-                for k in TOP5
-            }
-        )
-
+        mlflow.log_metrics({f"integrity_{k}": checks.metrics.get(k, float("nan")) for k in TOP5})
 
         # Drift in raw space (selected cols)
         raw_cols = [c for c in [
@@ -139,13 +129,13 @@ def main() -> None:
         mlflow.log_metrics({f"drift_raw_{k}": v for k, v in drift_raw_metrics.items()})
         mlflow.log_table(drift_raw, artifact_file="drift/raw.json")
 
-
         log_violin_plots_ref_vs_cur(df_ref_raw,df_cur_raw)
+
         # Model feature space
         Xcur, ycur, feature_cols = make_tip_frame(df_cur_raw, credit_card_only=True)
         Xcur = cast_ints_to_float(Xcur)
 
-        #Consider logging drift in feature space.
+        # Consider logging drift in feature space.
 
         # drift_feat, drift_feat_metrics = compute_drift_report(
         #     ref_frame[feature_cols], cur_frame[feature_cols], bins=args.drift_bins
@@ -180,14 +170,8 @@ def main() -> None:
                 mlflow.log_metric("rmse_increase_pct_vs_baseline", float((cur_rmse - base_rmse) / base_rmse))
 
         # Record decision hint for retrain script
-        mlflow.log_dict(
-            {
-                "model_uri": model_uri,
-                "cur_rmse": cur_rmse,
-                "baseline_run": model_source_run_id,
-            },
-            artifact_file="monitor_summary.json",
-        )
+        dict_to_log = {"model_uri": model_uri, "cur_rmse": cur_rmse, "baseline_run": model_source_run_id}
+        mlflow.log_dict(dict_to_log, artifact_file="monitor_summary.json")
 
 
 if __name__ == "__main__":
