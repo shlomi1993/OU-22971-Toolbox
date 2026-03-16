@@ -4,8 +4,8 @@
 Unit 07: toy regression data generator
 
 This script produces a single CSV file for downstream training scripts.
-Output:
 
+Output:
 - A CSV with columns: x0..x{d-1}, y
 - Written to `--out` (default: data/toy_regression.csv)
 
@@ -15,9 +15,9 @@ Example:
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
-
 import pandas as pd
+
+from pathlib import Path
 from sklearn.datasets import make_regression
 
 
@@ -32,13 +32,7 @@ def main() -> None:
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
 
-
-    X, y = make_regression(
-        n_samples=args.n,
-        n_features=args.d,
-        noise=args.noise,
-        random_state=args.seed,
-    )
+    X, y = make_regression(n_samples=args.n, n_features=args.d, noise=args.noise, random_state=args.seed)
 
     X = pd.DataFrame(X, columns=[f"x{i}" for i in range(args.d)])
     y = pd.Series(y, name="y", dtype="float64")

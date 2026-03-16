@@ -30,7 +30,7 @@
    - The backend and artifact paths are **relative to the current directory**.
    - Starting the server from a different folder creates a *different tracking database* with no history.
 
-4. Open the UI at http://localhost:5000.
+4. Open the UI at http://localhost:5001.
 
 ---
 

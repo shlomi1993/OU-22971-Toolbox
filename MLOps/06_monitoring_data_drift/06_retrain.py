@@ -14,20 +14,18 @@ Example:
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
-from typing import List, Tuple
-
+import mlflow
+import mlflow.sklearn
+import mlflow.data
 import numpy as np
 import pandas as pd
 
+from pathlib import Path
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import mean_squared_error
 
-import mlflow
-import mlflow.sklearn
-import mlflow.data
 from mlflow.data.sources import LocalArtifactDatasetSource
 from mlflow.tracking import MlflowClient
 
@@ -62,7 +60,7 @@ def build_model(random_state: int = 0, max_depth: int = 8, min_samples_leaf: int
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
-    p.add_argument("--tracking-uri", type=str, default="http://localhost:5000")
+    p.add_argument("--tracking-uri", type=str, default="http://localhost:5001")
     p.add_argument("--experiment", type=str, default="06_green_taxi_drift")
     p.add_argument("--run-name", default=None)
 
@@ -75,9 +73,6 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
-
-
-
 def _rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return float(np.sqrt(mean_squared_error(y_true, y_pred)))
 
@@ -87,9 +82,7 @@ def _rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 # -----------------------------
 
 def main() -> None:
-
     args = parse_args()
-
     mlflow.set_tracking_uri(args.tracking_uri)
     mlflow.set_experiment(args.experiment)
 
@@ -138,7 +131,6 @@ def main() -> None:
             )
             mlflow.log_input(ds_slice, context="raw_train_slice")
 
-
         ds_eval_raw = mlflow.data.from_pandas(
             df_eval_raw,
             source=LocalArtifactDatasetSource(str(eval_path)),
@@ -167,7 +159,6 @@ def main() -> None:
 
         eval_df = Xev.copy()
         eval_df["target"] = yev
-
 
         # --- Train + log new model ---
         model = build_model(
@@ -200,7 +191,6 @@ def main() -> None:
         })
 
         mlflow.set_tag("new_model_wins", str(new_rmse < base_rmse).lower())
-
 
 
 if __name__ == "__main__":

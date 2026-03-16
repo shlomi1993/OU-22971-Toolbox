@@ -9,19 +9,16 @@ Example:
 from __future__ import annotations
 
 import argparse
+import mlflow
+import mlflow.sklearn
+import mlflow.data
+
+from mlflow.data.sources import LocalArtifactDatasetSource
 from pathlib import Path
-
-import pandas as pd
-
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
-
-import mlflow
-import mlflow.sklearn
-import mlflow.data
-from mlflow.data.sources import LocalArtifactDatasetSource
 
 from green_taxi_drift_lib import (
     load_taxi_table,
@@ -44,7 +41,7 @@ def build_model(random_state: int = 0, max_depth: int = 8, min_samples_leaf: int
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
-    p.add_argument("--tracking-uri", default="http://localhost:5000")
+    p.add_argument("--tracking-uri", default="http://localhost:5001")
     p.add_argument("--experiment", default="06_green_taxi_drift")
     p.add_argument("--run-name", default=None)
     p.add_argument("--data-parquet", type=Path, required=True)
@@ -53,8 +50,6 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--min-samples-leaf", type=int, default=200)
     p.add_argument("--val-size", type=float, default=0.2)
     return p.parse_args()
-
-
 
 
 def main() -> None:
@@ -81,13 +76,8 @@ def main() -> None:
 
         # --- Datasets (lineage) ---
         raw_source = LocalArtifactDatasetSource(str(args.data_parquet))
-
         df_raw = load_taxi_table(args.data_parquet)
-        raw_ds = mlflow.data.from_pandas(
-            df_raw,
-            source=raw_source,
-            name=f"green_taxi_raw_{args.data_parquet.stem}",
-        )
+        raw_ds = mlflow.data.from_pandas(df_raw, source=raw_source, name=f"green_taxi_raw_{args.data_parquet.stem}")
         mlflow.log_input(raw_ds, context="raw_reference")
 
         # --- Integrity checks on raw slice ---
@@ -97,32 +87,20 @@ def main() -> None:
         for name, tbl in chk.tables.items():
             mlflow.log_table(tbl, artifact_file=f"checks/{name}.json")
 
-
         # --- Build modeling frame ---
         X, y, feature_cols = make_tip_frame(df_raw, credit_card_only=True)
         mlflow.log_dict({"feature_cols": feature_cols}, "feature_cols.json")
-
         X = cast_ints_to_float(X)
 
         # --- Split ---
-        X_tr, X_va, y_tr, y_va = train_test_split(
-            X, y, test_size=args.val_size, random_state=args.seed
-        )
+        X_tr, X_va, y_tr, y_va = train_test_split(X, y, test_size=args.val_size, random_state=args.seed)
 
         # --- Fit ---
-        model = build_model(
-            random_state=args.seed,
-            max_depth=args.max_depth,
-            min_samples_leaf=args.min_samples_leaf,
-        )
+        model = build_model(random_state=args.seed, max_depth=args.max_depth, min_samples_leaf=args.min_samples_leaf)
         model.fit(X_tr, y_tr)
 
         # --- Log model ---
-        model_info = mlflow.sklearn.log_model(
-            sk_model=model,
-            name="model",
-            input_example=X_tr.head(5),
-        )
+        model_info = mlflow.sklearn.log_model(sk_model=model, name="model", input_example=X_tr.head(5))
 
         mlflow.log_text(model_info.model_uri, "model_uri.txt")
         mlflow.set_tag("model_uri", model_info.model_uri)
@@ -131,13 +109,13 @@ def main() -> None:
         eval_df = X_va.copy()
         eval_df["target"] = y_va
 
-
         res = mlflow.models.evaluate(
             model=model_info.model_uri,
-            data=eval_df,          
+            data=eval_df,
             targets="target",
             model_type="regressor",
         )
+
 
 if __name__ == "__main__":
     main()

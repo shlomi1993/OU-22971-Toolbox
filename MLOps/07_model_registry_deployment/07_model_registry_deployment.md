@@ -108,7 +108,7 @@ client.set_model_version_tag("green_taxi_tip_model", "1", "validation_status", "
 
 1. Set mlflow URI environment variable:
     ```powershell
-    $env:MLFLOW_TRACKING_URI = "http://localhost:5000"
+    $env:MLFLOW_TRACKING_URI = "http://localhost:5001"
     ```
 2. Start server:
     ```powershell
