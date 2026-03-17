@@ -1,0 +1,556 @@
+"""
+capstone_lib.py
+
+Shared utilities for the MLOps capstone Metaflow flow:
+  - Data loading & feature engineering (stable schema)
+  - Hard integrity checks (fail-fast)
+  - Soft integrity checks (NannyML)
+  - Model building helpers
+  - Champion loading / registration / promotion logic
+  - Decision-logging helpers
+"""
+
+import mlflow
+import nannyml as nml
+import numpy as np
+import pandas as pd
+
+from dataclasses import dataclass, field, asdict
+from enum import Enum
+from mlflow.tracking import MlflowClient
+from pathlib import Path
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.impute import SimpleImputer
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.pipeline import Pipeline
+from typing import Tuple, List, Dict, Union, Optional, Any
+
+
+RAW_DATETIME_COLS = [
+    "lpep_pickup_datetime",
+    "lpep_dropoff_datetime"
+]
+
+REQUIRED_COLS = [
+    "lpep_pickup_datetime",
+    "lpep_dropoff_datetime",
+    "trip_distance",
+    "fare_amount",
+    "tip_amount",
+    "PULocationID",
+    "DOLocationID",
+    "passenger_count",
+    "payment_type",
+]
+
+RANGE_RULES = [
+    ("trip_distance", 0.0, 200.0),
+    ("fare_amount", 0.0, 500.0),
+    ("tip_amount", 0.0, 200.0),
+    ("passenger_count", 0.0, 10.0),
+]
+
+MIN_IMPROVEMENT_PCT = 0.01  # 1 % default
+
+FEATURE_COLS = [
+    "trip_distance",
+    "fare_amount",
+    "PULocationID",
+    "DOLocationID",
+    "passenger_count",
+    "duration_min",
+    "pickup_hour",
+    "pickup_weekday",
+    "pickup_month",
+]
+
+TARGET_COL = "tip_amount"
+MODEL_NAME = "green_taxi_tip_model"
+DEFAULT_URI = "http://localhost:5001"
+DEFAULT_EXPERIMENT = "08_capstone_green_taxi"
+
+
+
+def load_taxi_table(path: Union[str, Path]) -> pd.DataFrame:
+    """
+    Data Loading: Load a taxi dataset from the given path (Parquet or CSV), ensuring datetime columns are parsed.
+
+    Args:
+        path (str or Path): Path to the dataset file (Parquet or CSV).
+
+    Returns:
+        pd.DataFrame: Loaded dataset.
+    """
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(path)
+
+    if path.suffix == ".parquet":
+        df = pd.read_parquet(path)
+    elif path.suffix == ".csv":
+        df = pd.read_csv(path)
+    else:
+        raise ValueError(f"Unsupported format: {path.suffix}")
+
+    for col in RAW_DATETIME_COLS:
+        if col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors="coerce")
+    return df
+
+
+def engineer_features(df_raw: pd.DataFrame, *, credit_card_only: bool = True) -> Tuple[pd.DataFrame, np.ndarray]:
+    """
+    Feature Engineering: Produce a model-ready (X, y) pair with a stable column schema.
+
+    Steps:
+      1. Filter to credit-card transactions (payment_type == 1) if requested.
+      2. Derive calendar features from pickup datetime.
+      3. Derive duration_min from pickup/dropoff.
+      4. Clip heavy-tailed numerics.
+      5. Select FEATURE_COLS and return (X, y).
+
+    Args:
+        df_raw (pd.DataFrame): Raw dataset.
+        credit_card_only (bool, optional): Whether to filter to credit-card transactions only. Defaults to True.
+
+    Returns:
+        Tuple[pd.DataFrame, np.ndarray]: Model-ready (X, y) pair.
+    """
+    df = df_raw.copy()
+
+    # Filter
+    if credit_card_only and "payment_type" in df.columns:
+        df = df[df["payment_type"] == 1].copy()
+
+    # Datetime features
+    if "lpep_pickup_datetime" in df.columns:
+        dt = pd.to_datetime(df["lpep_pickup_datetime"], errors="coerce")
+        df["pickup_hour"] = dt.dt.hour.astype("float64")
+        df["pickup_weekday"] = dt.dt.dayofweek.astype("float64")
+        df["pickup_month"] = dt.dt.month.astype("float64")
+
+    # Duration
+    if all(col in df.columns for col in RAW_DATETIME_COLS):
+        dur = (df["lpep_dropoff_datetime"] - df["lpep_pickup_datetime"]).dt.total_seconds() / 60.0
+        df["duration_min"] = dur
+    elif "duration_min" not in df.columns:
+        df["duration_min"] = np.nan
+
+    # Clip heavy tails
+    if "trip_distance" in df.columns:
+        df["trip_distance"] = df["trip_distance"].clip(0, 100)
+    if "fare_amount" in df.columns:
+        df["fare_amount"] = df["fare_amount"].clip(0, 300)
+
+    # Target
+    y_raw: pd.Series = pd.to_numeric(df.get(TARGET_COL), errors="coerce")
+    y = y_raw.fillna(0.0).to_numpy(dtype=float)
+
+    # Select stable feature set, fill missing cols with NaN
+    for col in FEATURE_COLS:
+        if col not in df.columns:
+            df[col] = np.nan
+
+    X = df[FEATURE_COLS].astype("float64")
+
+    return X, y
+
+
+@dataclass
+class HardIntegrityResult:
+    """
+    Result of hard integrity checks.
+    """
+    passed: bool
+    hard_failures: List[str] = field(default_factory=list)
+    metrics: Dict[str, float] = field(default_factory=dict)
+    tables: Dict[str, pd.DataFrame] = field(default_factory=dict)
+
+
+def run_hard_integrity_checks(df: pd.DataFrame) -> HardIntegrityResult:
+    """
+    Hard Integrity Checks: Hard rules that cause immediate batch rejection (fail-fast).
+
+    Args:
+        df (pd.DataFrame): Dataset to check.
+
+    Returns:
+        HardIntegrityResult: Result of the checks.
+    """
+    failures = []
+    metrics = {}
+
+    # 1. Required columns present
+    present = set(df.columns)
+    missing = [col for col in REQUIRED_COLS if col not in present]
+    metrics["missing_required_cols"] = float(len(missing))
+    if missing:
+        failures.append(f"Missing required columns: {missing}")
+
+    # 2. Target column exists and has values
+    if TARGET_COL not in df.columns:
+        failures.append("Target column 'tip_amount' missing entirely.")
+    else:
+        target_null_frac = float(df[TARGET_COL].isna().mean())
+        metrics["target_null_frac"] = target_null_frac
+        if target_null_frac > 0.5:
+            failures.append(f"tip_amount null fraction too high: {target_null_frac:.2%}")
+
+    # 3. Datetime validity
+    for col in RAW_DATETIME_COLS:
+        if col not in df.columns:
+            continue
+        nat_frac = float(pd.to_datetime(df[col], errors="coerce").isna().mean())
+        metrics[f"{col}_nat_frac"] = nat_frac
+        if nat_frac > 0.5:
+            failures.append(f"{col} has {nat_frac:.2%} invalid datetimes")
+
+    # 4. Negative duration (dropoff before pickup)
+    if all(col in df.columns for col in RAW_DATETIME_COLS):
+        dur = (df["lpep_dropoff_datetime"] - df["lpep_pickup_datetime"]).dt.total_seconds()
+        neg_frac = float((dur < 0).mean()) if len(dur) else 0.0
+        metrics["negative_duration_frac"] = neg_frac
+        if neg_frac > 0.10:
+            failures.append(f"Negative duration fraction: {neg_frac:.2%}")
+
+    # 5. Range violations
+    for col, lo, hi in RANGE_RULES:
+        if col not in df.columns:
+            continue
+        x = pd.to_numeric(df[col], errors="coerce").dropna()
+        if len(x) == 0:
+            continue
+        bad = ((x < lo) | (x > hi)).mean()  # fraction of out-of-range values
+        metrics[f"range_bad_{col}"] = float(bad)
+        if bad > 0.20:
+            failures.append(f"{col} out-of-range fraction: {bad:.2%}")
+
+    return HardIntegrityResult(passed=len(failures) == 0, hard_failures=failures, metrics=metrics)
+
+
+@dataclass
+class SoftIntegrityResult:
+    """
+    Result of NannyML soft integrity checks.
+    """
+    warn: bool = False
+    details: List[str] = field(default_factory=list)
+    metrics: Dict[str, float] = field(default_factory=dict)
+
+
+def run_soft_integrity_checks(df_ref: pd.DataFrame, df_cur: pd.DataFrame) -> SoftIntegrityResult:
+    """
+    Soft Integrity Checks: Run NannyML-based soft data quality checks.
+
+    Args:
+        df_ref (pd.DataFrame): Reference dataset (e.g. historical baseline).
+        df_cur (pd.DataFrame): Current batch dataset.
+
+    Returns:
+        SoftIntegrityResult: Result containing any warnings, details, and metrics.
+    """
+    # Check missingness drift using NannyML's missing-value drift calculator
+    num_cols = [col for col in FEATURE_COLS if col in df_ref.columns and col in df_cur.columns]
+    if not num_cols:
+        return SoftIntegrityResult()
+
+    warn = False
+    details = []
+    metrics = {}
+
+    # Build reference and analysis DataFrames with a "partition" marker
+    ref = df_ref[num_cols].copy()
+    ref["_partition"] = "reference"
+    cur = df_cur[num_cols].copy()
+    cur["_partition"] = "analysis"
+
+    # Missingness comparison
+    for col in num_cols:
+        ref_miss = float(df_ref[col].isna().mean()) if col in df_ref.columns else 0.0
+        cur_miss = float(df_cur[col].isna().mean()) if col in df_cur.columns else 0.0
+        delta = cur_miss - ref_miss
+        metrics[f"miss_delta_{col}"] = delta
+        if delta > 0.05:
+            warn = True
+            details.append(f"Missingness spike in '{col}': ref={ref_miss:.3f}, cur={cur_miss:.3f}")
+
+    # Univariate drift via NannyML
+    try:
+        # Prepare reference with a synthetic timestamp column for NannyML
+        ref_chunk = df_ref[num_cols].copy().reset_index(drop=True)
+        ref_chunk["_nml_idx"] = range(len(ref_chunk))
+
+        # Prepare analysis with a synthetic timestamp column for NannyML
+        cur_chunk = df_cur[num_cols].copy().reset_index(drop=True)
+        cur_chunk["_nml_idx"] = range(len(ref_chunk), len(ref_chunk) + len(cur_chunk))
+
+        calculator = nml.UnivariateDriftCalculator(
+            column_names=num_cols,
+            timestamp_column_name="_nml_idx",
+            chunk_size=len(cur_chunk) or 1000,
+        )
+        calculator.fit(ref_chunk)
+        drift_results = calculator.calculate(cur_chunk)
+
+        for col_name in num_cols:
+            col_results = drift_results.filter(column_names=[col_name])
+            alerts = col_results.to_df()
+            if "alert" in alerts.columns:
+                n_alerts = int(alerts["alert"].sum())
+            else: # Try column-specific alert columns
+                alert_cols = [c for c in alerts.columns if "alert" in str(c).lower()]
+                n_alerts = int(alerts[alert_cols].sum().sum()) if alert_cols else 0
+
+            metrics[f"nml_drift_alerts_{col_name}"] = float(n_alerts)
+            if n_alerts > 0:
+                warn = True
+                details.append(f"NannyML drift alert for '{col_name}'")
+
+    except Exception as exc:
+        details.append(f"NannyML univariate drift check failed: {exc}")
+
+    # Unseen categoricals
+    cat_cols = ["PULocationID", "DOLocationID", "payment_type"]
+    for col in cat_cols:
+        if col not in df_ref.columns or col not in df_cur.columns:
+            continue
+        ref_vals = set(df_ref[col].dropna().unique())
+        cur_vals = set(df_cur[col].dropna().unique())
+        unseen = cur_vals - ref_vals
+        frac = len(unseen) / max(len(cur_vals), 1)
+        metrics[f"unseen_cats_{col}"] = float(frac)
+        if frac > 0.10:
+            warn = True
+            details.append(f"Unseen categories in '{col}': {len(unseen)} new values")
+
+    return SoftIntegrityResult(warn=warn, details=details, metrics=metrics)
+
+
+def build_model(*, random_state: int = 0, n_estimators: int = 200, max_depth: int = 6, learning_rate: float = 0.1,
+                min_samples_leaf: int = 50) -> Pipeline:
+    """
+    Model Building: Construct a model pipeline with the given hyperparameters.
+
+    Args:
+        random_state (int, optional): Random seed for reproducibility. Defaults to 0.
+        n_estimators (int, optional): Number of boosting iterations. Defaults to 200.
+        max_depth (int, optional): Maximum tree depth. Defaults to 6.
+        learning_rate (float, optional): Learning rate for boosting. Defaults to 0.1.
+        min_samples_leaf (int, optional): Minimum samples per leaf. Defaults to 50.
+
+    Returns:
+        Pipeline: Model pipeline ready for training.
+    """
+    imp = SimpleImputer(strategy="median")
+    gbr = GradientBoostingRegressor(
+        random_state=random_state,
+        n_estimators=n_estimators,
+        max_depth=max_depth,
+        learning_rate=learning_rate,
+        min_samples_leaf=min_samples_leaf,
+    )
+    return Pipeline(steps=[
+        ("imp", imp),
+        ("gbr", gbr)
+    ])
+
+
+@dataclass
+class EvaluationMetrics:
+    """
+    Result of model evaluation.
+    """
+    rmse: float
+    mae: float
+    r2: float
+
+    def as_dict(self) -> Dict[str, float]:
+        return asdict(self)
+
+
+def evaluate_model(model, X: pd.DataFrame, y: np.ndarray) -> EvaluationMetrics:
+    """
+    Model Evaluation: Compute evaluation metrics for the given model and dataset.
+
+    Args:
+        model: Trained model pipeline.
+        X (pd.DataFrame): Feature matrix.
+        y (np.ndarray): True target values.
+
+    Returns:
+        EvaluationMetrics: A dataclass containing RMSE, MAE, and R-squared results.
+    """
+
+    y_pred = model.predict(X)
+    return EvaluationMetrics(
+        rmse=float(np.sqrt(mean_squared_error(y, y_pred))),
+        mae=float(mean_absolute_error(y, y_pred)),
+        r2=float(r2_score(y, y_pred)),
+    )
+
+
+class ModelRegistry:
+    """
+    Model Registry Helper: Encapsulates all MLflow Model Registry operations for a specific model.
+    """
+    def __init__(self, client: MlflowClient, model_name: str = MODEL_NAME) -> None:
+        """
+        Initialize the ModelRegistry.
+
+        Args:
+            client (MlflowClient): MLflow client.
+            model_name (str, optional): Name of the registered model. Defaults to MODEL_NAME.
+        """
+        try:
+            client.get_registered_model(model_name)
+        except mlflow.exceptions.MlflowException:
+            client.create_registered_model(model_name)
+
+        self.client = client
+        self.model_name = model_name
+
+    def champion_exists(self) -> bool:
+        """
+        Check if a champion model exists.
+
+        Returns:
+            bool: True if a champion model exists, False otherwise.
+        """
+        try:
+            return self.client.get_model_version_by_alias(self.model_name, "champion") is not None
+        except mlflow.exceptions.MlflowException:
+            return False
+
+    def load_champion(self) -> Tuple[Any, str]:
+        """
+        Load the current @champion model. Raises if none exists.
+
+        Returns:
+            tuple: Loaded model and its URI.
+        """
+        uri = f"models:/{self.model_name}@champion"
+        return mlflow.pyfunc.load_model(uri), uri
+
+    def register_version(self, model_uri: str, tags: Optional[Dict[str, str]] = None) -> str:
+        """
+        Register a new model version.
+
+        Args:
+            model_uri (str): URI of the model to register.
+            tags (Optional[Dict[str, str]], optional): Tags to set on the model version. Defaults to None.
+
+        Returns:
+            str: Version number of the registered model.
+        """
+        mv = mlflow.register_model(model_uri, self.model_name)
+        if tags:
+            for k, v in tags.items():
+                self.client.set_model_version_tag(self.model_name, mv.version, k, v)
+        return mv.version
+
+    def promote_to_champion(self, new_version: str, reason: str) -> None:
+        """
+        Flip @champion alias to new_version, tagging old champion as previous.
+
+        Args:
+            new_version (str): Version number to promote.
+            reason (str): Reason for promotion.
+        """
+        # Demote old champion if exists
+        try:
+            old_mv = self.client.get_model_version_by_alias(self.model_name, "champion")
+            old_ver = old_mv.version
+            self.client.set_model_version_tag(self.model_name, old_ver, "role", "previous_champion")
+            self.client.set_model_version_tag(self.model_name, old_ver, "demoted_at", pd.Timestamp.now().isoformat())
+        except mlflow.exceptions.MlflowException:
+            pass
+
+        # Promote new
+        self.client.set_registered_model_alias(self.model_name, "champion", new_version)
+        self.client.set_model_version_tag(self.model_name, new_version, "role", "champion")
+        self.client.set_model_version_tag(self.model_name, new_version, "promoted_at", pd.Timestamp.now().isoformat())
+        self.client.set_model_version_tag(self.model_name, new_version, "promotion_reason", reason)
+
+
+class DecisionAction(str, Enum):
+    """
+    Enum for decision action types.
+    """
+    REJECT_BATCH = "reject_batch"
+    BATCH_ACCEPTED = "batch_accepted"
+    NO_RETRAIN = "no_retrain"
+    RETRAIN = "retrain"
+    NO_PROMOTE = "no_promote"
+    PROMOTE = "promote"
+
+
+@dataclass
+class Decision:
+    action: DecisionAction
+    retrain_recommended: bool = False
+    promotion_recommended: bool = False
+    reason: str = ""
+    metrics: Dict[str, float] = field(default_factory=dict)
+    details: Dict[str, Any] = field(default_factory=dict)
+
+    def log(self) -> None:
+        """
+        Log this decision to MLflow.
+        """
+        decision_dict = asdict(self)
+        decision_dict["action"] = self.action.value  # Convert enum to string for JSON
+        mlflow.log_dict(decision_dict, "decision.json")
+        mlflow.set_tag("retrain_recommended", str(self.retrain_recommended).lower())
+        mlflow.set_tag("promotion_recommended", str(self.promotion_recommended).lower())
+        mlflow.set_tag("decision_action", self.action.value)
+
+
+def init_mlflow(model_name: str = MODEL_NAME, tracking_uri: str = DEFAULT_URI, experiment_name: str = DEFAULT_EXPERIMENT) -> ModelRegistry:
+    """
+    Set up MLflow tracking, create experiment & registered model if needed.
+
+    Args:
+        model_name (str, optional): Name of the registered model. Defaults to MODEL_NAME.
+        tracking_uri (str, optional): MLflow tracking server URI. Defaults to DEFAULT_URI.
+        experiment_name (str, optional): MLflow experiment name. Defaults to DEFAULT_EXPERIMENT.
+
+    Returns:
+        ModelRegistry: An instance of the ModelRegistry helper class for managing model versions.
+    """
+    mlflow.set_tracking_uri(tracking_uri)
+    mlflow.set_experiment(experiment_name)
+    client = MlflowClient()
+    return ModelRegistry(client, model_name)
+
+
+def run_integrity_checks(df_ref: pd.DataFrame,df_batch: pd.DataFrame) -> Tuple[bool, Dict[str, Any]]:
+    """
+    Combined hard + NannyML soft integrity checks.
+
+    Args:
+        df_ref (pd.DataFrame): Reference dataset for comparison (e.g. historical baseline).
+        df_batch (pd.DataFrame): Current batch dataset to check.
+
+    Returns:
+        Tuple[bool, Dict[str, Any]]: A tuple where the first element indicates if the batch passed hard checks,
+            and the second element is a report dictionary containing details and metrics.
+    """
+    hard = run_hard_integrity_checks(df_batch)
+    report = {
+        "hard": {
+            "passed": hard.passed,
+            "failures": hard.hard_failures,
+            "metrics": hard.metrics,
+        },
+        "nannyml": {},
+        "metrics": dict(hard.metrics),
+    }
+
+    if not hard.passed:
+        return False, report
+
+    soft = run_soft_integrity_checks(df_ref, df_batch)
+    report["nannyml"] = asdict(soft)
+    report["metrics"].update(soft.metrics)
+
+    return True, report

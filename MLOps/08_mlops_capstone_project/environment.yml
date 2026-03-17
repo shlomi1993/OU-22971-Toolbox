@@ -1,0 +1,16 @@
+name: 22971-capstone
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - numpy=2.4.*
+  - pandas=2.3.*
+  - scikit-learn=1.8.*
+  - matplotlib=3.10.*
+  - pyarrow
+  - pip
+  - pip:
+      - mlflow==3.8
+      - metaflow
+      - nannyml
