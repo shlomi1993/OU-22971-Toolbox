@@ -17,10 +17,10 @@ What this script does:
    - candidate  -> svr version
 
 Notes:
-- `await_registration_for=300` makes `model_info.registered_model_version` reliably available
-  immediately after `log_model` returns.
+- `await_registration_for=300` makes `model_info.registered_model_version` reliably available immediately after
+    `log_model` returns.
 - Serving is separate:
-    mlflow models serve -m "models:/<model-name>@production" -p 5001 --env-manager local
+    mlflow models serve -m "models:/<model-name>@production" -p 5002 --env-manager local
 
 Example:
   python 072_train_register.py --data data/toy_regression.csv --tracking-uri http://localhost:5001
@@ -28,16 +28,14 @@ Example:
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
-
+import mlflow
+import mlflow.sklearn
 import numpy as np
 import pandas as pd
 
-import mlflow
-import mlflow.sklearn
 from mlflow import MlflowClient
 from mlflow.models.signature import infer_signature
-
+from pathlib import Path
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.tree import DecisionTreeRegressor
@@ -70,9 +68,7 @@ def main() -> None:
     X = df.drop(columns=["y"])
     feature_cols = list(X.columns)
 
-    X_tr, X_te, y_tr, y_te = train_test_split(
-        X, y, test_size=args.test_size, random_state=args.seed
-    )
+    X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=args.test_size, random_state=args.seed)
 
     mlflow.set_tracking_uri(args.tracking_uri)
     mlflow.set_experiment(args.experiment)
@@ -86,11 +82,7 @@ def main() -> None:
     # Model A: DecisionTreeRegressor (production)
     # ----------------------------
     tree_algo = "decision_tree"
-    tree = DecisionTreeRegressor(
-        random_state=args.seed,
-        max_depth=None,
-        min_samples_leaf=10,
-    )
+    tree = DecisionTreeRegressor(random_state=args.seed, max_depth=None, min_samples_leaf=10)
 
     with mlflow.start_run(run_name="train_tree") as run:
         tree.fit(X_tr, y_tr)
@@ -119,16 +111,9 @@ def main() -> None:
         client.set_model_version_tag(args.model_name, v_tree, "rmse", f"{rmse_score:.6f}")
         client.set_model_version_tag(args.model_name, v_tree, "r2", f"{r2:.6f}")
         client.set_model_version_tag(args.model_name, v_tree, "features", ",".join(feature_cols))
-        client.update_model_version(
-            name=args.model_name,
-            version=v_tree,
-            description=(
-                "DecisionTreeRegressor\n"
-                f"- rmse: {rmse_score:.6f}\n"
-                f"- r2: {r2:.6f}\n"
-                f"- run_id: {run.info.run_id}\n"
-            ),
-        )
+
+        desc = f"DecisionTreeRegressor\n- rmse: {rmse_score:.6f}\n- r2: {r2:.6f}\n- run_id: {run.info.run_id}\n"
+        client.update_model_version(name=args.model_name, version=v_tree, description=desc)
 
     # ----------------------------
     # Model B: LinearSVR (candidate)
@@ -163,16 +148,8 @@ def main() -> None:
         client.set_model_version_tag(args.model_name, v_svr, "rmse", f"{rmse_score:.6f}")
         client.set_model_version_tag(args.model_name, v_svr, "r2", f"{r2:.6f}")
         client.set_model_version_tag(args.model_name, v_svr, "features", ",".join(feature_cols))
-        client.update_model_version(
-            name=args.model_name,
-            version=v_svr,
-            description=(
-                "LinearSVR\n"
-                f"- rmse: {rmse_score:.6f}\n"
-                f"- r2: {r2:.6f}\n"
-                f"- run_id: {run.info.run_id}\n"
-            ),
-        )
+        desc = f"LinearSVR\n- rmse: {rmse_score:.6f}\n- r2: {r2:.6f}\n- run_id: {run.info.run_id}\n"
+        client.update_model_version(name=args.model_name, version=v_svr, description=desc)
 
     # ----------------------------
     # Aliases

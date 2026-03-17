@@ -1,0 +1,38 @@
+artifact_path: /Users/shlomibenshushan/Repositories/OU-22971-Toolbox/MLOps/07_model_registry_deployment/mlflow_tracking/mlruns/1/models/m-4b507e701eaa4410a9bcdfec1f50e004/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.12.12
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.8.0
+    skops_trusted_types: null
+is_signature_from_type_hint: false
+mlflow_version: 3.10.1
+model_id: m-4b507e701eaa4410a9bcdfec1f50e004
+model_size_bytes: 23877
+model_uuid: m-4b507e701eaa4410a9bcdfec1f50e004
+prompts: null
+run_id: 4793588b9aee4c159a05a5aa5c9e3a6d
+saved_input_example_info:
+  artifact_path: input_example.json
+  pandas_orient: split
+  serving_input_path: serving_input_example.json
+  type: dataframe
+signature:
+  inputs: '[{"type": "double", "name": "x0", "required": true}, {"type": "double",
+    "name": "x1", "required": true}, {"type": "double", "name": "x2", "required":
+    true}, {"type": "double", "name": "x3", "required": true}, {"type": "double",
+    "name": "x4", "required": true}, {"type": "double", "name": "x5", "required":
+    true}]'
+  outputs: '[{"type": "tensor", "tensor-spec": {"dtype": "float64", "shape": [-1]}}]'
+  params: null
+type_hint_from_example: false
+utc_time_created: '2026-03-16 18:51:37.917359'
