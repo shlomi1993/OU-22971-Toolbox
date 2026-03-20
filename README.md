@@ -48,3 +48,4 @@ The emphasis is practical engineering ability, with supporting theoretical under
 - [Full Stack Deep Learning](https://fullstackdeeplearning.com/course/)
 - [Distributed Systems lecture series](https://www.youtube.com/playlist?list=PLeKd45zvjcDFUEv_ohr_HdUFe97RItdiB)
 - [Ultra-Scale Playbook](https://huggingface.co/spaces/nanotron/ultrascale-playbook)
+- [The Missing Semester](https://missing.csail.mit.edu/)
