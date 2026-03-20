@@ -41,25 +41,31 @@ RANGE_RULES = [
 MIN_IMPROVEMENT_PCT = 0.01  # 1 % default
 
 FEATURE_COLS = [
+
     # Original numeric features
     "trip_distance",
     "fare_amount",
     "passenger_count",
     "duration_min",
+
     # Log-transformed heavy-tailed features
     "log_trip_distance",
     "log_fare_amount",
     "log_duration_min",
+
     # Temporal features
     "pickup_hour",
     "pickup_weekday",
     "pickup_month",
+
     # Location features (raw IDs)
     "PULocationID",
     "DOLocationID",
+
     # Location frequency encoding
     "PU_frequency",
     "DO_frequency",
+
     # Interaction features
     "distance_per_minute",
     "fare_per_mile",
