@@ -258,7 +258,7 @@ def test_load_champion_skipped_when_batch_rejected(flow: MLFlowCapstoneFlow) -> 
 
 
 @patch("capstone_flow.mlflow")
-def test_load_champion_loads_existing_champion(flow: MLFlowCapstoneFlow, feature_xy: FeatureXY) -> None:
+def test_load_champion_loads_existing_champion(mock_mlflow: MagicMock, flow: MLFlowCapstoneFlow, feature_xy: FeatureXY) -> None:
     X_ref, y_ref, _, _ = feature_xy
     flow.batch_rejected = False
     flow.X_ref, flow.y_ref = X_ref, y_ref
@@ -792,7 +792,7 @@ def test_promotion_audit_trail_rejected_candidate_registered_with_tags(mock_mlfl
 @patch("capstone_flow.ModelRegistry")
 @patch("capstone_flow.MlflowClient")
 @patch("capstone_flow.mlflow")
-def test_attribute_initialization_all_flags_initialized_in_start(mock_registry_class: MagicMock, flow: MLFlowCapstoneFlow) -> None:
+def test_attribute_initialization_all_flags_initialized_in_start(mock_mlflow: MagicMock, mock_client: MagicMock, mock_registry_class: MagicMock, flow: MLFlowCapstoneFlow) -> None:
     """
     All conditional flags should be initialized to prevent AttributeError.
     """

@@ -25,6 +25,7 @@ import os
 import pandas as pd
 
 from metaflow import FlowSpec, Parameter, step
+from mlflow.tracking import MlflowClient
 
 from capstone_lib import (
     DEFAULT_EXPERIMENT,
@@ -32,11 +33,11 @@ from capstone_lib import (
     FEATURE_COLS,
     MIN_IMPROVEMENT_PCT,
     MODEL_NAME,
+    ModelRegistry,
     Decision,
     DecisionAction,
     build_model,
     evaluate_model,
-    init_mlflow,
     load_taxi_table,
     engineer_features,
     run_integrity_checks,
@@ -50,6 +51,7 @@ class MLFlowCapstoneFlow(FlowSpec):
     """
     Manual monitoring loop: load → integrity → features → evaluate → retrain → promote.
     """
+
     reference_path = Parameter(
         "reference-path",
         help="Path to reference parquet (e.g. 2020-01)",
@@ -85,7 +87,17 @@ class MLFlowCapstoneFlow(FlowSpec):
     # Initialize MLflow
     @step
     def start(self):
-        self.registry = init_mlflow(self.model_name, self.tracking_uri, self.experiment_name)
+        # Initialize conditional attributes
+        self.batch_rejected = False
+        self.integrity_warn = False
+        self.retrain_needed = False
+        self.did_retrain = False
+
+        # Initialize MLflow tracking and registry
+        mlflow.set_tracking_uri(self.tracking_uri)
+        mlflow.set_experiment(self.experiment_name)
+        self.registry = ModelRegistry(MlflowClient(), self.model_name)
+
         logger.info(f"MLflow configured: {self.tracking_uri} / experiment={self.experiment_name}")
         self.next(self.load_data)
 
@@ -110,14 +122,14 @@ class MLFlowCapstoneFlow(FlowSpec):
             mlflow.set_tag("reference_path", self.reference_path)
 
             # Combined hard + soft integrity checks
-            passed, report = run_integrity_checks(self.df_ref, self.df_batch)
+            ok, report = run_integrity_checks(self.df_ref, self.df_batch)
 
             # Log metrics and artifacts
             mlflow.log_metrics(report["metrics"])
             mlflow.log_dict({"hard_failures": report["hard"]["failures"]}, "hard_failures.json")
             mlflow.log_dict({"nannyml_details": report["nannyml"].get("details", [])}, "nannyml_details.json")
 
-            if not passed:
+            if not ok:
                 logger.warning("HARD INTEGRITY FAILURE — rejecting batch")
                 decision = Decision(
                     action=DecisionAction.REJECT_BATCH,
@@ -145,13 +157,13 @@ class MLFlowCapstoneFlow(FlowSpec):
             )
             decision.log()
 
-        logger.info("Integrity gate passed (warn=%s)", self.integrity_warn)
+        logger.info(f"Integrity gate passed (warn={self.integrity_warn})")
         self.next(self.feature_engineering)
 
     # Step C — Feature Engineering
     @step
     def feature_engineering(self):
-        if getattr(self, "batch_rejected", False):
+        if self.batch_rejected:
             logger.info("Skipping feature engineering — batch was rejected")
             self.X_ref = None
             self.y_ref = None
@@ -171,23 +183,15 @@ class MLFlowCapstoneFlow(FlowSpec):
         with mlflow.start_run(run_name="feature_engineering"):
             mlflow.set_tag("pipeline_step", "feature_engineering")
             feature_spec = {c: str(self.X_ref[c].dtype) for c in self.feature_cols}
-            mlflow.log_dict(
-                {"feature_cols": self.feature_cols, "dtypes": feature_spec},
-                "feature_cols.json",
-            )
+            mlflow.log_dict({"feature_cols": self.feature_cols, "dtypes": feature_spec}, "feature_cols.json")
 
-        logger.info(
-            "Features engineered: ref=%d, batch=%d, cols=%s",
-            len(self.X_ref), len(self.X_batch), self.feature_cols,
-        )
+        logger.info(f"Features engineered: ref={len(self.X_ref)}, batch={len(self.X_batch)}, cols={self.feature_cols}")
         self.next(self.load_champion)
 
-    # ================================================================
-    # Step D — load champion (bootstrap if needed)
-    # ================================================================
+    # Step D — Load Champion
     @step
     def load_champion(self):
-        if getattr(self, "batch_rejected", False):
+        if self.batch_rejected:
             logger.info("Skipping champion load — batch was rejected")
             self.champion_model = None
             self.champion_uri = None
@@ -197,6 +201,7 @@ class MLFlowCapstoneFlow(FlowSpec):
         mlflow.set_tracking_uri(self.tracking_uri)
         mlflow.set_experiment(self.experiment_name)
 
+        # Bootstrap champion if none exists (first run)
         if not self.registry.champion_exists():
             logger.info("No champion found — bootstrapping initial model on reference data")
 
@@ -208,12 +213,10 @@ class MLFlowCapstoneFlow(FlowSpec):
                 model.fit(self.X_ref, self.y_ref)
 
                 metrics = evaluate_model(model, self.X_ref, self.y_ref)
-                mlflow.log_metrics({f"train_{k}": v for k, v in metrics.items()})
+                mlflow.log_metrics({f"train_{k}": v for k, v in metrics.as_dict().items()})
                 mlflow.log_dict({"feature_cols": FEATURE_COLS}, "feature_cols.json")
 
-                model_info = mlflow.sklearn.log_model(
-                    model, name="model", input_example=self.X_ref.head(5),
-                )
+                model_info = mlflow.sklearn.log_model(model, name="model", input_example=self.X_ref.head(5))
                 mlflow.set_tag("model_uri", model_info.model_uri)
 
                 version = self.registry.register_version(
@@ -225,19 +228,17 @@ class MLFlowCapstoneFlow(FlowSpec):
                     },
                 )
                 self.registry.promote_to_champion(version, reason="bootstrap")
-                logger.info("Bootstrap champion registered: version=%s", version)
+                logger.info(f"Bootstrap champion registered: version={version}")
 
         # Load champion
         self.champion_model, self.champion_uri = self.registry.load_champion()
-        logger.info("Champion loaded: %s", self.champion_uri)
+        logger.info(f"Champion loaded: {self.champion_uri}")
         self.next(self.model_gate)
 
-    # ================================================================
-    # Step E — model gate (evaluate champion on batch)
-    # ================================================================
+    # Step E — Model Gate
     @step
     def model_gate(self):
-        if getattr(self, "batch_rejected", False):
+        if self.batch_rejected:
             logger.info("Skipping model gate — batch was rejected")
             self.retrain_needed = False
             self.rmse_champion_on_batch = None
@@ -257,11 +258,11 @@ class MLFlowCapstoneFlow(FlowSpec):
 
             # Evaluate champion on batch
             champ_metrics = evaluate_model(self.champion_model, self.X_batch, self.y_batch)
-            mlflow.log_metrics({f"champion_{k}": v for k, v in champ_metrics.items()})
+            mlflow.log_metrics({f"champion_{k}": v for k, v in champ_metrics.as_dict().items()})
 
             # Evaluate champion on reference (baseline)
             ref_metrics = evaluate_model(self.champion_model, self.X_ref, self.y_ref)
-            mlflow.log_metrics({f"baseline_{k}": v for k, v in ref_metrics.items()})
+            mlflow.log_metrics({f"baseline_{k}": v for k, v in ref_metrics.as_dict().items()})
 
             # Log evaluation dataset lineage (P1 requirement)
             eval_dataset = mlflow.data.from_pandas(self.X_batch, name="batch_eval")
@@ -277,11 +278,9 @@ class MLFlowCapstoneFlow(FlowSpec):
             mlflow.log_artifact(pred_path)
             os.remove(pred_path)
 
-            rmse_champ = champ_metrics["rmse"]
-            rmse_base = ref_metrics["rmse"]
-            rmse_increase_pct = (
-                (rmse_champ - rmse_base) / max(rmse_base, 1e-9) if rmse_base > 0 else 0.0
-            )
+            rmse_champ = champ_metrics.rmse
+            rmse_base = ref_metrics.rmse
+            rmse_increase_pct = (rmse_champ - rmse_base) / max(rmse_base, 1e-9) if rmse_base > 0 else 0.0
             mlflow.log_metric("rmse_increase_pct", rmse_increase_pct)
 
             self.rmse_champion_on_batch = rmse_champ
@@ -317,12 +316,10 @@ class MLFlowCapstoneFlow(FlowSpec):
             decision.log()
             mlflow.set_tag("retrain_recommended", str(self.retrain_needed).lower())
 
-        logger.info("Model gate: retrain_needed=%s (%s)", self.retrain_needed, reason)
+        logger.info(f"Model gate: retrain_needed={self.retrain_needed} ({reason})")
         self.next(self.retrain)
 
-    # ================================================================
-    # Step F — retrain (conditional — skipped if not needed)
-    # ================================================================
+    # Step F — Retrain if needed
     @step
     def retrain(self):
         self.did_retrain = False
@@ -331,7 +328,7 @@ class MLFlowCapstoneFlow(FlowSpec):
         self.candidate_rmse_ref = None
         self.retrain_run_id = None
 
-        if not getattr(self, "retrain_needed", False):
+        if not self.retrain_needed:
             logger.info("Retrain step: skipped (not needed)")
             self.next(self.promotion_gate)
             return
@@ -357,21 +354,16 @@ class MLFlowCapstoneFlow(FlowSpec):
 
             # Evaluate candidate on batch (same eval set as champion)
             candidate_metrics = evaluate_model(model, self.X_batch, self.y_batch)
-            mlflow.log_metrics({f"candidate_{k}": v for k, v in candidate_metrics.items()})
+            mlflow.log_metrics({f"candidate_{k}": v for k, v in candidate_metrics.as_dict().items()})
 
             # Evaluate candidate on reference (stability check — P3)
             ref_metrics = evaluate_model(model, self.X_ref, self.y_ref)
-            mlflow.log_metrics({f"candidate_ref_{k}": v for k, v in ref_metrics.items()})
+            mlflow.log_metrics({f"candidate_ref_{k}": v for k, v in ref_metrics.as_dict().items()})
 
             mlflow.log_dict({"feature_cols": FEATURE_COLS}, "feature_cols.json")
-            mlflow.log_params({
-                "reference_path": self.reference_path,
-                "batch_path": self.batch_path,
-            })
+            mlflow.log_params({"reference_path": self.reference_path, "batch_path": self.batch_path})
 
-            model_info = mlflow.sklearn.log_model(
-                model, name="model", input_example=self.X_batch.head(5),
-            )
+            model_info = mlflow.sklearn.log_model(model, name="model", input_example=self.X_batch.head(5))
             mlflow.set_tag("model_uri", model_info.model_uri)
 
             # Inference demo: log batch predictions as artifact
@@ -385,19 +377,14 @@ class MLFlowCapstoneFlow(FlowSpec):
             os.remove(pred_path)
 
             self.candidate_model_uri = model_info.model_uri
-            self.candidate_rmse_batch = candidate_metrics["rmse"]
-            self.candidate_rmse_ref = ref_metrics["rmse"]
+            self.candidate_rmse_batch = candidate_metrics.rmse
+            self.candidate_rmse_ref = ref_metrics.rmse
             self.did_retrain = True
 
-        logger.info(
-            "Retrain done: candidate RMSE=%.4f (batch), %.4f (ref)",
-            self.candidate_rmse_batch, self.candidate_rmse_ref,
-        )
+        logger.info(f"Retrain done: candidate RMSE={self.candidate_rmse_batch:.4f} (batch), {self.candidate_rmse_ref:.4f} (ref)")
         self.next(self.promotion_gate)
 
-    # ================================================================
-    # Step G — promotion gate
-    # ================================================================
+    # Step G — Promotion Gate
     @step
     def promotion_gate(self):
         mlflow.set_tracking_uri(self.tracking_uri)
@@ -419,7 +406,7 @@ class MLFlowCapstoneFlow(FlowSpec):
                 self.next(self.end)
                 return
 
-            # ---- Promotion criteria ----
+            # Promotion criteria
             rmse_champ = self.rmse_champion_on_batch
             rmse_cand = self.candidate_rmse_batch
             rmse_cand_ref = self.candidate_rmse_ref
@@ -448,7 +435,7 @@ class MLFlowCapstoneFlow(FlowSpec):
             p3 = ref_regression < 0.05
 
             # P4: No hard integrity failures
-            p4 = not getattr(self, "batch_rejected", False)
+            p4 = not self.batch_rejected
 
             promote = p1 and p2 and p3 and p4
             reasons = []
@@ -461,10 +448,8 @@ class MLFlowCapstoneFlow(FlowSpec):
             if not p4:
                 reasons.append("batch was rejected by integrity gate")
             if promote:
-                reasons.append(
-                    f"candidate RMSE {rmse_cand:.4f} < {threshold:.4f} "
-                    f"(>{self.min_improvement:.0%} better than champion {rmse_champ:.4f})"
-                )
+                reasons.append(f"candidate RMSE {rmse_cand:.4f} < {threshold:.4f} "
+                               f"(>{self.min_improvement:.0%} better than champion {rmse_champ:.4f})")
 
             decision = Decision(
                 action=DecisionAction.PROMOTE if promote else DecisionAction.NO_PROMOTE,
@@ -495,9 +480,9 @@ class MLFlowCapstoneFlow(FlowSpec):
                 )
                 self.registry.promote_to_champion(version, reason=decision.reason)
                 mlflow.set_tag("promoted_version", version)
-                logger.info("PROMOTED candidate to champion: version=%s", version)
+                logger.info(f"PROMOTED candidate to champion: version={version}")
             else:
-                logger.info("Promotion declined: %s", decision.reason)
+                logger.info(f"Promotion declined: {decision.reason}")
                 # Still register as rejected candidate for audit trail
                 if self.candidate_model_uri:
                     version = self.registry.register_version(
@@ -511,14 +496,12 @@ class MLFlowCapstoneFlow(FlowSpec):
 
         self.next(self.end)
 
-    # ================================================================
     # End
-    # ================================================================
     @step
     def end(self):
-        if getattr(self, "batch_rejected", False):
+        if self.batch_rejected:
             logger.info("Flow finished: batch was REJECTED by integrity gate.")
-        elif getattr(self, "did_retrain", False):
+        elif self.did_retrain:
             logger.info("Flow finished: retrain + promotion gate completed.")
         else:
             logger.info("Flow finished: champion is still adequate, no retrain needed.")
