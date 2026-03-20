@@ -70,7 +70,6 @@ DEFAULT_URI = "http://localhost:5001"
 DEFAULT_EXPERIMENT = "08_capstone_green_taxi"
 
 
-
 def load_taxi_table(path: Union[str, Path]) -> pd.DataFrame:
     """
     Data Loading: Load a taxi dataset from the given path (Parquet or CSV), ensuring datetime columns are parsed.
@@ -95,6 +94,7 @@ def load_taxi_table(path: Union[str, Path]) -> pd.DataFrame:
     for col in RAW_DATETIME_COLS:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors="coerce")
+
     return df
 
 
@@ -326,7 +326,7 @@ def run_soft_integrity_checks(df_ref: pd.DataFrame, df_cur: pd.DataFrame) -> Sof
     return SoftIntegrityResult(warn=warn, details=details, metrics=metrics)
 
 
-def build_model(*, random_state: int = 0, n_estimators: int = 200, max_depth: int = 6, learning_rate: float = 0.1,
+def build_model(random_state: int = 0, n_estimators: int = 200, max_depth: int = 6, learning_rate: float = 0.1,
                 min_samples_leaf: int = 50) -> Pipeline:
     """
     Model Building: Construct a model pipeline with the given hyperparameters.
@@ -368,12 +368,12 @@ class EvaluationMetrics:
         return asdict(self)
 
 
-def evaluate_model(model, X: pd.DataFrame, y: np.ndarray) -> EvaluationMetrics:
+def evaluate_model(model: Pipeline, X: pd.DataFrame, y: np.ndarray) -> EvaluationMetrics:
     """
     Model Evaluation: Compute evaluation metrics for the given model and dataset.
 
     Args:
-        model: Trained model pipeline.
+        model (Pipeline): Trained model pipeline.
         X (pd.DataFrame): Feature matrix.
         y (np.ndarray): True target values.
 
@@ -393,6 +393,7 @@ class ModelRegistry:
     """
     Model Registry Helper: Encapsulates all MLflow Model Registry operations for a specific model.
     """
+
     def __init__(self, client: MlflowClient, model_name: str = MODEL_NAME) -> None:
         """
         Initialize the ModelRegistry.
@@ -503,24 +504,6 @@ class Decision:
         mlflow.set_tag("retrain_recommended", str(self.retrain_recommended).lower())
         mlflow.set_tag("promotion_recommended", str(self.promotion_recommended).lower())
         mlflow.set_tag("decision_action", self.action.value)
-
-
-def init_mlflow(model_name: str = MODEL_NAME, tracking_uri: str = DEFAULT_URI, experiment_name: str = DEFAULT_EXPERIMENT) -> ModelRegistry:
-    """
-    Set up MLflow tracking, create experiment & registered model if needed.
-
-    Args:
-        model_name (str, optional): Name of the registered model. Defaults to MODEL_NAME.
-        tracking_uri (str, optional): MLflow tracking server URI. Defaults to DEFAULT_URI.
-        experiment_name (str, optional): MLflow experiment name. Defaults to DEFAULT_EXPERIMENT.
-
-    Returns:
-        ModelRegistry: An instance of the ModelRegistry helper class for managing model versions.
-    """
-    mlflow.set_tracking_uri(tracking_uri)
-    mlflow.set_experiment(experiment_name)
-    client = MlflowClient()
-    return ModelRegistry(client, model_name)
 
 
 def run_integrity_checks(df_ref: pd.DataFrame,df_batch: pd.DataFrame) -> Tuple[bool, Dict[str, Any]]:
