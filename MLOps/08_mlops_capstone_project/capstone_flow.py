@@ -66,6 +66,13 @@ class MLFlowCapstoneFlow(FlowSpec):
         type=float,
     )
 
+    def init_mlflow(self) -> None:
+        """
+        Initialize MLflow for steps that need to log.
+        """
+        mlflow.set_tracking_uri(self.tracking_uri)
+        mlflow.set_experiment(self.experiment_name)
+
     # Initialize MLflow
     @step
     def start(self):
@@ -76,8 +83,7 @@ class MLFlowCapstoneFlow(FlowSpec):
         self.did_retrain = False
 
         # Initialize MLflow tracking and registry
-        mlflow.set_tracking_uri(self.tracking_uri)
-        mlflow.set_experiment(self.experiment_name)
+        self.init_mlflow()
         self.registry = ModelRegistry(MlflowClient(), self.model_name)
 
         logger.info(f"MLflow configured: {self.tracking_uri} / experiment={self.experiment_name}")
@@ -94,8 +100,7 @@ class MLFlowCapstoneFlow(FlowSpec):
     # Step B — Integrity Gate
     @step
     def integrity_gate(self):
-        mlflow.set_tracking_uri(self.tracking_uri)
-        mlflow.set_experiment(self.experiment_name)
+        self.init_mlflow()
 
         with mlflow.start_run(run_name="integrity_gate") as run:
             self.integrity_run_id = run.info.run_id
@@ -160,8 +165,7 @@ class MLFlowCapstoneFlow(FlowSpec):
         self.feature_cols = FEATURE_COLS
 
         # Log feature spec to MLflow (design doc Step C)
-        mlflow.set_tracking_uri(self.tracking_uri)
-        mlflow.set_experiment(self.experiment_name)
+        self.init_mlflow()
         with mlflow.start_run(run_name="feature_engineering"):
             mlflow.set_tag("pipeline_step", "feature_engineering")
             feature_spec = {c: str(self.X_ref[c].dtype) for c in self.feature_cols}
@@ -180,8 +184,7 @@ class MLFlowCapstoneFlow(FlowSpec):
             self.next(self.model_gate)
             return
 
-        mlflow.set_tracking_uri(self.tracking_uri)
-        mlflow.set_experiment(self.experiment_name)
+        self.init_mlflow()
 
         # Bootstrap champion if none exists (first run)
         if not self.registry.champion_exists():
@@ -229,8 +232,7 @@ class MLFlowCapstoneFlow(FlowSpec):
             self.next(self.retrain)
             return
 
-        mlflow.set_tracking_uri(self.tracking_uri)
-        mlflow.set_experiment(self.experiment_name)
+        self.init_mlflow()
 
         with mlflow.start_run(run_name="model_gate") as run:
             self.model_gate_run_id = run.info.run_id
@@ -315,8 +317,7 @@ class MLFlowCapstoneFlow(FlowSpec):
             self.next(self.promotion_gate)
             return
 
-        mlflow.set_tracking_uri(self.tracking_uri)
-        mlflow.set_experiment(self.experiment_name)
+        self.init_mlflow()
 
         # Train on merged reference + batch
         X_train = pd.concat([self.X_ref, self.X_batch], ignore_index=True)
@@ -369,8 +370,7 @@ class MLFlowCapstoneFlow(FlowSpec):
     # Step G — Promotion Gate
     @step
     def promotion_gate(self):
-        mlflow.set_tracking_uri(self.tracking_uri)
-        mlflow.set_experiment(self.experiment_name)
+        self.init_mlflow()
 
         with mlflow.start_run(run_name="promotion_gate") as run:
             mlflow.set_tag("pipeline_step", "promotion_gate")
