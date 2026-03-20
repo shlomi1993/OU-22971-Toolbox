@@ -1,21 +1,3 @@
-"""
-capstone_flow.py
-
-MLOps capstone: manual monitoring → optional retraining → champion promotion.
-
-Linear Metaflow DAG (no branching — conditional logic lives inside steps):
-  start → load_data → integrity_gate → feature_engineering → load_champion → model_gate → retrain → promotion_gate → end
-
-Run examples:
-  # Normal baseline run
-  python capstone_flow.py run \\
-      --reference-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-01.parquet \\
-      --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-04.parquet
-
-  # Resume from a failed step
-  python capstone_flow.py resume retrain
-"""
-
 import logging
 import mlflow
 import mlflow.data

@@ -1,15 +1,3 @@
-"""
-capstone_lib.py
-
-Shared utilities for the MLOps capstone Metaflow flow:
-  - Data loading & feature engineering (stable schema)
-  - Hard integrity checks (fail-fast)
-  - Soft integrity checks (NannyML)
-  - Model building helpers
-  - Champion loading / registration / promotion logic
-  - Decision-logging helpers
-"""
-
 import mlflow
 import nannyml as nml
 import numpy as np
@@ -53,15 +41,28 @@ RANGE_RULES = [
 MIN_IMPROVEMENT_PCT = 0.01  # 1 % default
 
 FEATURE_COLS = [
+    # Original numeric features
     "trip_distance",
     "fare_amount",
-    "PULocationID",
-    "DOLocationID",
     "passenger_count",
     "duration_min",
+    # Log-transformed heavy-tailed features
+    "log_trip_distance",
+    "log_fare_amount",
+    "log_duration_min",
+    # Temporal features
     "pickup_hour",
     "pickup_weekday",
     "pickup_month",
+    # Location features (raw IDs)
+    "PULocationID",
+    "DOLocationID",
+    # Location frequency encoding
+    "PU_frequency",
+    "DO_frequency",
+    # Interaction features
+    "distance_per_minute",
+    "fare_per_mile",
 ]
 
 TARGET_COL = "tip_amount"
@@ -107,7 +108,10 @@ def engineer_features(df_raw: pd.DataFrame, *, credit_card_only: bool = True) ->
       2. Derive calendar features from pickup datetime.
       3. Derive duration_min from pickup/dropoff.
       4. Clip heavy-tailed numerics.
-      5. Select FEATURE_COLS and return (X, y).
+      5. Log-transform heavy-tailed features.
+      6. Encode location features with frequency encoding.
+      7. Create interaction features.
+      8. Select FEATURE_COLS and return (X, y).
 
     Args:
         df_raw (pd.DataFrame): Raw dataset.
@@ -136,11 +140,50 @@ def engineer_features(df_raw: pd.DataFrame, *, credit_card_only: bool = True) ->
     elif "duration_min" not in df.columns:
         df["duration_min"] = np.nan
 
-    # Clip heavy tails
+    # Clip heavy tails before log transform
     if "trip_distance" in df.columns:
         df["trip_distance"] = df["trip_distance"].clip(0, 100)
     if "fare_amount" in df.columns:
         df["fare_amount"] = df["fare_amount"].clip(0, 300)
+
+    # Log transforms for heavy-tailed numeric fields
+    if "trip_distance" in df.columns:
+        df["log_trip_distance"] = np.log1p(df["trip_distance"].fillna(0))
+    else:
+        df["log_trip_distance"] = np.nan
+
+    if "fare_amount" in df.columns:
+        df["log_fare_amount"] = np.log1p(df["fare_amount"].fillna(0))
+    else:
+        df["log_fare_amount"] = np.nan
+
+    if "duration_min" in df.columns:
+        df["log_duration_min"] = np.log1p(df["duration_min"].clip(0, 1000).fillna(0))
+    else:
+        df["log_duration_min"] = np.nan
+
+    # Location frequency encoding (stateless, computed per dataset)
+    for loc_col, freq_col in [("PULocationID", "PU_frequency"), ("DOLocationID", "DO_frequency")]:
+        if loc_col in df.columns:
+            freq_map = df[loc_col].value_counts(normalize=True, dropna=False).to_dict()
+            df[freq_col] = df[loc_col].map(freq_map).fillna(0.0)
+        else:
+            df[freq_col] = 0.0
+
+    # Interaction features
+    if "trip_distance" in df.columns and "duration_min" in df.columns:
+        # Average speed proxy (distance per minute)
+        df["distance_per_minute"] = df["trip_distance"] / df["duration_min"].clip(lower=1.0)
+        df["distance_per_minute"] = df["distance_per_minute"].fillna(0).clip(0, 5)  # Cap outliers
+    else:
+        df["distance_per_minute"] = 0.0
+
+    if "fare_amount" in df.columns and "trip_distance" in df.columns:
+        # Price efficiency (fare per mile)
+        df["fare_per_mile"] = df["fare_amount"] / df["trip_distance"].clip(lower=0.1)
+        df["fare_per_mile"] = df["fare_per_mile"].fillna(0).clip(0, 100)  # Cap outliers
+    else:
+        df["fare_per_mile"] = 0.0
 
     # Target
     y_raw: pd.Series = pd.to_numeric(df.get(TARGET_COL), errors="coerce")
