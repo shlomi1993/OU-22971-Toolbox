@@ -31,8 +31,9 @@ ACTION: Scroll through the class, point out each step decorator:
        negative durations, range violations) — "reject_batch" if any fail
      • Layer 2: NannyML soft checks (missingness drift via
        UnivariateDriftCalculator, unseen categoricals) — sets integrity_warn tag
-  4. feature_engineering — stable schema (FEATURE_COLS: 9 columns),
-     credit-card filter, datetime features, duration, clipping.
+  4. feature_engineering — stable schema (FEATURE_COLS: 16 columns),
+     credit-card filter, datetime features, duration, clipping,
+     log transforms, frequency encoding, interaction features.
      Logs feature_cols.json with dtypes to MLflow.
   5. load_champion — loads models:/<name>@champion; if none exists,
      bootstraps by training on reference and registering with @champion alias
@@ -72,14 +73,14 @@ NARRATION:
  like business logic."
 
 ACTION: Briefly highlight:
-  • REQUIRED_COLUMNS, RANGE_RULES — configurable integrity rules
+  • REQUIRED_COLS, RANGE_RULES — configurable integrity rules
   • engineer_features() — the shared feature transformation
-  • run_hard_integrity() → IntegrityResult dataclass
-  • run_nannyml_checks() → dict with warn flag, details, metrics
+  • run_hard_integrity_checks() → HardIntegrityResult dataclass
+  • run_soft_integrity_checks() → SoftIntegrityResult dataclass
   • build_model() — Pipeline(SimpleImputer + GradientBoostingRegressor)
-  • champion_exists(), load_champion_model(), register_model_version(),
-    promote_to_champion() — Model Registry helpers
-  • Decision dataclass + log_decision() — always logs decision.json + tags
+  • champion_exists(), load_champion(), register_version(),
+    promote_to_champion() — ModelRegistry methods
+  • Decision dataclass + log() method — always logs decision.json + tags
 
 
 ============================================================
