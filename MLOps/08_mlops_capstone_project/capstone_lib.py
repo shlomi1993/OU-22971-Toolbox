@@ -105,7 +105,7 @@ def load_taxi_table(path: Union[str, Path]) -> pd.DataFrame:
     return df
 
 
-def engineer_features(df_raw: pd.DataFrame, *, credit_card_only: bool = True) -> Tuple[pd.DataFrame, np.ndarray]:
+def engineer_features(df_raw: pd.DataFrame, credit_card_only: bool = True) -> Tuple[pd.DataFrame, np.ndarray]:
     """
     Feature Engineering: Produce a model-ready (X, y) pair with a stable column schema.
 
@@ -120,7 +120,7 @@ def engineer_features(df_raw: pd.DataFrame, *, credit_card_only: bool = True) ->
       8. Select FEATURE_COLS and return (X, y).
 
     Args:
-        df_raw (pd.DataFrame): Raw dataset.
+        df_raw (pd.DataFrame): Raw dataset loaded from source.
         credit_card_only (bool, optional): Whether to filter to credit-card transactions only. Defaults to True.
 
     Returns:
@@ -221,10 +221,10 @@ def run_hard_integrity_checks(df: pd.DataFrame) -> HardIntegrityResult:
     Hard Integrity Checks: Hard rules that cause immediate batch rejection (fail-fast).
 
     Args:
-        df (pd.DataFrame): Dataset to check.
+        df (pd.DataFrame): Dataset to check, expected to have raw columns (e.g. lpep_pickup_datetime) for checks.
 
     Returns:
-        HardIntegrityResult: Result of the checks.
+        HardIntegrityResult: Result of the checks, including the batch status, any failure messages, and metrics.
     """
     failures = []
     metrics = {}
@@ -375,6 +375,100 @@ def run_soft_integrity_checks(df_ref: pd.DataFrame, df_cur: pd.DataFrame) -> Sof
     return SoftIntegrityResult(warn=warn, details=details, metrics=metrics)
 
 
+def run_integrity_checks(df_ref: pd.DataFrame,df_batch: pd.DataFrame) -> Tuple[bool, Dict[str, Any]]:
+    """
+    Combined hard + NannyML soft integrity checks.
+
+    Args:
+        df_ref (pd.DataFrame): Reference dataset for comparison (e.g. historical baseline).
+        df_batch (pd.DataFrame): Current batch dataset to check.
+
+    Returns:
+        Tuple[bool, Dict[str, Any]]: A tuple where the first element indicates if the batch passed hard checks,
+            and the second element is a report dictionary containing details and metrics.
+    """
+    # Layer 1: Hard integrity checks (fail-fast)
+    hard = run_hard_integrity_checks(df_batch)
+    report = {
+        "hard": {
+            "failures": hard.hard_failures,
+            "metrics": hard.metrics,
+        },
+        "nannyml": {},
+        "metrics": dict(hard.metrics),
+    }
+    if not hard.passed:
+        return False, report
+
+    # Layer 2: NannyML soft integrity checks (warnings, no hard fail)
+    soft = run_soft_integrity_checks(df_ref, df_batch)
+    report["nannyml"] = asdict(soft)
+    report["metrics"].update(soft.metrics)
+    return True, report
+
+
+class DecisionAction(str, Enum):
+    """
+    Enum for decision action types.
+    """
+    REJECT_BATCH = "reject_batch"
+    BATCH_ACCEPTED = "batch_accepted"
+    NO_RETRAIN = "no_retrain"
+    RETRAIN = "retrain"
+    NO_PROMOTE = "no_promote"
+    PROMOTE = "promote"
+
+
+@dataclass
+class Decision:
+    action: DecisionAction
+    retrain_recommended: bool = False
+    promotion_recommended: bool = False
+    reason: str = ""
+    metrics: Dict[str, float] = field(default_factory=dict)
+    details: Dict[str, Any] = field(default_factory=dict)
+
+    def log(self) -> None:
+        """
+        Log this decision to MLflow.
+        """
+        decision_dict = asdict(self)
+        decision_dict["action"] = self.action.value  # Convert enum to string for JSON
+        mlflow.log_dict(decision_dict, "decision.json")
+        mlflow.set_tag("retrain_recommended", str(self.retrain_recommended).lower())
+        mlflow.set_tag("promotion_recommended", str(self.promotion_recommended).lower())
+        mlflow.set_tag("decision_action", self.action.value)
+
+
+def make_integrity_decision(ok: bool, report: Dict[str, Any]) -> Decision:
+    """
+    Make a decision based on integrity check results.
+
+    Args:
+        ok (bool): Whether hard integrity checks passed.
+        report (Dict[str, Any]): Integrity check report containing hard and soft check results.
+
+    Returns:
+        Decision: Decision object containing the action, reasoning, and relevant metadata.
+    """
+    if not ok:
+        # Hard checks failed - reject batch
+        return Decision(
+            action=DecisionAction.REJECT_BATCH,
+            reason="; ".join(report["hard"]["failures"]),
+            metrics=report["hard"]["metrics"],
+        )
+
+    # Hard checks passed - check for NannyML warnings
+    nannyml_warn = report["nannyml"].get("warn", False)
+    return Decision(
+        action=DecisionAction.BATCH_ACCEPTED,
+        reason="Hard rules passed" + ("; NannyML warnings present" if nannyml_warn else ""),
+        metrics=report["hard"]["metrics"],
+        details={"nannyml_warn": nannyml_warn, "nannyml_details": report["nannyml"].get("details", [])},
+    )
+
+
 def build_model(random_state: int = 0, n_estimators: int = 200, max_depth: int = 6, learning_rate: float = 0.1,
                 min_samples_leaf: int = 50) -> Pipeline:
     """
@@ -520,69 +614,3 @@ class ModelRegistry:
         self.client.set_model_version_tag(self.model_name, new_version, "role", "champion")
         self.client.set_model_version_tag(self.model_name, new_version, "promoted_at", pd.Timestamp.now().isoformat())
         self.client.set_model_version_tag(self.model_name, new_version, "promotion_reason", reason)
-
-
-class DecisionAction(str, Enum):
-    """
-    Enum for decision action types.
-    """
-    REJECT_BATCH = "reject_batch"
-    BATCH_ACCEPTED = "batch_accepted"
-    NO_RETRAIN = "no_retrain"
-    RETRAIN = "retrain"
-    NO_PROMOTE = "no_promote"
-    PROMOTE = "promote"
-
-
-@dataclass
-class Decision:
-    action: DecisionAction
-    retrain_recommended: bool = False
-    promotion_recommended: bool = False
-    reason: str = ""
-    metrics: Dict[str, float] = field(default_factory=dict)
-    details: Dict[str, Any] = field(default_factory=dict)
-
-    def log(self) -> None:
-        """
-        Log this decision to MLflow.
-        """
-        decision_dict = asdict(self)
-        decision_dict["action"] = self.action.value  # Convert enum to string for JSON
-        mlflow.log_dict(decision_dict, "decision.json")
-        mlflow.set_tag("retrain_recommended", str(self.retrain_recommended).lower())
-        mlflow.set_tag("promotion_recommended", str(self.promotion_recommended).lower())
-        mlflow.set_tag("decision_action", self.action.value)
-
-
-def run_integrity_checks(df_ref: pd.DataFrame,df_batch: pd.DataFrame) -> Tuple[bool, Dict[str, Any]]:
-    """
-    Combined hard + NannyML soft integrity checks.
-
-    Args:
-        df_ref (pd.DataFrame): Reference dataset for comparison (e.g. historical baseline).
-        df_batch (pd.DataFrame): Current batch dataset to check.
-
-    Returns:
-        Tuple[bool, Dict[str, Any]]: A tuple where the first element indicates if the batch passed hard checks,
-            and the second element is a report dictionary containing details and metrics.
-    """
-    hard = run_hard_integrity_checks(df_batch)
-    report = {
-        "hard": {
-            "passed": hard.passed,
-            "failures": hard.hard_failures,
-            "metrics": hard.metrics,
-        },
-        "nannyml": {},
-        "metrics": dict(hard.metrics),
-    }
-
-    if not hard.passed:
-        return False, report
-
-    soft = run_soft_integrity_checks(df_ref, df_batch)
-    report["nannyml"] = asdict(soft)
-    report["metrics"].update(soft.metrics)
-
-    return True, report

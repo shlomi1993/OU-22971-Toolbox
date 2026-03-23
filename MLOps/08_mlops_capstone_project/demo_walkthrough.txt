@@ -303,6 +303,10 @@ NARRATION:
 
  Every decision is logged as decision.json, every gate produces
  auditable tags, and the Model Registry tracks champion lineage.
+ 
+ In a production scenario, the next step would be redeploying the
+ serving endpoint with the newly promoted @champion model — this
+ could be automated via MLflow Model Serving or a separate CD pipeline.
 
  The code is in two files: capstone_flow.py (the pipeline) and
  capstone_lib.py (the reusable utilities). The README has setup
