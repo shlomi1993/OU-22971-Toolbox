@@ -153,22 +153,20 @@ class MLFlowCapstoneFlow(FlowSpec):
             self.y_ref = None
             self.X_batch = None
             self.y_batch = None
-            self.feature_cols = []
             self.next(self.load_champion)
             return
 
         self.X_ref, self.y_ref = engineer_features(self.df_ref)
         self.X_batch, self.y_batch = engineer_features(self.df_batch)
-        self.feature_cols = FEATURE_COLS
 
         # Log feature spec to MLflow (design doc Step C)
         self.init_mlflow()
         with mlflow.start_run(run_name="feature_engineering"):
             mlflow.set_tag("pipeline_step", "feature_engineering")
-            feature_spec = {c: str(self.X_ref[c].dtype) for c in self.feature_cols}
-            mlflow.log_dict({"feature_cols": self.feature_cols, "dtypes": feature_spec}, "feature_cols.json")
+            feature_spec = {c: str(self.X_ref[c].dtype) for c in FEATURE_COLS}
+            mlflow.log_dict({"feature_cols": FEATURE_COLS, "dtypes": feature_spec}, "feature_cols.json")
 
-        self.logger.info(f"Features engineered: ref={len(self.X_ref)}, batch={len(self.X_batch)}, cols={self.feature_cols}")
+        self.logger.info(f"Features engineered: ref={len(self.X_ref)}, batch={len(self.X_batch)}, cols={FEATURE_COLS}")
         self.next(self.load_champion)
 
     # Step D - Load Champion

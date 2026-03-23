@@ -105,106 +105,6 @@ def load_taxi_table(path: Union[str, Path]) -> pd.DataFrame:
     return df
 
 
-def engineer_features(df_raw: pd.DataFrame, credit_card_only: bool = True) -> Tuple[pd.DataFrame, np.ndarray]:
-    """
-    Feature Engineering: Produce a model-ready (X, y) pair with a stable column schema.
-
-    Steps:
-      1. Filter to credit-card transactions (payment_type == 1) if requested.
-      2. Derive calendar features from pickup datetime.
-      3. Derive duration_min from pickup/dropoff.
-      4. Clip heavy-tailed numerics.
-      5. Log-transform heavy-tailed features.
-      6. Encode location features with frequency encoding.
-      7. Create interaction features.
-      8. Select FEATURE_COLS and return (X, y).
-
-    Args:
-        df_raw (pd.DataFrame): Raw dataset loaded from source.
-        credit_card_only (bool, optional): Whether to filter to credit-card transactions only. Defaults to True.
-
-    Returns:
-        Tuple[pd.DataFrame, np.ndarray]: Model-ready (X, y) pair.
-    """
-    df = df_raw.copy()
-
-    # Filter
-    if credit_card_only and "payment_type" in df.columns:
-        df = df[df["payment_type"] == 1].copy()
-
-    # Datetime features
-    if "lpep_pickup_datetime" in df.columns:
-        dt = pd.to_datetime(df["lpep_pickup_datetime"], errors="coerce")
-        df["pickup_hour"] = dt.dt.hour.astype("float64")
-        df["pickup_weekday"] = dt.dt.dayofweek.astype("float64")
-        df["pickup_month"] = dt.dt.month.astype("float64")
-
-    # Duration
-    if all(col in df.columns for col in RAW_DATETIME_COLS):
-        dur = (df["lpep_dropoff_datetime"] - df["lpep_pickup_datetime"]).dt.total_seconds() / 60.0
-        df["duration_min"] = dur
-    elif "duration_min" not in df.columns:
-        df["duration_min"] = np.nan
-
-    # Clip heavy tails before log transform
-    if "trip_distance" in df.columns:
-        df["trip_distance"] = df["trip_distance"].clip(0, 100)
-    if "fare_amount" in df.columns:
-        df["fare_amount"] = df["fare_amount"].clip(0, 300)
-
-    # Log transforms for heavy-tailed numeric fields
-    if "trip_distance" in df.columns:
-        df["log_trip_distance"] = np.log1p(df["trip_distance"].fillna(0))
-    else:
-        df["log_trip_distance"] = np.nan
-
-    if "fare_amount" in df.columns:
-        df["log_fare_amount"] = np.log1p(df["fare_amount"].fillna(0))
-    else:
-        df["log_fare_amount"] = np.nan
-
-    if "duration_min" in df.columns:
-        df["log_duration_min"] = np.log1p(df["duration_min"].clip(0, 1000).fillna(0))
-    else:
-        df["log_duration_min"] = np.nan
-
-    # Location frequency encoding (stateless, computed per dataset)
-    for loc_col, freq_col in [("PULocationID", "PU_frequency"), ("DOLocationID", "DO_frequency")]:
-        if loc_col in df.columns:
-            freq_map = df[loc_col].value_counts(normalize=True, dropna=False).to_dict()
-            df[freq_col] = df[loc_col].map(freq_map).fillna(0.0)
-        else:
-            df[freq_col] = 0.0
-
-    # Interaction features
-    if "trip_distance" in df.columns and "duration_min" in df.columns:
-        # Average speed proxy (distance per minute)
-        df["distance_per_minute"] = df["trip_distance"] / df["duration_min"].clip(lower=1.0)
-        df["distance_per_minute"] = df["distance_per_minute"].fillna(0).clip(0, 5)  # Cap outliers
-    else:
-        df["distance_per_minute"] = 0.0
-
-    if "fare_amount" in df.columns and "trip_distance" in df.columns:
-        # Price efficiency (fare per mile)
-        df["fare_per_mile"] = df["fare_amount"] / df["trip_distance"].clip(lower=0.1)
-        df["fare_per_mile"] = df["fare_per_mile"].fillna(0).clip(0, 100)  # Cap outliers
-    else:
-        df["fare_per_mile"] = 0.0
-
-    # Target
-    y_raw: pd.Series = pd.to_numeric(df.get(TARGET_COL), errors="coerce")
-    y = y_raw.fillna(0.0).to_numpy(dtype=float)
-
-    # Select stable feature set, fill missing cols with NaN
-    for col in FEATURE_COLS:
-        if col not in df.columns:
-            df[col] = np.nan
-
-    X = df[FEATURE_COLS].astype("float64")
-
-    return X, y
-
-
 @dataclass
 class HardIntegrityResult:
     """
@@ -219,6 +119,13 @@ class HardIntegrityResult:
 def run_hard_integrity_checks(df: pd.DataFrame) -> HardIntegrityResult:
     """
     Hard Integrity Checks: Hard rules that cause immediate batch rejection (fail-fast).
+
+    Checks:
+        1. Required columns present.
+        2. Target column exists and has values.
+        3. Datetime validity.
+        4. Negative duration (dropoff before pickup).
+        5. Range violations.
 
     Args:
         df (pd.DataFrame): Dataset to check, expected to have raw columns (e.g. lpep_pickup_datetime) for checks.
@@ -291,48 +198,65 @@ def run_soft_integrity_checks(df_ref: pd.DataFrame, df_cur: pd.DataFrame) -> Sof
     """
     Soft Integrity Checks: Run NannyML-based soft data quality checks.
 
+    Checks:
+        1. Missing value drift (NannyML MissingValuesCalculator).
+        2. Univariate distribution drift (NannyML UnivariateDriftCalculator).
+        3. Multivariate drift via reconstruction error (NannyML DataReconstructionDriftCalculator).
+        4. Unseen categorical values in key location features.
+
+    These checks do not cause hard batch rejection but can trigger warnings and inform retraining decisions.
+
     Args:
-        df_ref (pd.DataFrame): Reference dataset (e.g. historical baseline).
-        df_cur (pd.DataFrame): Current batch dataset.
+        df_ref (pd.DataFrame): Reference dataset for comparison, typically historical data used for model training.
+        df_cur (pd.DataFrame): Current batch dataset to check, expected to have the same schema as df_ref.
 
     Returns:
         SoftIntegrityResult: Result containing any warnings, details, and metrics.
     """
-    # Check missingness drift using NannyML's missing-value drift calculator
+    # Identify numeric columns to check for drift
     num_cols = [col for col in FEATURE_COLS if col in df_ref.columns and col in df_cur.columns]
     if not num_cols:
-        return SoftIntegrityResult()
+        return SoftIntegrityResult()  # No numeric features to check, return clean result
 
     warn = False
     details = []
     metrics = {}
 
-    # Build reference and analysis DataFrames with a "partition" marker
-    ref = df_ref[num_cols].copy()
-    ref["_partition"] = "reference"
-    cur = df_cur[num_cols].copy()
-    cur["_partition"] = "analysis"
+    # Prepare reference and analysis DataFrames with synthetic timestamp
+    ref_chunk = df_ref[num_cols].copy().reset_index(drop=True)
+    ref_chunk["_nml_idx"] = range(len(ref_chunk))
+    cur_chunk = df_cur[num_cols].copy().reset_index(drop=True)
+    cur_chunk["_nml_idx"] = range(len(ref_chunk), len(ref_chunk) + len(cur_chunk))
 
-    # Missingness comparison
-    for col in num_cols:
-        ref_miss = float(df_ref[col].isna().mean()) if col in df_ref.columns else 0.0
-        cur_miss = float(df_cur[col].isna().mean()) if col in df_cur.columns else 0.0
-        delta = cur_miss - ref_miss
-        metrics[f"miss_delta_{col}"] = delta
-        if delta > 0.05:
-            warn = True
-            details.append(f"Missingness spike in '{col}': ref={ref_miss:.3f}, cur={cur_miss:.3f}")
-
-    # Univariate drift via NannyML
+    # 1. Missingness drift via NannyML
     try:
-        # Prepare reference with a synthetic timestamp column for NannyML
-        ref_chunk = df_ref[num_cols].copy().reset_index(drop=True)
-        ref_chunk["_nml_idx"] = range(len(ref_chunk))
+        missing_calc = nml.MissingValuesCalculator(
+            column_names=num_cols,
+            timestamp_column_name="_nml_idx",
+            chunk_size=len(cur_chunk) or 1000,
+        )
+        missing_calc.fit(ref_chunk)
+        missing_results = missing_calc.calculate(cur_chunk)
 
-        # Prepare analysis with a synthetic timestamp column for NannyML
-        cur_chunk = df_cur[num_cols].copy().reset_index(drop=True)
-        cur_chunk["_nml_idx"] = range(len(ref_chunk), len(ref_chunk) + len(cur_chunk))
+        for col_name in num_cols:
+            col_results = missing_results.filter(column_names=[col_name])
+            alerts = col_results.to_df()
 
+            if "alert" in alerts.columns:
+                n_alerts = int(alerts["alert"].sum())
+            else:
+                alert_cols = [c for c in alerts.columns if "alert" in str(c).lower()]
+                n_alerts = int(alerts[alert_cols].sum().sum()) if alert_cols else 0
+
+            metrics[f"nml_missing_alerts_{col_name}"] = float(n_alerts)
+            if n_alerts > 0:
+                warn = True
+                details.append(f"NannyML missing value alert for '{col_name}'")
+    except Exception as exc:
+        details.append(f"NannyML missing value check failed: {exc}")
+
+    # 2. Univariate drift via NannyML
+    try:
         calculator = nml.UnivariateDriftCalculator(
             column_names=num_cols,
             timestamp_column_name="_nml_idx",
@@ -346,7 +270,7 @@ def run_soft_integrity_checks(df_ref: pd.DataFrame, df_cur: pd.DataFrame) -> Sof
             alerts = col_results.to_df()
             if "alert" in alerts.columns:
                 n_alerts = int(alerts["alert"].sum())
-            else: # Try column-specific alert columns
+            else:  # Try column-specific alert columns
                 alert_cols = [c for c in alerts.columns if "alert" in str(c).lower()]
                 n_alerts = int(alerts[alert_cols].sum().sum()) if alert_cols else 0
 
@@ -358,7 +282,31 @@ def run_soft_integrity_checks(df_ref: pd.DataFrame, df_cur: pd.DataFrame) -> Sof
     except Exception as exc:
         details.append(f"NannyML univariate drift check failed: {exc}")
 
-    # Unseen categoricals
+    # 3. Multivariate drift via NannyML Data Reconstruction (PCA-based)
+    try:
+        reconstruction_calc = nml.DataReconstructionDriftCalculator(
+            column_names=num_cols,
+            timestamp_column_name="_nml_idx",
+            chunk_size=len(cur_chunk) or 1000,
+        )
+        reconstruction_calc.fit(ref_chunk)
+        reconstruction_results = reconstruction_calc.calculate(cur_chunk)
+
+        recon_df = reconstruction_results.to_df()  # Reconstruction alerts indicate multivariate drift
+        if "alert" in recon_df.columns:
+            n_alerts = int(recon_df["alert"].sum())
+        else:  # Try column-specific alert columns
+            alert_cols = [c for c in recon_df.columns if "alert" in str(c).lower()]
+            n_alerts = int(recon_df[alert_cols].sum().sum()) if alert_cols else 0
+
+        metrics["nml_multivariate_drift_alerts"] = float(n_alerts)
+        if n_alerts > 0:
+            warn = True
+            details.append(f"NannyML multivariate drift detected (reconstruction error alert)")
+    except Exception as exc:
+        details.append(f"NannyML multivariate drift check failed: {exc}")
+
+    # 4. Unseen categoricals
     cat_cols = ["PULocationID", "DOLocationID", "payment_type"]
     for col in cat_cols:
         if col not in df_ref.columns or col not in df_cur.columns:
@@ -467,6 +415,106 @@ def make_integrity_decision(ok: bool, report: Dict[str, Any]) -> Decision:
         metrics=report["hard"]["metrics"],
         details={"nannyml_warn": nannyml_warn, "nannyml_details": report["nannyml"].get("details", [])},
     )
+
+
+def engineer_features(df_raw: pd.DataFrame, credit_card_only: bool = True) -> Tuple[pd.DataFrame, np.ndarray]:
+    """
+    Feature Engineering: Produce a model-ready (X, y) pair with a stable column schema.
+
+    Steps:
+      1. Filter to credit-card transactions (payment_type == 1) if requested.
+      2. Derive calendar features from pickup datetime.
+      3. Derive duration_min from pickup/dropoff.
+      4. Clip heavy-tailed numerics.
+      5. Log-transform heavy-tailed features.
+      6. Encode location features with frequency encoding.
+      7. Create interaction features.
+      8. Select FEATURE_COLS and return (X, y).
+
+    Args:
+        df_raw (pd.DataFrame): Raw dataset loaded from source.
+        credit_card_only (bool, optional): Whether to filter to credit-card transactions only. Defaults to True.
+
+    Returns:
+        Tuple[pd.DataFrame, np.ndarray]: Model-ready (X, y) pair.
+    """
+    df = df_raw.copy()
+
+    # Filter
+    if credit_card_only and "payment_type" in df.columns:
+        df = df[df["payment_type"] == 1].copy()
+
+    # Datetime features
+    if "lpep_pickup_datetime" in df.columns:
+        dt = pd.to_datetime(df["lpep_pickup_datetime"], errors="coerce")
+        df["pickup_hour"] = dt.dt.hour.astype("float64")
+        df["pickup_weekday"] = dt.dt.dayofweek.astype("float64")
+        df["pickup_month"] = dt.dt.month.astype("float64")
+
+    # Duration
+    if all(col in df.columns for col in RAW_DATETIME_COLS):
+        dur = (df["lpep_dropoff_datetime"] - df["lpep_pickup_datetime"]).dt.total_seconds() / 60.0
+        df["duration_min"] = dur
+    elif "duration_min" not in df.columns:
+        df["duration_min"] = np.nan
+
+    # Clip heavy tails before log transform
+    if "trip_distance" in df.columns:
+        df["trip_distance"] = df["trip_distance"].clip(0, 100)
+    if "fare_amount" in df.columns:
+        df["fare_amount"] = df["fare_amount"].clip(0, 300)
+
+    # Log transforms for heavy-tailed numeric fields
+    if "trip_distance" in df.columns:
+        df["log_trip_distance"] = np.log1p(df["trip_distance"].fillna(0))
+    else:
+        df["log_trip_distance"] = np.nan
+
+    if "fare_amount" in df.columns:
+        df["log_fare_amount"] = np.log1p(df["fare_amount"].fillna(0))
+    else:
+        df["log_fare_amount"] = np.nan
+
+    if "duration_min" in df.columns:
+        df["log_duration_min"] = np.log1p(df["duration_min"].clip(0, 1000).fillna(0))
+    else:
+        df["log_duration_min"] = np.nan
+
+    # Location frequency encoding (stateless, computed per dataset)
+    for loc_col, freq_col in [("PULocationID", "PU_frequency"), ("DOLocationID", "DO_frequency")]:
+        if loc_col in df.columns:
+            freq_map = df[loc_col].value_counts(normalize=True, dropna=False).to_dict()
+            df[freq_col] = df[loc_col].map(freq_map).fillna(0.0)
+        else:
+            df[freq_col] = 0.0
+
+    # Interaction features
+    if "trip_distance" in df.columns and "duration_min" in df.columns:
+        # Average speed proxy (distance per minute)
+        df["distance_per_minute"] = df["trip_distance"] / df["duration_min"].clip(lower=1.0)
+        df["distance_per_minute"] = df["distance_per_minute"].fillna(0).clip(0, 5)  # Cap outliers
+    else:
+        df["distance_per_minute"] = 0.0
+
+    if "fare_amount" in df.columns and "trip_distance" in df.columns:
+        # Price efficiency (fare per mile)
+        df["fare_per_mile"] = df["fare_amount"] / df["trip_distance"].clip(lower=0.1)
+        df["fare_per_mile"] = df["fare_per_mile"].fillna(0).clip(0, 100)  # Cap outliers
+    else:
+        df["fare_per_mile"] = 0.0
+
+    # Target
+    y_raw: pd.Series = pd.to_numeric(df.get(TARGET_COL), errors="coerce")
+    y = y_raw.fillna(0.0).to_numpy(dtype=float)
+
+    # Select stable feature set, fill missing cols with NaN
+    for col in FEATURE_COLS:
+        if col not in df.columns:
+            df[col] = np.nan
+
+    X = df[FEATURE_COLS].astype("float64")
+
+    return X, y
 
 
 def build_model(random_state: int = 0, n_estimators: int = 200, max_depth: int = 6, learning_rate: float = 0.1,
