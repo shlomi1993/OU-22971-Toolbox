@@ -9,7 +9,7 @@ from typing import Generator, Tuple
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
-from capstone_lib import FEATURE_COLS, Decision, engineer_features, EvaluationMetrics
+from capstone_lib import FEATURE_COLS, engineer_features, EvaluationMetrics
 from capstone_flow import MLFlowCapstoneFlow
 
 FeatureXY = Tuple[pd.DataFrame, np.ndarray, pd.DataFrame, np.ndarray]
@@ -86,9 +86,9 @@ def _use_tmp_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.fixture(autouse=True)
 def _silence_decision_log() -> Generator[None, None, None]:
     """
-    Prevent Decision.log() from calling real MLflow.
+    Prevent log_decision() from calling real MLflow.
     """
-    with patch.object(Decision, "log"):
+    with patch("capstone_flow.log_decision"):
         yield
 
 

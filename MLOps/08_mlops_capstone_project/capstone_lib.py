@@ -367,54 +367,31 @@ class DecisionAction(str, Enum):
     PROMOTE = "promote"
 
 
-@dataclass
-class Decision:
-    action: DecisionAction
-    retrain_recommended: bool = False
-    promotion_recommended: bool = False
-    reason: str = ""
-    metrics: Dict[str, float] = field(default_factory=dict)
-    details: Dict[str, Any] = field(default_factory=dict)
-
-    def log(self) -> None:
-        """
-        Log this decision to MLflow.
-        """
-        decision_dict = asdict(self)
-        decision_dict["action"] = self.action.value  # Convert enum to string for JSON
-        mlflow.log_dict(decision_dict, "decision.json")
-        mlflow.set_tag("retrain_recommended", str(self.retrain_recommended).lower())
-        mlflow.set_tag("promotion_recommended", str(self.promotion_recommended).lower())
-        mlflow.set_tag("decision_action", self.action.value)
-
-
-def make_integrity_decision(ok: bool, report: Dict[str, Any]) -> Decision:
+def log_decision(action: DecisionAction, retrain_recommended: bool = False, promotion_recommended: bool = False,
+                 reason: str = "", metrics: Dict[str, float] = None, details: Dict[str, Any] = None) -> None:
     """
-    Make a decision based on integrity check results.
+    Log a decision to MLflow.
 
     Args:
-        ok (bool): Whether hard integrity checks passed.
-        report (Dict[str, Any]): Integrity check report containing hard and soft check results.
-
-    Returns:
-        Decision: Decision object containing the action, reasoning, and relevant metadata.
+        action (DecisionAction): The action taken.
+        retrain_recommended (bool, optional): Whether a retrain is recommended. Defaults to False.
+        promotion_recommended (bool, optional): Whether a promotion is recommended. Defaults to False.
+        reason (str, optional): Reason for the decision. Defaults to "".
+        metrics (Dict[str, float], optional): Additional metrics. Defaults to None.
+        details (Dict[str, Any], optional): Additional details. Defaults to None.
     """
-    if not ok:
-        # Hard checks failed - reject batch
-        return Decision(
-            action=DecisionAction.REJECT_BATCH,
-            reason="; ".join(report["hard"]["failures"]),
-            metrics=report["hard"]["metrics"],
-        )
-
-    # Hard checks passed - check for NannyML warnings
-    nannyml_warn = report["nannyml"].get("warn", False)
-    return Decision(
-        action=DecisionAction.BATCH_ACCEPTED,
-        reason="Hard rules passed" + ("; NannyML warnings present" if nannyml_warn else ""),
-        metrics=report["hard"]["metrics"],
-        details={"nannyml_warn": nannyml_warn, "nannyml_details": report["nannyml"].get("details", [])},
-    )
+    decision_dict = {
+        "action": action.value,
+        "retrain_recommended": retrain_recommended,
+        "promotion_recommended": promotion_recommended,
+        "reason": reason,
+        "metrics": metrics or {},
+        "details": details or {}
+    }
+    mlflow.log_dict(decision_dict, "decision.json")
+    mlflow.set_tag("retrain_recommended", str(retrain_recommended).lower())
+    mlflow.set_tag("promotion_recommended", str(promotion_recommended).lower())
+    mlflow.set_tag("decision_action", action.value)
 
 
 def engineer_features(df_raw: pd.DataFrame, credit_card_only: bool = True) -> Tuple[pd.DataFrame, np.ndarray]:
