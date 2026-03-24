@@ -564,9 +564,9 @@ def evaluate_model(model: Pipeline, X: pd.DataFrame, y: np.ndarray) -> Evaluatio
     Model Evaluation: Compute evaluation metrics for the given model and dataset.
 
     Args:
-        model (Pipeline): Trained model pipeline.
-        X (pd.DataFrame): Feature matrix.
-        y (np.ndarray): True target values.
+        model (Pipeline): Trained model pipeline to evaluate.
+        X (pd.DataFrame): Feature matrix for evaluation.
+        y (np.ndarray): True target values for evaluation.
 
     Returns:
         EvaluationMetrics: A dataclass containing RMSE, MAE, and R-squared results.
