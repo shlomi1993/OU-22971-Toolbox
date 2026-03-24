@@ -9,7 +9,7 @@ from typing import Generator, Tuple
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
-from capstone_lib import FEATURE_COLS, engineer_features, EvaluationMetrics
+from capstone_lib import FEATURE_COLS, engineer_features, EvaluationMetrics, DecisionAction
 from capstone_flow import MLFlowCapstoneFlow
 
 FeatureXY = Tuple[pd.DataFrame, np.ndarray, pd.DataFrame, np.ndarray]
@@ -121,16 +121,15 @@ def flow() -> MLFlowCapstoneFlow:
 
     # Initialize logger and state attributes (normally done in start() step)
     f.logger = logging.getLogger(f.__class__.__name__)
-    f.batch_rejected = False
+    f.decision_action = None
     f.integrity_warn = False
-    f.did_retrain = False
 
     # Initialize retrain output attributes (normally done in model_gate() step)
     f.candidate_model_uri = None
     f.candidate_rmse_batch = None
     f.candidate_rmse_ref = None
     f.retrain_run_id = None
-    
+
     # Initialize champion metrics (normally set in model_gate() step)
     f.rmse_champion_on_batch = None
     f.rmse_champion_on_ref = None
@@ -201,7 +200,7 @@ def test_integrity_gate_accepted_no_warnings(mock_mlflow: MagicMock, mock_checks
 
     flow.integrity_gate()
 
-    assert flow.batch_rejected is False, "Batch should not be rejected when integrity checks pass"
+    assert flow.decision_action == DecisionAction.BATCH_ACCEPTED, "Batch should be accepted when integrity checks pass"
     assert flow.integrity_warn is False, "No integrity warnings expected when checks pass cleanly"
     # Branching: next() should be called (to feature_engineering, but we can't easily test the step reference in unit tests)
     flow.next.assert_called_once()
@@ -218,7 +217,7 @@ def test_integrity_gate_rejected_on_hard_failure(mock_mlflow: MagicMock, mock_ch
 
     flow.integrity_gate()
 
-    assert flow.batch_rejected is True, "Batch should be rejected on hard integrity failures"
+    assert flow.decision_action == DecisionAction.REJECT_BATCH, "Batch should be rejected on hard integrity failures"
     assert flow.integrity_warn is False, "Integrity warn should be False when batch rejected"
     # Branching: next() should be called (to handle_rejection, but we can't easily test the step reference in unit tests)
     flow.next.assert_called_once()
@@ -235,7 +234,7 @@ def test_integrity_gate_accepted_with_nannyml_warnings(mock_mlflow: MagicMock, m
 
     flow.integrity_gate()
 
-    assert flow.batch_rejected is False, "Batch should be accepted despite NannyML warnings"
+    assert flow.decision_action == DecisionAction.BATCH_ACCEPTED, "Batch should be accepted despite NannyML warnings"
     assert flow.integrity_warn is True, "Integrity warn flag should be set when NannyML detects drift"
 
 
@@ -249,7 +248,6 @@ def test_feature_engineering_produces_features(mock_mlflow: MagicMock, mock_eng:
     mock_eng.side_effect = [(X, y), (X.copy(), y.copy())]
 
     flow.df_ref, flow.df_batch = taxi_ref, taxi_batch
-    flow.batch_rejected = False
 
     flow.feature_engineering()
 
@@ -262,7 +260,6 @@ def test_feature_engineering_produces_features(mock_mlflow: MagicMock, mock_eng:
 @patch("capstone_flow.mlflow")
 def test_load_champion_loads_existing_champion(mock_mlflow: MagicMock, flow: MLFlowCapstoneFlow, feature_xy: FeatureXY) -> None:
     X_ref, y_ref, _, _ = feature_xy
-    flow.batch_rejected = False
     flow.X_ref, flow.y_ref = X_ref, y_ref
 
     mock_registry = MagicMock()
@@ -285,7 +282,6 @@ def test_load_champion_loads_existing_champion(mock_mlflow: MagicMock, flow: MLF
 def test_load_champion_bootstraps_when_no_champion(mock_mlflow: MagicMock, mock_build: MagicMock, mock_eval: MagicMock,
                                                    flow: MLFlowCapstoneFlow, feature_xy: FeatureXY) -> None:
     X_ref, y_ref, _, _ = feature_xy
-    flow.batch_rejected = False
     flow.X_ref, flow.y_ref = X_ref, y_ref
 
     mock_mlflow.start_run.return_value.__enter__.return_value = _mock_mlflow_run()
@@ -322,7 +318,6 @@ def test_model_gate_no_retrain_within_tolerance(mock_mlflow: MagicMock, mock_eva
         EvaluationMetrics(rmse=1.00, mae=0.5, r2=0.85),   # champion on ref
     ]
 
-    flow.batch_rejected = False
     flow.integrity_warn = False
     flow.champion_model = MagicMock()
     flow.champion_model.predict.return_value = np.zeros(len(X_batch))
@@ -347,7 +342,6 @@ def test_model_gate_retrain_above_threshold(mock_mlflow: MagicMock, mock_eval: M
         EvaluationMetrics(rmse=1.00, mae=0.5, r2=0.85),
     ]
 
-    flow.batch_rejected = False
     flow.integrity_warn = False
     flow.champion_model = MagicMock()
     flow.champion_model.predict.return_value = np.zeros(len(X_batch))
@@ -372,7 +366,6 @@ def test_model_gate_retrain_lowered_threshold_with_integrity_warn(mock_mlflow: M
         EvaluationMetrics(rmse=1.00, mae=0.5, r2=0.85),
     ]
 
-    flow.batch_rejected = False
     flow.integrity_warn = True
     flow.champion_model = MagicMock()
     flow.champion_model.predict.return_value = np.zeros(len(X_batch))
@@ -408,7 +401,6 @@ def test_retrain_trains_on_combined_data(mock_mlflow: MagicMock, mock_build: Mag
 
     flow.retrain()
 
-    assert flow.did_retrain is True, "Retrain flag should be set after training"
     assert flow.candidate_model_uri == "runs:/abc/model", "Candidate model URI should match logged model"
     assert flow.candidate_rmse_batch == 0.90, "Candidate RMSE on batch should be recorded"
     assert flow.candidate_rmse_ref == 0.85, "Candidate RMSE on ref should be recorded"
@@ -422,21 +414,8 @@ def test_retrain_trains_on_combined_data(mock_mlflow: MagicMock, mock_build: Mag
 
 
 @patch("capstone_flow.mlflow")
-def test_promotion_gate_no_promote_when_no_retrain(mock_mlflow: MagicMock, flow: MLFlowCapstoneFlow) -> None:
-    mock_mlflow.start_run.return_value.__enter__.return_value = _mock_mlflow_run()
-    flow.did_retrain = False
-    flow.rmse_champion_on_batch = 1.0
-
-    flow.promotion_gate()
-
-    flow.next.assert_called_once()
-
-
-@patch("capstone_flow.mlflow")
 def test_promotion_gate_promote_all_criteria_pass(mock_mlflow: MagicMock, flow: MLFlowCapstoneFlow) -> None:
     mock_mlflow.start_run.return_value.__enter__.return_value = _mock_mlflow_run()
-    flow.did_retrain = True
-    flow.batch_rejected = False
     flow.rmse_champion_on_batch = 1.00
     flow.rmse_champion_on_ref = 1.00
     flow.candidate_rmse_batch = 0.95       # P2: 0.95 < 1.00 * 0.99 = 0.99
@@ -457,8 +436,6 @@ def test_promotion_gate_promote_all_criteria_pass(mock_mlflow: MagicMock, flow: 
 @patch("capstone_flow.mlflow")
 def test_promotion_gate_no_promote_candidate_not_better_enough(mock_mlflow: MagicMock, flow: MLFlowCapstoneFlow) -> None:
     mock_mlflow.start_run.return_value.__enter__.return_value = _mock_mlflow_run()
-    flow.did_retrain = True
-    flow.batch_rejected = False
     flow.rmse_champion_on_batch = 1.00
     flow.rmse_champion_on_ref = 1.00
     flow.candidate_rmse_batch = 1.00       # P2 fails: 1.00 >= 0.99
@@ -480,8 +457,6 @@ def test_promotion_gate_no_promote_candidate_not_better_enough(mock_mlflow: Magi
 @patch("capstone_flow.mlflow")
 def test_promotion_gate_no_promote_reference_regression(mock_mlflow: MagicMock, flow: MLFlowCapstoneFlow) -> None:
     mock_mlflow.start_run.return_value.__enter__.return_value = _mock_mlflow_run()
-    flow.did_retrain = True
-    flow.batch_rejected = False
     flow.rmse_champion_on_batch = 1.00
     flow.rmse_champion_on_ref = 1.00
     flow.candidate_rmse_batch = 0.90       # P2 passes
@@ -499,20 +474,17 @@ def test_promotion_gate_no_promote_reference_regression(mock_mlflow: MagicMock, 
 
 
 def test_end_batch_rejected(flow: MLFlowCapstoneFlow) -> None:
-    flow.batch_rejected = True
-    flow.did_retrain = False
+    flow.decision_action = DecisionAction.REJECT_BATCH
     flow.end()  # should not raise
 
 
 def test_end_retrain_completed(flow: MLFlowCapstoneFlow) -> None:
-    flow.batch_rejected = False
-    flow.did_retrain = True
+    flow.decision_action = DecisionAction.PROMOTE
     flow.end()
 
 
 def test_end_no_retrain_needed(flow: MLFlowCapstoneFlow) -> None:
-    flow.batch_rejected = False
-    flow.did_retrain = False
+    flow.decision_action = DecisionAction.NO_RETRAIN
     flow.end()
 
 
@@ -522,8 +494,6 @@ def test_promotion_criteria_exactly_at_threshold(mock_mlflow: MagicMock, flow: M
     Candidate exactly at min_improvement threshold should NOT promote (< required, not <=).
     """
     mock_mlflow.start_run.return_value.__enter__.return_value = _mock_mlflow_run()
-    flow.did_retrain = True
-    flow.batch_rejected = False
     flow.rmse_champion_on_batch = 1.00
     flow.rmse_champion_on_ref = 1.00
     flow.candidate_rmse_batch = 0.99  # Exactly 1% better = 1.00 * (1 - 0.01)
@@ -547,8 +517,6 @@ def test_promotion_criteria_just_below_threshold(mock_mlflow: MagicMock, flow: M
     Candidate just barely better than threshold should promote.
     """
     mock_mlflow.start_run.return_value.__enter__.return_value = _mock_mlflow_run()
-    flow.did_retrain = True
-    flow.batch_rejected = False
     flow.rmse_champion_on_batch = 1.00
     flow.rmse_champion_on_ref = 1.00
     flow.candidate_rmse_batch = 0.98999  # Slightly better than 1% threshold
@@ -571,8 +539,6 @@ def test_promotion_criteria_reference_regression_at_5_percent(mock_mlflow: Magic
     Exactly 5% regression on reference should NOT promote.
     """
     mock_mlflow.start_run.return_value.__enter__.return_value = _mock_mlflow_run()
-    flow.did_retrain = True
-    flow.batch_rejected = False
     flow.rmse_champion_on_batch = 1.00
     flow.rmse_champion_on_ref = 1.00
     flow.candidate_rmse_batch = 0.90  # Good improvement on batch
@@ -602,7 +568,6 @@ def test_model_gate_integrity_warn_lowers_threshold_exactly_at_3_percent(
         EvaluationMetrics(rmse=1.00, mae=0.5, r2=0.85),
     ]
 
-    flow.batch_rejected = False
     flow.integrity_warn = True
     flow.champion_model = MagicMock()
     flow.champion_model.predict.return_value = np.zeros(len(X_batch))
@@ -629,7 +594,6 @@ def test_model_gate_zero_rmse_baseline_handles_division(mock_mlflow: MagicMock, 
         EvaluationMetrics(rmse=0.0, mae=0.0, r2=1.0),  # Perfect on reference
     ]
 
-    flow.batch_rejected = False
     flow.integrity_warn = False
     flow.champion_model = MagicMock()
     flow.champion_model.predict.return_value = np.zeros(len(X_batch))
@@ -665,7 +629,7 @@ def test_integrity_check_multiple_hard_failures(mock_mlflow: MagicMock, mock_che
 
     flow.integrity_gate()
 
-    assert flow.batch_rejected is True, "Batch should be rejected with multiple hard failures"
+    assert flow.decision_action == DecisionAction.REJECT_BATCH, "Batch should be rejected with multiple hard failures"
     assert len(failures) == 3, "All three failure messages should be captured"
 
 
@@ -692,7 +656,7 @@ def test_integrity_check_multiple_nannyml_warnings(mock_mlflow: MagicMock, mock_
 
     flow.integrity_gate()
 
-    assert flow.batch_rejected is False, "Batch should not be rejected with only warnings"
+    assert flow.decision_action == DecisionAction.BATCH_ACCEPTED, "Batch should not be rejected with only warnings"
     assert flow.integrity_warn is True, "Integrity warn flag should be set with NannyML warnings"
 
 
@@ -711,7 +675,6 @@ def test_data_edge_case_empty_dataframes_after_filtering(mock_mlflow: MagicMock,
 
     flow.df_ref = _make_taxi_df(10)
     flow.df_batch = _make_taxi_df(10)
-    flow.batch_rejected = False
 
     flow.feature_engineering()
 
@@ -741,8 +704,6 @@ def test_promotion_audit_trail_rejected_candidate_registered_with_tags(mock_mlfl
     Rejected candidates should be registered with proper tags.
     """
     mock_mlflow.start_run.return_value.__enter__.return_value = _mock_mlflow_run()
-    flow.did_retrain = True
-    flow.batch_rejected = False
     flow.rmse_champion_on_batch = 1.00
     flow.rmse_champion_on_ref = 1.00
     flow.candidate_rmse_batch = 1.05  # Worse than champion
@@ -759,8 +720,8 @@ def test_promotion_audit_trail_rejected_candidate_registered_with_tags(mock_mlfl
     # Should register as rejected
     mock_registry.register_version.assert_called_once()
     call_args = mock_registry.register_version.call_args
-    assert call_args[1]["tags"]["validation_status"] == "rejected", "Rejected candidate should have validation_status tag set to 'rejected'"
-    assert "decision_reason" in call_args[1]["tags"], "Rejected candidate should include decision_reason tag"
+    assert call_args[0][1]["validation_status"] == "rejected", "Rejected candidate should have validation_status tag set to 'rejected'"
+    assert "decision_reason" in call_args[0][1], "Rejected candidate should include decision_reason tag"
 
 
 @patch("capstone_flow.ModelRegistry")
@@ -774,12 +735,11 @@ def test_attribute_initialization_all_flags_initialized_in_start(mock_mlflow: Ma
 
     flow.start()
 
-    assert hasattr(flow, "batch_rejected"), "batch_rejected attribute should exist"
+    assert hasattr(flow, "decision_action"), "decision_action attribute should exist"
     assert hasattr(flow, "integrity_warn"), "integrity_warn attribute should exist"
-    assert hasattr(flow, "did_retrain"), "did_retrain attribute should exist"
-    assert flow.batch_rejected is False, "batch_rejected should initialize to False"
+    
+    assert flow.decision_action is None, "decision_action should initialize to None"
     assert flow.integrity_warn is False, "integrity_warn should initialize to False"
-    assert flow.did_retrain is False, "did_retrain should initialize to False"
 
 
 def test_attribute_initialization_retrain_initializes_all_outputs(flow: MLFlowCapstoneFlow, feature_xy: FeatureXY) -> None:
@@ -792,7 +752,6 @@ def test_attribute_initialization_retrain_initializes_all_outputs(flow: MLFlowCa
     flow.champion_uri = "models:/test@champion"
     flow.X_ref, flow.y_ref = X_ref, y_ref
     flow.X_batch, flow.y_batch = X_batch, y_batch
-    flow.batch_rejected = False
     flow.integrity_warn = False
 
     with patch("capstone_flow.evaluate_model") as mock_eval, patch("capstone_flow.mlflow") as mock_mlflow:
@@ -829,7 +788,7 @@ def test_decision_enum_usage_actions_are_enums_not_strings(mock_mlflow: MagicMoc
     flow.integrity_gate()
 
     # Verify the flow state was set correctly
-    assert flow.batch_rejected == True, "batch_rejected should be True for hard failure"
+    assert flow.decision_action == DecisionAction.REJECT_BATCH, "decision_action should be REJECT_BATCH for hard failure"
     assert flow.integrity_warn == False, "integrity_warn should be False for rejected batch"
 
 
@@ -847,7 +806,7 @@ def test_integrity_gate_branches_to_end_on_rejection(mock_mlflow: MagicMock, moc
 
     flow.integrity_gate()
 
-    assert flow.batch_rejected is True, "Batch should be rejected when integrity checks fail"
+    assert flow.decision_action == DecisionAction.REJECT_BATCH, "Batch should be rejected when integrity checks fail"
     flow.next.assert_called_once()  # Should call next(end)
 
 
@@ -884,7 +843,6 @@ def test_model_gate_exactly_5_percent_increase_no_retrain(mock_mlflow: MagicMock
         EvaluationMetrics(rmse=1.00, mae=0.5, r2=0.85),
     ]
 
-    flow.batch_rejected = False
     flow.integrity_warn = False
     flow.champion_model = MagicMock()
     flow.champion_model.predict.return_value = np.zeros(len(X_batch))
@@ -911,7 +869,6 @@ def test_model_gate_exactly_3_percent_with_integrity_warn_no_retrain(mock_mlflow
         EvaluationMetrics(rmse=1.00, mae=0.5, r2=0.85),
     ]
 
-    flow.batch_rejected = False
     flow.integrity_warn = True
     flow.champion_model = MagicMock()
     flow.champion_model.predict.return_value = np.zeros(len(X_batch))
@@ -938,7 +895,6 @@ def test_model_gate_negative_rmse_increase_no_retrain(mock_mlflow: MagicMock, mo
         EvaluationMetrics(rmse=1.00, mae=0.5, r2=0.85),
     ]
 
-    flow.batch_rejected = False
     flow.integrity_warn = False
     flow.champion_model = MagicMock()
     flow.champion_model.predict.return_value = np.zeros(len(X_batch))
@@ -966,7 +922,6 @@ def test_feature_engineering_logs_mlflow_tags(mock_mlflow: MagicMock, mock_eng: 
     mock_eng.side_effect = [(X, y), (X.copy(), y.copy())]
 
     flow.df_ref, flow.df_batch = taxi_ref, taxi_batch
-    flow.batch_rejected = False
 
     flow.feature_engineering()
 
@@ -990,7 +945,6 @@ def test_model_gate_logs_dataset_lineage(mock_mlflow: MagicMock, mock_eval: Magi
     mock_dataset = MagicMock()
     mock_mlflow.data.from_pandas.return_value = mock_dataset
 
-    flow.batch_rejected = False
     flow.integrity_warn = False
     flow.champion_model = MagicMock()
     flow.champion_model.predict.return_value = np.zeros(len(X_batch))
@@ -1018,7 +972,6 @@ def test_model_gate_logs_predictions_artifact(mock_mlflow: MagicMock, mock_eval:
         EvaluationMetrics(rmse=1.0, mae=0.5, r2=0.85),
     ]
 
-    flow.batch_rejected = False
     flow.integrity_warn = False
     flow.champion_model = MagicMock()
     flow.champion_model.predict.return_value = np.random.random(len(X_batch))
@@ -1133,28 +1086,12 @@ def test_bootstrap_registers_with_validation_approved(mock_mlflow: MagicMock, mo
     assert tags["role"] == "champion", "Bootstrap version should have champion role"
 
 
-@patch("capstone_flow.mlflow")
-def test_promotion_gate_p4_fails_with_batch_rejected_true(mock_mlflow: MagicMock, flow: MLFlowCapstoneFlow) -> None:
+def test_promotion_gate_p4_obsolete() -> None:
     """
-    If batch_rejected is True (P4 fails), promotion should not happen even if other criteria pass.
-    This is a defensive test - in practice, retrain shouldn't happen if batch rejected.
+    P4 test removed - promotion_gate is only reachable if batch passed integrity checks.
+    The flow structure guarantees P4 is always true at this point.
     """
-    mock_mlflow.start_run.return_value.__enter__.return_value = _mock_mlflow_run()
-    flow.did_retrain = True
-    flow.batch_rejected = True  # P4 fails
-    flow.rmse_champion_on_batch = 1.00
-    flow.rmse_champion_on_ref = 1.00
-    flow.candidate_rmse_batch = 0.90  # Good improvement
-    flow.candidate_rmse_ref = 1.00  # No regression
-    flow.candidate_model_uri = "runs:/test/model"
-    flow.min_improvement = 0.01
-
-    mock_registry = MagicMock()
-    flow.registry = mock_registry
-
-    flow.promotion_gate()
-
-    mock_registry.promote_to_champion.assert_not_called()
+    pass
 
 
 @patch("capstone_flow.mlflow")
@@ -1253,29 +1190,25 @@ def test_retrain_logs_training_params(mock_mlflow: MagicMock, mock_build: MagicM
     assert "batch_path" in logged_params, "Should log batch_path param"
 
 
-def test_end_handles_all_flag_combinations(flow: MLFlowCapstoneFlow) -> None:
+def test_end_handles_all_decision_actions(flow: MLFlowCapstoneFlow) -> None:
     """
-    End step should handle various combinations of batch_rejected and did_retrain flags.
+    End step should handle all possible decision_action values.
     """
-    # Test case 1: rejected + no retrain (most common rejected path)
-    flow.batch_rejected = True
-    flow.did_retrain = False
+    # Test case 1: batch rejected
+    flow.decision_action = DecisionAction.REJECT_BATCH
     flow.end()  # Should not raise
 
-    # Test case 2: not rejected + retrain (successful retrain path)
-    flow.batch_rejected = False
-    flow.did_retrain = True
+    # Test case 2: no retrain needed
+    flow.decision_action = DecisionAction.NO_RETRAIN
     flow.end()  # Should not raise
 
-    # Test case 3: not rejected + no retrain (champion adequate path)
-    flow.batch_rejected = False
-    flow.did_retrain = False
+    # Test case 3: candidate not promoted
+    flow.decision_action = DecisionAction.NO_PROMOTE
     flow.end()  # Should not raise
 
-    # Test case 4: rejected + retrain (edge case, shouldn't happen in practice)
-    flow.batch_rejected = True
-    flow.did_retrain = True
-    flow.end()  # Should still handle gracefully
+    # Test case 4: candidate promoted
+    flow.decision_action = DecisionAction.PROMOTE
+    flow.end()  # Should not raise
 
 
 @patch("capstone_flow.evaluate_model")
@@ -1359,7 +1292,6 @@ def test_model_gate_sets_run_id_attribute(mock_mlflow: MagicMock, mock_eval: Mag
         EvaluationMetrics(rmse=1.0, mae=0.5, r2=0.85),
     ]
 
-    flow.batch_rejected = False
     flow.integrity_warn = False
     flow.champion_model = MagicMock()
     flow.champion_model.predict.return_value = np.zeros(len(X_batch))

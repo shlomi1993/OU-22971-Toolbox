@@ -449,10 +449,7 @@ class MLFlowCapstoneFlow(FlowSpec):
             DecisionAction.NO_PROMOTE: "Retrained but candidate was NOT promoted",
             DecisionAction.PROMOTE: "Candidate was PROMOTED to champion",
         }
-
-        if self.decision_action not in outcome_messages.keys():
-            raise ValueError(f"Unknown decision action: {self.decision_action}")
-
+        assert self.decision_action in outcome_messages.keys(), f"Unknown decision action: {self.decision_action}"
         self.logger.info(f"Flow finished: {outcome_messages[self.decision_action]}")
 
 
