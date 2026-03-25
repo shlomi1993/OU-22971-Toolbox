@@ -431,6 +431,8 @@ class MLFlowCapstoneFlow(FlowSpec):
                 if self.candidate_model_uri:
                     tags = {
                         "role": "candidate",
+                        "trained_on_batches": f"{self.reference_path},{self.batch_path}",
+                        "eval_batch_id": self.batch_path,
                         "validation_status": "rejected",
                         "decision_reason": reason,
                     }
