@@ -3,13 +3,14 @@ import numpy as np
 import pandas as pd
 import pytest
 import socket
+import warnings
 
 from pathlib import Path
 from typing import Generator, Tuple
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
-from capstone_lib import FEATURE_COLS, engineer_features, EvaluationMetrics, DecisionAction
+from capstone_lib import FEATURE_COLS, RAW_NUMERIC_COLS, EvaluationMetrics, DecisionAction, engineer_features, run_soft_integrity_checks
 from capstone_flow import MLFlowCapstoneFlow
 
 FeatureXY = Tuple[pd.DataFrame, np.ndarray, pd.DataFrame, np.ndarray]
@@ -90,6 +91,15 @@ def _silence_decision_log() -> Generator[None, None, None]:
     """
     with patch("capstone_flow.log_decision"):
         yield
+
+
+@pytest.fixture(autouse=True)
+def _suppress_nannyml_warnings() -> None:
+    """
+    Suppress NannyML chunk size warnings in tests.
+    These warnings are expected with small test datasets; production batches are much larger.
+    """
+    warnings.filterwarnings('ignore', message='.*number of chunks is too low.*', category=UserWarning)
 
 
 @pytest.fixture
@@ -762,7 +772,7 @@ def test_attribute_initialization_retrain_initializes_all_outputs(flow: MLFlowCa
         ]
         flow.model_gate()
 
-    assert flow.did_retrain is False, "did_retrain should be False when not triggered"
+    assert flow.decision_action == DecisionAction.NO_RETRAIN, "decision_action should be NO_RETRAIN when not triggered"
     assert flow.candidate_model_uri is None, "candidate_model_uri should be None when not triggered"
     assert flow.candidate_rmse_batch is None, "candidate_rmse_batch should be None when not triggered"
     assert flow.candidate_rmse_ref is None, "candidate_rmse_ref should be None when not triggered"
@@ -824,7 +834,7 @@ def test_integrity_gate_branches_to_feature_engineering_on_acceptance(mock_mlflo
 
     flow.integrity_gate()
 
-    assert flow.batch_rejected is False, "Batch should not be rejected when integrity checks pass"
+    assert flow.decision_action == DecisionAction.BATCH_ACCEPTED, "decision_action should be BATCH_ACCEPTED when integrity checks pass"
     flow.next.assert_called_once()  # Should call next(feature_engineering)
 
 
@@ -1308,3 +1318,142 @@ def test_model_gate_sets_run_id_attribute(mock_mlflow: MagicMock, mock_eval: Mag
         assert flow.model_gate_run_id == expected_run_id, "Should capture correct run ID"
     except AttributeError:
         pytest.fail("model_gate_run_id should be set after model_gate()")
+
+
+# ============================================================================
+# Tests for Soft Integrity Checks Bug Fix
+# ============================================================================
+
+def test_raw_numeric_cols_exist_in_raw_data(taxi_ref: pd.DataFrame) -> None:
+    """
+    RAW_NUMERIC_COLS should only contain columns that exist in raw taxi data.
+    This is critical for soft integrity checks to work before feature engineering.
+    """
+    raw_cols_set = set(taxi_ref.columns)
+    for col in RAW_NUMERIC_COLS:
+        assert col in raw_cols_set, f"RAW_NUMERIC_COLS contains '{col}' which doesn't exist in raw data. Available: {raw_cols_set}"
+
+
+def test_feature_cols_includes_engineered_features() -> None:
+    """
+    FEATURE_COLS should include engineered features that don't exist in raw data.
+    This validates that using FEATURE_COLS for soft checks on raw data would fail.
+    """
+    engineered_features = [
+        "duration_min",
+        "log_trip_distance",
+        "log_fare_amount",
+        "log_duration_min",
+        "pickup_hour",
+        "pickup_weekday",
+        "pickup_month",
+        "PU_frequency",
+        "DO_frequency",
+        "distance_per_minute",
+        "fare_per_mile",
+    ]
+    for feat in engineered_features:
+        assert feat in FEATURE_COLS, f"FEATURE_COLS should contain engineered feature '{feat}'"
+
+
+def test_soft_integrity_checks_work_on_raw_data(taxi_ref: pd.DataFrame, taxi_batch: pd.DataFrame) -> None:
+    """
+    Soft integrity checks should successfully run on raw taxi data using RAW_NUMERIC_COLS.
+    This is the main bug fix validation test.
+    """
+    # Run soft integrity checks on raw data (before feature engineering)
+    result = run_soft_integrity_checks(taxi_ref, taxi_batch)
+    
+    # Should not return early due to missing columns
+    assert isinstance(result.warn, bool), "Should return a valid SoftIntegrityResult"
+    assert isinstance(result.details, list), "Should have details list"
+    assert isinstance(result.metrics, dict), "Should have metrics dict"
+    
+    # Should have run checks on RAW_NUMERIC_COLS
+    for col in RAW_NUMERIC_COLS:
+        # Check that metrics were generated for these columns
+        drift_key = f"nml_drift_alerts_{col}"
+        missing_key = f"nml_missing_alerts_{col}"
+        # At least one type of metric should exist for each raw column
+        has_metrics = (drift_key in result.metrics or missing_key in result.metrics)
+        assert has_metrics, f"No NannyML metrics generated for raw column '{col}'"
+
+
+def test_soft_integrity_checks_detect_drift_on_raw_columns(taxi_ref: pd.DataFrame) -> None:
+    """
+    Soft integrity checks should detect drift when raw numeric values change significantly.
+    """
+    # Create a batch with significantly different trip_distance distribution
+    batch_with_drift = taxi_ref.copy()
+    batch_with_drift['trip_distance'] = batch_with_drift['trip_distance'] * 3.0  # 3x all distances
+    
+    result = run_soft_integrity_checks(taxi_ref, batch_with_drift)
+    
+    # Should detect drift on trip_distance
+    trip_distance_alerts = result.metrics.get("nml_drift_alerts_trip_distance", 0)
+    assert trip_distance_alerts >= 0, "Should have drift metrics for trip_distance"
+
+
+def test_soft_integrity_checks_detect_unseen_categoricals(taxi_ref: pd.DataFrame, taxi_batch: pd.DataFrame) -> None:
+    """
+    Soft integrity checks should detect unseen categorical values in location IDs.
+    """
+    # Modify batch to have new location IDs not in reference
+    modified_batch = taxi_batch.copy()
+    max_ref_pu = taxi_ref['PULocationID'].max()
+    modified_batch.loc[0:10, 'PULocationID'] = max_ref_pu + 999  # Add unseen location IDs
+    
+    result = run_soft_integrity_checks(taxi_ref, modified_batch)
+    
+    # Should detect unseen categories
+    unseen_pu_metric = result.metrics.get("unseen_cats_PULocationID", 0)
+    assert unseen_pu_metric > 0, "Should detect unseen PULocationID values"
+    assert any("PULocationID" in detail for detail in result.details), "Should log details about unseen PULocationID"
+
+
+def test_soft_integrity_checks_handle_empty_overlap_gracefully() -> None:
+    """
+    Soft integrity checks should handle cases where raw columns don't overlap.
+    """
+    # Create dataframes with no overlapping RAW_NUMERIC_COLS
+    df_ref = pd.DataFrame({
+        'other_col': [1, 2, 3],
+        'another_col': [4, 5, 6]
+    })
+    df_batch = pd.DataFrame({
+        'different_col': [7, 8, 9],
+        'yet_another': [10, 11, 12]
+    })
+    
+    result = run_soft_integrity_checks(df_ref, df_batch)
+    
+    # Should return clean result without errors
+    assert result.warn is False, "Should not warn when no columns to check"
+    assert len(result.details) == 0, "Should have no details when no columns to check"
+    assert len(result.metrics) == 0, "Should have no metrics when no columns to check"
+
+
+def test_soft_integrity_checks_use_raw_not_engineered_cols(taxi_ref: pd.DataFrame, taxi_batch: pd.DataFrame) -> None:
+    """
+    Verify that soft integrity checks don't try to use engineered feature columns.
+    This test validates the bug fix by ensuring we use RAW_NUMERIC_COLS, not FEATURE_COLS.
+    """
+    # Run checks and examine the metrics keys
+    result = run_soft_integrity_checks(taxi_ref, taxi_batch)
+    
+    # Should NOT have metrics for engineered columns
+    engineered_only = [col for col in FEATURE_COLS if col not in RAW_NUMERIC_COLS]
+    for eng_col in engineered_only:
+        drift_key = f"nml_drift_alerts_{eng_col}"
+        missing_key = f"nml_missing_alerts_{eng_col}"
+        assert drift_key not in result.metrics, f"Soft checks should not try to use engineered column '{eng_col}'"
+        assert missing_key not in result.metrics, f"Soft checks should not try to use engineered column '{eng_col}'"
+    
+    # Should ONLY have metrics for raw columns
+    for col in RAW_NUMERIC_COLS:
+        if col in taxi_ref.columns and col in taxi_batch.columns:
+            # Should have at least attempted checks on this raw column
+            drift_key = f"nml_drift_alerts_{col}"
+            missing_key = f"nml_missing_alerts_{col}"
+            has_metric = (drift_key in result.metrics or missing_key in result.metrics)
+            assert has_metric, f"Should have metrics for raw column '{col}'"

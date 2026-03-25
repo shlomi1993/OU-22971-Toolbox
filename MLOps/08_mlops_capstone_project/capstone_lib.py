@@ -38,6 +38,14 @@ RANGE_RULES = [
     ("passenger_count", 0.0, 10.0),
 ]
 
+# Raw numeric columns that exist in data before feature engineering for NannyML drift detection on raw batches
+RAW_NUMERIC_COLS = [
+    "trip_distance",
+    "fare_amount",
+    "tip_amount",
+    "passenger_count",
+]
+
 MIN_IMPROVEMENT_PCT = 0.01  # 1 % default
 
 FEATURE_COLS = [
@@ -213,8 +221,8 @@ def run_soft_integrity_checks(df_ref: pd.DataFrame, df_cur: pd.DataFrame) -> Sof
     Returns:
         SoftIntegrityResult: Result containing any warnings, details, and metrics.
     """
-    # Identify numeric columns to check for drift
-    num_cols = [col for col in FEATURE_COLS if col in df_ref.columns and col in df_cur.columns]
+    # Identify numeric columns before feature engineering to check for drift
+    num_cols = [col for col in RAW_NUMERIC_COLS if col in df_ref.columns and col in df_cur.columns]
     if not num_cols:
         return SoftIntegrityResult()  # No numeric features to check, return clean result
 
