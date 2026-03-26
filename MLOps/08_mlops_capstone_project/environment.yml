@@ -1,4 +1,4 @@
-name: 22971-capstone
+name: 22971-mlflow
 channels:
   - conda-forge
   - defaults
@@ -7,10 +7,16 @@ dependencies:
   - numpy=2.4.*
   - pandas=2.3.*
   - scikit-learn=1.8.*
+  - xgboost=3.1.*
   - matplotlib=3.10.*
-  - pyarrow
+  - seaborn=0.13.*
+  - pyarrow  # Added for Capstone project to handle Parquet files
+  - geopandas  # Added for Capstone project to handle geospatial data
+  - ipykernel
   - pip
   - pip:
       - mlflow==3.8
-      - metaflow
-      - nannyml
+      - optuna==4.6.*
+      - metaflow  # Added for Capstone project to manage complex workflows
+      - nannyml  # Added for Capstone project to monitor model performance and detect data drift
+      - pytest

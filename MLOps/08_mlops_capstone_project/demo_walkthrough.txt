@@ -5,9 +5,8 @@
 
 PRE-RECORDING CHECKLIST
 -----------------------
-[ ] conda env active (conda activate 22971-mlflow)
-[ ] Delete any previous state so demo runs are fresh:
-      rm -rf mlflow_tracking .metaflow
+[ ] conda env active: conda activate 22971-mlflow
+[ ] Delete any previous state so demo runs are fresh: rm -rf mlflow_tracking .metaflow
 [ ] MLflow server NOT running yet (start on camera)
 [ ] Terminal CWD: MLOps/08_mlops_capstone_project
 [ ] MLflow UI (http://localhost:5001) ready to open in browser
