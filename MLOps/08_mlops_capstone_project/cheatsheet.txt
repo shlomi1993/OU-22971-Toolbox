@@ -1,6 +1,6 @@
 PRE-RECORDING SETUP
 □ conda activate 22971-mlflow
-□ rm -rf mlflow_tracking .metaflow
+□ ./reset.sh
 □ cd MLOps/08_mlops_capstone_project
 □ Open browser to http://localhost:5001 (don't load yet)
 
