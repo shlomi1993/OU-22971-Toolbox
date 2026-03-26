@@ -72,6 +72,11 @@ class MLFlowCapstoneFlow(FlowSpec):
         default=MIN_IMPROVEMENT_PCT,
     )
 
+    def init_mlflow(self) -> None:
+        """Apply tracking configuration in each step process."""
+        mlflow.set_tracking_uri(self.tracking_uri)
+        mlflow.set_experiment(self.experiment_name)
+
     # Pre-workflow - Initialize MLflow
     @step
     def start(self):
@@ -88,8 +93,7 @@ class MLFlowCapstoneFlow(FlowSpec):
         self.candidate_rmse_ref = None
 
         # Initialize MLflow tracking and registry
-        mlflow.set_tracking_uri(self.tracking_uri)
-        mlflow.set_experiment(self.experiment_name)
+        self.init_mlflow()
         self.registry = ModelRegistry(MlflowClient(), self.model_name)
 
         # Log configuration and start flow
@@ -110,6 +114,8 @@ class MLFlowCapstoneFlow(FlowSpec):
     # Step B - Integrity Gate
     @step
     def integrity_gate(self):
+        self.init_mlflow()
+
         with mlflow.start_run(run_name="integrity_gate") as run:
             self.integrity_run_id = run.info.run_id  # Capture run ID for testing
             mlflow.set_tag("pipeline_step", "integrity_gate")
@@ -165,11 +171,13 @@ class MLFlowCapstoneFlow(FlowSpec):
 
         # Log results and proceed to feature engineering if batch accepted, otherwise end flow
         self.logger.info(f"Integrity gate completed: batch_rejected={batch_rejected}, integrity_warn={self.integrity_warn}")
-        self.next(self.feature_engineering if ok else self.end)
+        self.integrity_route = "accepted" if ok else "rejected"
+        self.next({"accepted": self.feature_engineering, "rejected": self.end}, condition="integrity_route")
 
     # Step C - Feature Engineering
     @step
     def feature_engineering(self):
+        self.init_mlflow()
         self.X_ref, self.y_ref = engineer_features(self.df_ref)
         self.X_batch, self.y_batch = engineer_features(self.df_batch)
 
@@ -187,8 +195,22 @@ class MLFlowCapstoneFlow(FlowSpec):
     # Step D - Load Champion
     @step
     def load_champion(self):
-        # Bootstrap champion if none exists (first run)
-        if not self.registry.champion_exists():
+        self.init_mlflow()
+        needs_bootstrap = not self.registry.champion_exists()
+
+        # Guard against stale registry state where alias lookup fails at load time.
+        if not needs_bootstrap:
+            try:
+                self.champion_model, self.champion_uri = self.registry.load_champion()
+            except mlflow.exceptions.MlflowException as exc:
+                if "alias champion not found" in str(exc).lower():
+                    self.logger.warning("Champion alias missing at load time; bootstrapping a new champion")
+                    needs_bootstrap = True
+                else:
+                    raise
+
+        # Bootstrap champion if none exists (first run or alias missing)
+        if needs_bootstrap:
             self.logger.info("No champion found - bootstrapping initial model on reference data")
 
             with mlflow.start_run(run_name="bootstrap_train") as run:
@@ -219,14 +241,20 @@ class MLFlowCapstoneFlow(FlowSpec):
                 self.registry.promote_to_champion(version, reason="bootstrap")
                 self.logger.info(f"Bootstrap champion registered: version={version}")
 
-        # Load champion
-        self.champion_model, self.champion_uri = self.registry.load_champion()
+            # Load champion after bootstrap
+            self.champion_model, self.champion_uri = self.registry.load_champion()
+
+        # Load champion in normal path (when no bootstrap was needed)
+        if not hasattr(self, "champion_model") or self.champion_model is None:
+            self.champion_model, self.champion_uri = self.registry.load_champion()
         self.logger.info(f"Champion loaded: {self.champion_uri}")
         self.next(self.model_gate)
 
     # Step E - Model Gate
     @step
     def model_gate(self):
+        self.init_mlflow()
+
         with mlflow.start_run(run_name="model_gate") as run:
             self.model_gate_run_id = run.info.run_id  # Capture run ID for testing
             mlflow.set_tag("pipeline_step", "model_gate")
@@ -270,6 +298,7 @@ class MLFlowCapstoneFlow(FlowSpec):
             retrain_needed = rmse_increase_pct > threshold + 1e-10
 
             # Set retrain reason and action
+            # retrain_needed = True  # NOTE Force retrain for demo
             if retrain_needed:
                 retrain_reason = f"RMSE increased by {rmse_increase_pct:.2%} which is above the threshold of {threshold:.2%}"
                 self.decision_action = DecisionAction.RETRAIN
@@ -287,13 +316,17 @@ class MLFlowCapstoneFlow(FlowSpec):
             # Log decision with details
             log_decision(action=self.decision_action, retrain_recommended=retrain_needed, reason=retrain_reason, metrics=metrics)
 
-            # Log results and proceed to retrain if needed, or end flow otherwise
-            self.logger.info(f"Model gate completed: retrain_needed={retrain_needed} ({retrain_reason})")
-            self.next(self.retrain if retrain_needed else self.end)
+        # Log results and proceed to retrain if needed, or end flow otherwise
+        self.logger.info(f"Model gate completed: retrain_needed={retrain_needed} ({retrain_reason})")
+        self.model_gate_route = "retrain" if retrain_needed else "end"
+        self.next({"retrain": self.retrain, "end": self.end}, condition="model_gate_route")
 
     # Step F - Retrain
     @step
     def retrain(self):
+        # raise RuntimeError("Simulated failure for demo")  # NOTE Inject error for demo
+        self.init_mlflow()
+
         # Train on merged reference and batch data
         X_train = pd.concat([self.X_ref, self.X_batch], ignore_index=True)
         y_train = np.concatenate([self.y_ref, self.y_batch])
@@ -347,6 +380,8 @@ class MLFlowCapstoneFlow(FlowSpec):
     # Step G - Promotion Gate
     @step
     def promotion_gate(self):
+        self.init_mlflow()
+
         with mlflow.start_run(run_name="promotion_gate") as run:
             self.promotion_gate_run_id = run.info.run_id  # Capture run ID for testing
             mlflow.set_tag("pipeline_step", "promotion_gate")
