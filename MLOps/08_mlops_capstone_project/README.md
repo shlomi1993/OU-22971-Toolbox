@@ -13,15 +13,17 @@ Manual monitoring → optional retraining → champion promotion pipeline using 
 
 2. **Place data files** (parquet) under `../06_monitoring_data_drift/TLC_data/`:
    - `green_tripdata_2020-01.parquet` (reference)
-   - `green_tripdata_2020-04.parquet` (batch A — small drift)
-   - `green_tripdata_2020-08.parquet` (batch B — larger drift)
+   - `green_tripdata_2020-04.parquet` (batch A — triggers retrain)
+   - `green_tripdata_2020-08.parquet` (batch B — no retrain needed)
 
    Download from: https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page
 
 3. **Start the MLflow tracking server:**
 
    ```bash
-   mlflow server --workers 1 --port 5001 \
+   mlflow server \
+       --workers 1 \
+       --port 5001 \
        --backend-store-uri sqlite:///mlflow_tracking/mlflow.db \
        --default-artifact-root mlflow_tracking/mlruns
    ```
@@ -37,7 +39,7 @@ Manual monitoring → optional retraining → champion promotion pipeline using 
 ```bash
 python capstone_flow.py run \
     --reference-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-01.parquet \
-    --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-04.parquet
+    --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-08.parquet
 ```
 
 In MLflow UI, verify:
@@ -45,12 +47,12 @@ In MLflow UI, verify:
 - `model_gate` run → `retrain_recommended=false`, `decision.json` with `action=no_retrain`
 - `promotion_gate` run → `promotion_recommended=false`
 
-### Run 2 — Retrain + promotion (larger temporal drift)
+### Run 2 — Retrain + promotion (performance degradation)
 
 ```bash
 python capstone_flow.py run \
     --reference-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-01.parquet \
-    --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-08.parquet
+    --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-04.parquet
 ```
 
 In MLflow UI, verify:
