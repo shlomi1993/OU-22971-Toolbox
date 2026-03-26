@@ -54,21 +54,20 @@ def _mock_mlflow_run() -> MagicMock:
 
 
 def _build_integrity_report(passed: bool = True, failures: list = None, warn: bool = False, details: list = None) -> Tuple[bool, dict]:
-    """
-    Build a mock run_integrity_checks return value.
-    """
+    hard_metrics = {"missing_required_cols": 0.0 if passed else 1.0}
+    nannyml_metrics = {}
+
     return passed, {
         "hard": {
-            "passed": passed,
             "failures": failures or [],
-            "metrics": {"missing_required_cols": 0.0 if passed else 1.0},
+            "metrics": hard_metrics,
         },
         "nannyml": {
             "warn": warn,
             "details": details or [],
-            "metrics": {},
+            "metrics": nannyml_metrics,
         },
-        "metrics": {"missing_required_cols": 0.0 if passed else 1.0},
+        "metrics": {**hard_metrics, **nannyml_metrics},
     }
 
 
@@ -91,15 +90,6 @@ def _silence_decision_log() -> Generator[None, None, None]:
     """
     with patch("capstone_flow.log_decision"):
         yield
-
-
-@pytest.fixture(autouse=True)
-def _suppress_nannyml_warnings() -> None:
-    """
-    Suppress NannyML chunk size warnings in tests.
-    These warnings are expected with small test datasets; production batches are much larger.
-    """
-    warnings.filterwarnings('ignore', message='.*number of chunks is too low.*', category=UserWarning)
 
 
 @pytest.fixture

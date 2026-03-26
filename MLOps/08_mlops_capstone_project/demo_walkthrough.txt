@@ -84,8 +84,8 @@ TERMINAL COMMANDS (two terminals):
   # Start MLflow server (show the command)
   mlflow server --workers 1 --port 5001 --backend-store-uri sqlite:///mlflow_tracking/mlflow.db --default-artifact-root mlflow_tracking/mlruns
 
-  # Wait a moment, then run the flow with 2020-04 batch (small drift)
-  python capstone_flow.py run --reference-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-01.parquet --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-04.parquet
+  # Wait a moment, then run the flow with 2020-08 batch (no retrain needed)
+  python capstone_flow.py run --reference-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-01.parquet --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-08.parquet
 
 EXPECTED TERMINAL OUTPUT:
   • "MLflow configured: http://localhost:5001 / experiment=08_capstone_green_taxi"
@@ -133,8 +133,8 @@ SHOW IN UI:
      • Tags: role=champion, promotion_reason=bootstrap
 
 NARRATION:
-"Run 1 shows a clean baseline. The batch (April 2020) is similar enough to the reference (January 2020) that RMSE increase
-is within tolerance. No retrain, no promotion. Every decision is logged in decision.json and visible in MLflow tags."
+"Run 1 shows a clean baseline. The batch (August 2020) performs within acceptable tolerance compared to the reference 
+(January 2020). No retrain, no promotion. Every decision is logged in decision.json and visible in MLflow tags."
 
 
 ============================================================
@@ -142,10 +142,10 @@ PART 3 — RUN 2: RETRAIN + PROMOTION  (~2 min)
 ============================================================
 
 TERMINAL COMMAND:
-  python capstone_flow.py run --reference-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-01.parquet --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-08.parquet
+  python capstone_flow.py run --reference-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-01.parquet --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-04.parquet
 
 NARRATION:
-"Now we feed in August 2020 as the batch. COVID severely changed taxi ridership patterns by summer 2020, so we expect significant performance degradation."
+"Now we feed in April 2020 as the batch. The model's performance degrades enough to trigger retraining."
 
 EXPECTED TERMINAL OUTPUT:
   • "Loaded reference (447770 rows) and batch (71057 rows)"
@@ -187,8 +187,9 @@ SHOW IN UI:
      • Version 1 tags: role=previous_champion, demoted_at=...
 
 NARRATION:
-"Run 2 automatically detected degradation, retrained a candidate on reference + batch, verified it meets all four promotion
-criteria (P1–P4), and flipped the @champion alias — all in a single unattended run. Every step is auditable in MLflow."
+"Run 2 automatically detected performance degradation between January (reference) and April (batch), retrained a candidate 
+on reference + batch, verified it meets all four promotion criteria (P1–P4), and flipped the @champion alias — all in a 
+single unattended run. Every step is auditable in MLflow."
 
 
 ============================================================
@@ -206,7 +207,7 @@ STEP 1: Inject a failure
   Save the file.
 
 TERMINAL COMMAND:
-  python capstone_flow.py run --reference-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-01.parquet --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-08.parquet
+  python capstone_flow.py run --reference-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-01.parquet --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-04.parquet
 
 EXPECTED OUTPUT:
   • Steps start, load_data, integrity_gate, feature_engineering, load_champion, model_gate complete successfully.
@@ -253,8 +254,8 @@ PART 5 — WRAP-UP  (~30 sec)
 
 NARRATION:
 "To summarize what we demonstrated:
- 1. A clean baseline run where no action was needed.
- 2. An automatic retrain + promotion run triggered by temporal drift between January and August 2020.
+ 1. A clean baseline run where no action was needed (August 2020 batch).
+ 2. An automatic retrain + promotion run triggered by performance degradation (April 2020 batch).
  3. A failure/resumption pattern showing Metaflow's checkpointing.
 
  Every decision is logged as decision.json, every gate produces auditable tags, and the Model Registry tracks champion lineage.
