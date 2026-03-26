@@ -8,17 +8,23 @@ Manual monitoring → optional retraining → champion promotion pipeline using 
 
    ```bash
    conda env create -f environment.yml   # first time only
-   conda activate 22971-capstone
+   conda activate 22971-mlflow
    ```
 
-2. **Place data files** (parquet) under `../06_monitoring_data_drift/TLC_data/`:
+2. **Reset local artifacts (recommended before a fresh demo run):**
+
+   ```bash
+   ./reset.sh
+   ```
+
+3. **Place data files** (parquet) under `../06_monitoring_data_drift/TLC_data/`:
    - `green_tripdata_2020-01.parquet` (reference)
    - `green_tripdata_2020-04.parquet` (batch A — triggers retrain)
    - `green_tripdata_2020-08.parquet` (batch B — no retrain needed)
 
    Download from: https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page
 
-3. **Start the MLflow tracking server:**
+4. **Start the MLflow tracking server:**
 
    ```bash
    mlflow server \
@@ -28,7 +34,7 @@ Manual monitoring → optional retraining → champion promotion pipeline using 
        --default-artifact-root mlflow_tracking/mlruns
    ```
 
-4. **Open the MLflow UI** at http://localhost:5001. Look for experiment **`08_capstone_green_taxi`**.
+5. **Open the MLflow UI** at http://localhost:5001. Look for experiment **`08_capstone_green_taxi`**.
 
 ---
 
@@ -45,7 +51,7 @@ python capstone_flow.py run \
 In MLflow UI, verify:
 - `integrity_gate` run → `decision.json` with `action=batch_accepted`
 - `model_gate` run → `retrain_recommended=false`, `decision.json` with `action=no_retrain`
-- `promotion_gate` run → `promotion_recommended=false`
+- No `retrain` / `promotion_gate` run for this execution path
 
 ### Run 2 — Retrain + promotion (performance degradation)
 
@@ -58,7 +64,7 @@ python capstone_flow.py run \
 In MLflow UI, verify:
 - `model_gate` → `retrain_recommended=true`
 - `retrain` run → `candidate_rmse`, `predictions.parquet` artifact
-- `promotion_gate` → `promotion_recommended=true/false`, new model version in Model Registry
+- `promotion_gate` → `promotion_recommended=true/false`, new model version in Model Registry (retrain path only)
 - Check Model Registry → `green_taxi_tip_model` → `@champion` alias updated
 
 ### Run 3 — Failure + resume
@@ -92,7 +98,7 @@ In MLflow UI, verify:
 ## MLflow UI — what to look for
 
 - **Experiment:** `08_capstone_green_taxi`
-- **Runs per flow execution:** `integrity_gate`, `feature_engineering`, `bootstrap_train` (first run only), `model_gate`, `retrain` (conditional), `promotion_gate`
+- **Runs per flow execution:** `integrity_gate`, `feature_engineering`, `bootstrap_train` (first run only), `model_gate`, `retrain` (conditional), `promotion_gate` (conditional; only after retrain)
 - **Key metrics:** `champion_rmse`, `baseline_rmse`, `rmse_increase_pct`, `candidate_rmse`
 - **Key tags:** `pipeline_step`, `retrain_recommended`, `promotion_recommended`, `decision_action`, `integrity_warn`
 - **Key artifacts:** `decision.json`, `hard_failures.json`, `nannyml_details.json`, `feature_cols.json`, `predictions.parquet`

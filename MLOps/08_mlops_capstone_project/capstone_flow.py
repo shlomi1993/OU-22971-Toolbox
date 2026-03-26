@@ -73,13 +73,18 @@ class MLFlowCapstoneFlow(FlowSpec):
     )
 
     def init_mlflow(self) -> None:
-        """Apply tracking configuration in each step process."""
+        """
+        Apply tracking configuration in each step process.
+        """
         mlflow.set_tracking_uri(self.tracking_uri)
         mlflow.set_experiment(self.experiment_name)
 
     # Pre-workflow - Initialize MLflow
     @step
     def start(self):
+        """
+        Initialize the MLFlowCapstoneFlow, including MLflow config, model registry setup, and logger initialization.
+        """
         # Initialize logger
         self.logger = logging.getLogger(self.__class__.__name__)
 
@@ -103,6 +108,9 @@ class MLFlowCapstoneFlow(FlowSpec):
     # Step A - Load Data
     @step
     def load_data(self):
+        """
+        Load reference and batch datasets from specified paths.
+        """
         # Load reference and batch datasets
         self.df_ref = load_taxi_table(self.reference_path)
         self.df_batch = load_taxi_table(self.batch_path)
@@ -114,6 +122,11 @@ class MLFlowCapstoneFlow(FlowSpec):
     # Step B - Integrity Gate
     @step
     def integrity_gate(self):
+        """
+        Perform integrity checks on the reference and batch datasets.
+        - Layer 1: hard rules (missing columns, invalid datetimes, negative durations, range violations) - "reject_batch" if any fail
+        - Layer 2: NannyML soft checks (missingness drift, unseen categoricals) — sets integrity_warn tag
+        """
         self.init_mlflow()
 
         with mlflow.start_run(run_name="integrity_gate") as run:
@@ -177,6 +190,13 @@ class MLFlowCapstoneFlow(FlowSpec):
     # Step C - Feature Engineering
     @step
     def feature_engineering(self):
+        """
+        Perform feature engineering on both reference and batch datasets, including:
+        - Builds feature matrices (X) and target vectors (y)
+        - Produces a stable feature schema defined by FEATURE_COLS (16 columns)
+        - Applies domain transforms (credit-card filter, datetime/duration features, clipping, log transforms, etc.)
+        - Logs feature schema and dtypes to MLflow as feature_cols.json
+        """
         self.init_mlflow()
         self.X_ref, self.y_ref = engineer_features(self.df_ref)
         self.X_batch, self.y_batch = engineer_features(self.df_batch)
@@ -195,6 +215,10 @@ class MLFlowCapstoneFlow(FlowSpec):
     # Step D - Load Champion
     @step
     def load_champion(self):
+        """
+        Load the current champion model from the registry if exists, otherwise bootstrap a champion by training on the
+        reference data and registering it as the champion with @champion alias.
+        """
         self.init_mlflow()
         needs_bootstrap = not self.registry.champion_exists()
 
@@ -253,6 +277,12 @@ class MLFlowCapstoneFlow(FlowSpec):
     # Step E - Model Gate
     @step
     def model_gate(self):
+        """
+        Evaluate the champion model on the new batch and reference datasets, log results to MLflow, and decide whether
+        retraining is needed based on performance changes and integrity warnings.
+        If the champion's RMSE on the batch has increased by more than 3% (with integrity warnings) or 5% (without
+        warnings) compared to the reference, then retraining is recommended.
+        """
         self.init_mlflow()
 
         with mlflow.start_run(run_name="model_gate") as run:
@@ -324,6 +354,12 @@ class MLFlowCapstoneFlow(FlowSpec):
     # Step F - Retrain
     @step
     def retrain(self):
+        """
+        If needed, retrain the model on the combined reference and batch datasets, log results to MLflow, and prepare
+        outputs for the promotion gate.
+        The retrained candidate model is evaluated on both the batch (for performance) and reference (for stability)
+        datasets, and metrics are logged to MLflow.
+        """
         # raise RuntimeError("Simulated failure for demo")  # NOTE Inject error for demo
         self.init_mlflow()
 
@@ -380,6 +416,15 @@ class MLFlowCapstoneFlow(FlowSpec):
     # Step G - Promotion Gate
     @step
     def promotion_gate(self):
+        """
+        Evaluate the retrained candidate model against the champion using the following criteria:
+        - P1: Evaluation is valid - champion and candidate metrics exist, evaluation dataset logged
+        - P2: Candidate beats champion meaningfully - e.g. >1% improvement in RMSE on batch
+        - P3: Stability - candidate doesn't regress on reference by >5%
+        - P4: No hard integrity failures - guaranteed by flow structure
+        If all criteria are met, the candidate is promoted to champion in the registry.
+        Otherwise, it is rejected but still registered with a "rejected" tag for audit trail.
+        """
         self.init_mlflow()
 
         with mlflow.start_run(run_name="promotion_gate") as run:
@@ -480,6 +525,9 @@ class MLFlowCapstoneFlow(FlowSpec):
     # End
     @step
     def end(self):
+        """
+        End of the MLFlowCapstoneFlow. Logs the final decision outcome for clarity in flow results.
+        """
         outcome_messages = {
             DecisionAction.REJECT_BATCH: "Batch was rejected by integrity gate",
             DecisionAction.NO_RETRAIN: "Champion is adequate, no retrain needed",

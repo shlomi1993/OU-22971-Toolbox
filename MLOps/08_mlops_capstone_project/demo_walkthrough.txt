@@ -1,287 +1,83 @@
-============================================================
-  MLOps Capstone — Video Demo Walkthrough & Transcript
-  (~8 min)
-============================================================
-
-PRE-RECORDING CHECKLIST
------------------------
-[ ] conda env active: conda activate 22971-mlflow
-[ ] Delete any previous state so demo runs are fresh: rm -rf mlflow_tracking .metaflow
-[ ] MLflow server NOT running yet (start on camera)
-[ ] Terminal CWD: MLOps/08_mlops_capstone_project
-[ ] MLflow UI (http://localhost:5001) ready to open in browser
-
+PRE-RECORDING SETUP
+□ conda activate 22971-mlflow
+□ ./reset.sh
+□ cd MLOps/08_mlops_capstone_project
+□ Open browser to http://localhost:5001 (don't load yet)
 
 ============================================================
-PART 1 — CODE WALKTHROUGH  (~2 min)
-============================================================
 
---- Show: capstone_flow.py ---
-
-NARRATION:
-"This is our main Metaflow pipeline. It defines a single linear DAG with 9 steps."
-
-ACTION: Scroll through the class, point out each step decorator:
-  1. start         — initializes MLflow (tracking URI, experiment, registered model)
-  2. load_data     — loads reference and batch parquets via capstone_lib
-  3. integrity_gate — two-layer gate:
-     • Layer 1: hard rules (missing columns, invalid datetimes,
-       negative durations, range violations) — "reject_batch" if any fail
-     • Layer 2: NannyML soft checks (missingness drift via
-       UnivariateDriftCalculator, unseen categoricals) — sets integrity_warn tag
-  4. feature_engineering — stable schema (FEATURE_COLS: 16 columns), credit-card filter, datetime features, duration,
-        clipping, log transforms, frequency encoding, interaction features. Logs feature_cols.json with dtypes to MLflow.
-  5. load_champion — loads models:/<name>@champion; if none exists,
-     bootstraps by training on reference and registering with @champion alias
-  6. model_gate    — evaluates champion on batch vs reference:
-     • computes champion_rmse, baseline_rmse, rmse_increase_pct
-     • logs predictions.parquet (champion inference on batch)
-     • logs evaluation dataset lineage via mlflow.data
-     • decides retrain_needed (>5 % RMSE increase, lowered to 3 % if integrity_warn is true)
-     • always writes decision.json
-  7. retrain       — if retrain_needed:
-     • trains candidate on reference ∪ batch
-     • evaluates on batch AND on reference (stability check P3)
-     • logs candidate model, predictions.parquet, feature_cols.json
-     • logs training dataset lineage
-  8. promotion_gate — four criteria (P1–P4):
-     P1: evaluation metrics exist + dataset lineage logged
-     P2: candidate RMSE < champion × (1 − min_improvement)
-     P3: candidate doesn't regress reference by >5 %
-     P4: no hard integrity failures
-     If all pass → register new version, flip @champion alias, tag old champion as previous_champion.
-     Always logs decision.json.
-  9. end           — summary log
-
-ACTION: Show the Parameters at the top:
-  • reference-path, batch-path (required)
-  • tracking-uri (default localhost:5001)
-  • experiment-name (default 08_capstone_green_taxi)
-  • model-name (default green_taxi_tip_model)
-  • min-improvement (default 1 %)
-
---- Show: capstone_lib.py ---
-
-NARRATION:
-"All reusable logic lives in capstone_lib.py so the flow reads like business logic."
-
-ACTION: Briefly highlight:
-  • REQUIRED_COLS, RANGE_RULES — configurable integrity rules
-  • engineer_features() — the shared feature transformation
-  • run_hard_integrity_checks() → HardIntegrityResult dataclass
-  • run_soft_integrity_checks() → SoftIntegrityResult dataclass
-  • build_model() — Pipeline(SimpleImputer + GradientBoostingRegressor)
-  • champion_exists(), load_champion(), register_version(), promote_to_champion() — ModelRegistry methods
-  • DecisionAction enum + log_decision() function — always logs decision.json + tags
-
+PART 1 — CODE WALKTHROUGH (~2 min)
+SHOW FILES:
+- capstone_flow.py (scroll through 9 @step methods)
+- capstone_lib.py (highlight key functions)
 
 ============================================================
-PART 2 — RUN 1: BASELINE (no retrain, no promotion)  (~2 min)
-============================================================
 
-TERMINAL COMMANDS (two terminals):
-  # Start MLflow server (show the command)
-  mlflow server --workers 1 --port 5001 --backend-store-uri sqlite:///mlflow_tracking/mlflow.db --default-artifact-root mlflow_tracking/mlruns
+PART 2 — RUN 1: BASELINE (~2 min)
+TERMINAL 1:
+mlflow server --workers 1 --port 5001 --backend-store-uri sqlite:///mlflow_tracking/mlflow.db --default-artifact-root mlflow_tracking/mlruns
 
-  # Wait a moment, then run the flow with 2020-08 batch (no retrain needed)
-  python capstone_flow.py run --reference-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-01.parquet --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-08.parquet
+TERMINAL 2:
+python capstone_flow.py run --reference-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-01.parquet --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-08.parquet
+□ Review interesting logs in the terminal
 
-EXPECTED TERMINAL OUTPUT:
-  • "MLflow configured: http://localhost:5001 / experiment=08_capstone_green_taxi"
-  • "Loaded reference (447770 rows) and batch (35611 rows)"
-  • "Integrity gate passed (warn=True/False)"
-  • "Features engineered: ref=..., batch=..., cols=[...]"
-  • "No champion found — bootstrapping initial model on reference data" (first run only — trains and registers version 1 as @champion)
-  • "Champion loaded: models:/green_taxi_tip_model@champion"
-  • "Model gate: retrain_needed=False (RMSE increase X.XX% within tolerance)"
-  • "Retrain step: skipped (not needed)"
-  • "Promotion gate: skipped (no retrain)"
-  • "Flow finished: champion is still adequate, no retrain needed."
-
---- Switch to MLflow UI (http://localhost:5001) ---
-
-ACTION: Click experiment "08_capstone_green_taxi"
-
-SHOW IN UI:
-  1. "integrity_gate" run:
-     • Tags: pipeline_step=integrity_gate, integrity_warn=..., retrain_recommended=false, decision_action=batch_accepted
-     • Artifacts: decision.json (open it — action="batch_accepted"), hard_failures.json, nannyml_details.json
-
-  2. "feature_engineering" run:
-     • Tags: pipeline_step=feature_engineering
-     • Artifacts: feature_cols.json (show feature names + dtypes)
-
-  3. "bootstrap_train" run (first run only):
-     • Tags: pipeline_step=train, bootstrap=true
-     • Metrics: train_rmse, train_mae, train_r2
-     • Artifacts: model/, feature_cols.json
-
-  4. "model_gate" run:
-     • Tags: pipeline_step=model_gate, retrain_recommended=false, decision_action=no_retrain
-     • Metrics: champion_rmse, baseline_rmse, rmse_increase_pct
-     • Artifacts: decision.json (action="no_retrain", reason=...), predictions.parquet (champion inference on batch)
-     • Dataset Inputs: batch_eval (evaluation context)
-
-  5. "promotion_gate" run:
-     • Tags: promotion_recommended=false, decision_action=no_promote
-     • Artifacts: decision.json (action="no_promote", reason="No retraining was performed")
-
-  6. Model Registry:
-     • Click "Models" → green_taxi_tip_model
-     • Version 1 exists, alias @champion is set
-     • Tags: role=champion, promotion_reason=bootstrap
-
-NARRATION:
-"Run 1 shows a clean baseline. The batch (August 2020) performs within acceptable tolerance compared to the reference 
-(January 2020). No retrain, no promotion. Every decision is logged in decision.json and visible in MLflow tags."
-
+BROWSER (http://localhost:5001):
+□ Open experiment "08_capstone_green_taxi"
+□ Review tags in each run: integrity_gate, feature_engineering, bootstrap_train, model_gate
+□ Open decision.json artifact in each run and show action="batch_accepted", action="no_retrain"
+□ Models → green_taxi_tip_model → Version 1 with @champion alias
+□ Say: "Run 1 shows a clean baseline. The batch performs within acceptable tol compared to the ref. No retrain, no promotion"
 
 ============================================================
-PART 3 — RUN 2: RETRAIN + PROMOTION  (~2 min)
-============================================================
 
-TERMINAL COMMAND:
-  python capstone_flow.py run --reference-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-01.parquet --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-04.parquet
+PART 3 — RUN 2: RETRAIN + PROMOTION (~2 min)
 
-NARRATION:
-"Now we feed in April 2020 as the batch. The model's performance degrades enough to trigger retraining."
+TERMINAL:
+python capstone_flow.py run --reference-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-01.parquet --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-04.parquet
+□ Review interesting logs in the terminal
 
-EXPECTED TERMINAL OUTPUT:
-  • "Loaded reference (447770 rows) and batch (71057 rows)"
-  • "Integrity gate passed (warn=True)" — NannyML drift alerts expected
-  • "Champion loaded: models:/green_taxi_tip_model@champion"
-  • "Model gate: retrain_needed=True (RMSE increase X.XX% > 5% threshold)" OR  "retrain_needed=True ... (lowered threshold due to integrity warnings)"
-  • "Retrain done: candidate RMSE=X.XXXX (batch), X.XXXX (ref)"
-  • "PROMOTED candidate to champion: version=2" OR  "Promotion declined: ..." (if candidate doesn't beat champion enough)
-  • "Flow finished: retrain + promotion gate completed."
-
---- Switch to MLflow UI ---
-
-ACTION: Refresh experiment "08_capstone_green_taxi"
-
-SHOW IN UI:
-  1. "model_gate" run (new):
-     • Metrics: champion_rmse, baseline_rmse, rmse_increase_pct (>5%)
-     • Tags: retrain_recommended=true
-     • Artifacts: decision.json (action="retrain"), predictions.parquet
-     • Dataset Inputs: batch_eval logged
-
-  2. "retrain" run:
-     • Tags: pipeline_step=retrain, trained_on_batches="<ref_path>,<batch_path>"
-     • Metrics: candidate_rmse, candidate_mae, candidate_r2, candidate_ref_rmse, candidate_ref_mae, candidate_ref_r2
-     • Artifacts: model/, feature_cols.json, predictions.parquet
-     • Dataset Inputs: train_combined (training context)
-     • Params: reference_path, batch_path
-
-  3. "promotion_gate" run:
-     • Tags: promotion_recommended=true, decision_action=promote, promoted_version=2
-     • Metrics: champion_rmse_batch, candidate_rmse_batch, candidate_rmse_ref, min_improvement_pct
-     • Artifacts: decision.json — open it and show: {action: "promote", details: {p1: true, p2: true, p3: true, p4: true}, metrics: {champion_rmse_batch, candidate_rmse_batch, ...}}
-
-  4. Model Registry:
-     • Click "Models" → green_taxi_tip_model
-     • Version 2 now exists
-     • @champion alias now points to version 2
-     • Version 2 tags: role=champion, promoted_at=..., promotion_reason=...
-     • Version 1 tags: role=previous_champion, demoted_at=...
-
-NARRATION:
-"Run 2 automatically detected performance degradation between January (reference) and April (batch), retrained a candidate 
-on reference + batch, verified it meets all four promotion criteria (P1–P4), and flipped the @champion alias — all in a 
-single unattended run. Every step is auditable in MLflow."
-
+BROWSER:
+□ Refresh experiment
+□ Show model_gate run (check rmse_increase_pct > 5%, retrain_recommended=true)
+□ Show retrain run (candidate metrics, predictions.parquet)
+□ Show promotion_gate run (decision.json with P1-P4, action="promote")
+□ Models → green_taxi_tip_model → Version 2 with @champion alias (Version 1 = previous_champion)
 
 ============================================================
-PART 4 — RUN 3: FAILURE + RESUMPTION  (~2 min)
-============================================================
 
-STEP 1: Inject a failure
+PART 4 — RUN 3: FAILURE + RESUME (~2 min)
 
-  ACTION: Open capstone_flow.py, go to the retrain step (line 296).
-  Add this line at line 297 (right after "def retrain(self):",
-  before the comment about data concatenation):
+STEP 1 — INJECT FAILURE:
+□ Add at capstone_flow.py:line 326 (retrain method): raise RuntimeError("Simulated failure for demo")
+□ Show nothing new in the UI
 
-      raise RuntimeError("Simulated failure for demo")
+TERMINAL:
+python capstone_flow.py run --reference-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-01.parquet --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-04.parquet
+(Watch it fail at retrain step)
 
-  Save the file.
+STEP 2 — FIX:
+□ Remove the raise RuntimeError(...) line
 
-TERMINAL COMMAND:
-  python capstone_flow.py run --reference-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-01.parquet --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-04.parquet
+TERMINAL:
+python capstone_flow.py resume retrain
+(Watch it resume from retrain, skip earlier steps)
 
-EXPECTED OUTPUT:
-  • Steps start, load_data, integrity_gate, feature_engineering, load_champion, model_gate complete successfully.
-  • Flow FAILS at retrain step with: RuntimeError: Simulated failure for demo
-
-NARRATION:
-"The flow failed at the retrain step. All preceding steps completed successfully and their artifacts are checkpointed by Metaflow."
-
-STEP 2: Fix the failure
-
-  ACTION: Remove the raise RuntimeError(...) line. Save the file.
-
-STEP 3: Resume from the failed step
-
-TERMINAL COMMAND:
-  python capstone_flow.py resume retrain
-
-EXPECTED OUTPUT:
-  • "Resuming from step retrain"
-  • Steps start through model_gate are NOT re-executed
-  • retrain step runs successfully
-  • promotion_gate runs
-  • Flow completes
-
-NARRATION:
-"Using Metaflow's resume command, we restart from exactly the retrain step. Steps before it are skipped — their artifacts
- are restored from the previous (failed) run's checkpoint. The flow completes normally."
-
---- Switch to MLflow UI ---
-
-SHOW IN UI:
-  • The retrain and promotion_gate runs from the resumed execution appear as new runs in the experiment
-  • Artifacts contain valid decision.json, predictions, model
-  • No duplicate integrity_gate, feature_engineering, or model_gate runs were created by the resume
-
-NARRATION:
-"MLflow shows only the new runs from the resumed execution. The failed run's partial state is preserved for debugging,
- while the successful resume produces clean artifacts."
-
+BROWSER:
+□ Refresh experiment
+□ Show new retrain and promotion_gate runs
+□ Verify no duplicate integrity_gate/feature_engineering runs
 
 ============================================================
-PART 5 — WRAP-UP  (~30 sec)
-============================================================
 
-NARRATION:
-"To summarize what we demonstrated:
- 1. A clean baseline run where no action was needed (August 2020 batch).
- 2. An automatic retrain + promotion run triggered by performance degradation (April 2020 batch).
- 3. A failure/resumption pattern showing Metaflow's checkpointing.
+PART 5 — WRAP-UP (~30 sec)
 
- Every decision is logged as decision.json, every gate produces auditable tags, and the Model Registry tracks champion lineage.
+SUMMARY:
+✓ Run 1: Baseline - August batch - no retrain
+✓ Run 2: Retrain + promotion - April batch - degradation detected
+✓ Run 3: Failure recovery - showing Metaflow checkpointing
+✓ All decisions logged with decision.json and MLflow tags
+✓ Model Registry tracks champion lineage
 
- In a production scenario, the next step would be redeploying the serving endpoint with the newly promoted @champion
- model — this could be automated via MLflow Model Serving or a separate CD pipeline.
-
- The code is in two files: capstone_flow.py (the pipeline) and capstone_lib.py (the reusable utilities).
- The README has setup instructions and exact commands to reproduce."
-
-============================================================
-END OF DEMO
-============================================================
-
-
-APPENDIX: TROUBLESHOOTING
---------------------------
-• If Run 2 does NOT trigger retrain (RMSE increase is below 5%):
-  Lower the threshold by appending to the run command:
-    --min-improvement 0.20
-  This makes the promotion bar higher, but the retrain threshold in model_gate is hardcoded at 5%/3%.
-  If the champion happens to perform well on the August batch, you can temporarily edit model_gate to lower the
-    threshold (e.g., 0.01 instead of 0.05).
-
-• If the MLflow server is not running:
-    mlflow server --workers 1 --port 5001 --backend-store-uri sqlite:///mlflow_tracking/mlflow.db --default-artifact-root mlflow_tracking/mlruns 
-
-• If "No module named 'metaflow'" or similar:
-    conda activate 22971-mlflow
-    pip install metaflow nannyml
+NOTE:
+In a production scenario, the next step would be redeploying the serving endpoint with the newly promoted champion.
+This could be automated via MLflow Model Serving or a separate CD pipeline.
