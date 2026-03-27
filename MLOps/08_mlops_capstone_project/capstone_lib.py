@@ -352,7 +352,7 @@ class CombinedIntegrityReport:
         return combined
 
 
-def run_integrity_checks(df_ref: pd.DataFrame,df_batch: pd.DataFrame) -> CombinedIntegrityReport:
+def run_integrity_checks(df_ref: pd.DataFrame, df_batch: pd.DataFrame) -> Tuple[bool, CombinedIntegrityReport]:
     """
     Combined hard and NannyML soft integrity checks.
 
@@ -361,7 +361,7 @@ def run_integrity_checks(df_ref: pd.DataFrame,df_batch: pd.DataFrame) -> Combine
         df_batch (pd.DataFrame): Current batch dataset to check.
 
     Returns:
-        CombinedIntegrityReport: Combined integrity report containing results from both hard and soft checks.
+        Tuple[bool, CombinedIntegrityReport]: Tuple of (passed, report) where passed indicates if hard checks passed.
     """
     # Layer 1: Hard integrity checks (fail-fast)
     hard = run_hard_integrity_checks(df_batch)
