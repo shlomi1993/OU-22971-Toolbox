@@ -17,10 +17,10 @@ Manual monitoring → optional retraining → champion promotion pipeline using 
    ./reset.sh
    ```
 
-3. **Place data files** (parquet) under `../06_monitoring_data_drift/TLC_data/`:
+3. **Place data files** (parquet) under `TLC_data/`:
    - `green_tripdata_2020-01.parquet` (reference)
    - `green_tripdata_2020-04.parquet` (batch A — triggers retrain)
-   - `green_tripdata_2020-08.parquet` (batch B — no retrain needed)
+   - `green_tripdata_2020-06.parquet` (batch B — no retrain needed)
 
    Download from: https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page
 
@@ -44,8 +44,8 @@ Manual monitoring → optional retraining → champion promotion pipeline using 
 
 ```bash
 python capstone_flow.py run \
-    --reference-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-01.parquet \
-    --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-08.parquet
+    --reference-path TLC_data/green_tripdata_2020-01.parquet \
+    --batch-path TLC_data/green_tripdata_2020-08.parquet
 ```
 
 In MLflow UI, verify:
@@ -57,8 +57,8 @@ In MLflow UI, verify:
 
 ```bash
 python capstone_flow.py run \
-    --reference-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-01.parquet \
-    --batch-path ../06_monitoring_data_drift/TLC_data/green_tripdata_2020-04.parquet
+    --reference-path TLC_data/green_tripdata_2020-01.parquet \
+    --batch-path TLC_data/green_tripdata_2020-04.parquet
 ```
 
 In MLflow UI, verify:
