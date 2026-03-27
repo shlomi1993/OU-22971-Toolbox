@@ -2,6 +2,12 @@
 
 Manual monitoring → optional retraining → champion promotion pipeline using **Metaflow**, **NannyML**, and **MLflow**.
 
+## 🎥 Demo Video
+
+Watch the complete demo walkthrough: [MLOps Capstone Demo](https://drive.google.com/file/d/1Oo6qLciW6hLclkFiXSVzqebLdbAvpDz6/view?usp=sharing)
+
+---
+
 ## Setup
 
 1. **Create / activate the conda environment:**
