@@ -17,7 +17,6 @@ from capstone_lib import (
     MODEL_NAME,
     ModelRegistry,
     DecisionAction,
-    CombinedIntegrityReport,
     load_taxi_table,
     run_integrity_checks,
     log_decision,
@@ -138,7 +137,6 @@ class MLFlowCapstoneFlow(FlowSpec):
 
             # Perform hard and soft integrity checks
             ok, report = run_integrity_checks(self.df_ref, self.df_batch)
-            report: CombinedIntegrityReport  # Type hint for IDE
 
             # Log metrics and artifacts
             mlflow.log_metrics(report.metrics)
