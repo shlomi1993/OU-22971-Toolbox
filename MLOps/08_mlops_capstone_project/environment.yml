@@ -13,10 +13,11 @@ dependencies:
   - pyarrow  # Added for Capstone project to handle Parquet files
   - geopandas  # Added for Capstone project to handle geospatial data
   - ipykernel
+  - ipdb  # Added for debugging
+  - pytest  # Added for project testing
   - pip
   - pip:
       - mlflow==3.8
       - optuna==4.6.*
       - metaflow  # Added for Capstone project to manage complex workflows
       - nannyml  # Added for Capstone project to monitor model performance and detect data drift
-      - pytest
