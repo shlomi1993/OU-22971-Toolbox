@@ -25,6 +25,7 @@ BROWSER (http://localhost:5001):
 □ Open experiment "08_capstone_green_taxi"
 □ Review tags in each run: integrity_gate, feature_engineering, bootstrap_train, model_gate
 □ Open decision.json artifact in each run and show action="batch_accepted", action="no_retrain"
+□ INFERENCE DEMO: Open model_gate run → Artifacts → show predictions.parquet (batch inference on new data)
 □ Models → green_taxi_tip_model → Version 1 with @champion alias
 □ Say: "Run 1 shows a clean baseline. The batch performs within acceptable tol compared to the ref. No retrain, no promotion"
 
@@ -40,6 +41,7 @@ BROWSER:
 □ Refresh experiment
 □ Show model_gate run (check rmse_increase_pct > 5%, retrain_recommended=true)
 □ Show retrain run (candidate metrics, predictions.parquet)
+□ INFERENCE DEMO: Open predictions.parquet artifact → show columns: features + prediction + actual
 □ Show promotion_gate run (decision.json with P1-P4, action="promote")
 □ Models → green_taxi_tip_model → Version 2 with @champion alias (Version 1 = previous_champion)
 
@@ -72,11 +74,12 @@ BROWSER:
 PART 5 — WRAP-UP (~30 sec)
 
 SUMMARY:
-✓ Run 1: Baseline - August batch - no retrain
-✓ Run 2: Retrain + promotion - April batch - degradation detected
-✓ Run 3: Failure recovery - showing Metaflow checkpointing
+✓ Run 1: Baseline - January batch - no retrain (showed predictions.parquet in model_gate)
+✓ Run 2: Retrain + promotion - April batch - degradation detected (showed predictions.parquet in retrain)
+✓ Run 3: Failure recovery - June batch - showing Metaflow checkpointing
 ✓ All decisions logged with decision.json and MLflow tags
 ✓ Model Registry tracks champion lineage
+✓ **Inference demo completed:** batch predictions logged as parquet artifacts with actual vs predicted values
 
 NOTE:
 In a production scenario, the next step would be redeploying the serving endpoint with the newly promoted champion.
