@@ -119,9 +119,8 @@ class HardIntegrityResult:
     Result of hard integrity checks.
     """
     passed: bool
-    hard_failures: List[str] = field(default_factory=list)
+    failures: List[str] = field(default_factory=list)
     metrics: Dict[str, float] = field(default_factory=dict)
-    tables: Dict[str, pd.DataFrame] = field(default_factory=dict)
 
 
 def run_hard_integrity_checks(df: pd.DataFrame) -> HardIntegrityResult:
@@ -129,11 +128,11 @@ def run_hard_integrity_checks(df: pd.DataFrame) -> HardIntegrityResult:
     Hard Integrity Checks: Hard rules that cause immediate batch rejection (fail-fast).
 
     Checks:
-        1. Required columns present.
-        2. Target column exists and has values.
-        3. Datetime validity.
-        4. Negative duration (dropoff before pickup).
-        5. Range violations.
+        1. Required columns present - all columns in REQUIRED_COLS must be present.
+        2. Target column exists and has values - 'tip_amount' must exist and not be mostly null.
+        3. Datetime validity - 'lpep_pickup_datetime' and 'lpep_dropoff_datetime' must parse to valid datetimes.
+        4. Negative duration - 'lpep_dropoff_datetime' must not be before 'lpep_pickup_datetime'.
+        5. Range violations - numeric columns must fall within specified ranges.
 
     Args:
         df (pd.DataFrame): Dataset to check, expected to have raw columns (e.g. lpep_pickup_datetime) for checks.
@@ -189,7 +188,7 @@ def run_hard_integrity_checks(df: pd.DataFrame) -> HardIntegrityResult:
         if bad > 0.20:
             failures.append(f"{col} out-of-range fraction: {bad:.2%}")
 
-    return HardIntegrityResult(passed=len(failures) == 0, hard_failures=failures, metrics=metrics)
+    return HardIntegrityResult(passed=len(failures) == 0, failures=failures, metrics=metrics)
 
 
 @dataclass
@@ -207,10 +206,10 @@ def run_soft_integrity_checks(df_ref: pd.DataFrame, df_cur: pd.DataFrame) -> Sof
     Soft Integrity Checks: Run NannyML-based soft data quality checks.
 
     Checks:
-        1. Missing value drift (NannyML MissingValuesCalculator).
-        2. Univariate distribution drift (NannyML UnivariateDriftCalculator).
-        3. Multivariate drift via reconstruction error (NannyML DataReconstructionDriftCalculator).
-        4. Unseen categorical values in key location features.
+        1. Missing value drift - using NannyML MissingValuesCalculator.
+        2. Univariate distribution drift - using NannyML UnivariateDriftCalculator.
+        3. Multivariate drift via reconstruction error - using NannyML DataReconstructionDriftCalculator.
+        4. Unseen categorical values in key location features - comparing current batch to reference.
 
     These checks do not cause hard batch rejection but can trigger warnings and inform retraining decisions.
 
@@ -331,35 +330,47 @@ def run_soft_integrity_checks(df_ref: pd.DataFrame, df_cur: pd.DataFrame) -> Sof
     return SoftIntegrityResult(warn=warn, details=details, metrics=metrics)
 
 
-def run_integrity_checks(df_ref: pd.DataFrame,df_batch: pd.DataFrame) -> Tuple[bool, Dict[str, Any]]:
+@dataclass
+class CombinedIntegrityReport:
     """
-    Combined hard + NannyML soft integrity checks.
+    Combined integrity report containing results from both hard and soft checks.
+    """
+    hard: HardIntegrityResult
+    soft: SoftIntegrityResult = field(default_factory=SoftIntegrityResult)
+
+    @property
+    def metrics(self) -> Dict[str, float]:
+        """
+        Combined metrics from both hard and soft checks.
+
+        Returns:
+            Dict[str, float]: Merged metrics dictionary.
+        """
+        combined = dict(self.hard.metrics)  # Copy hard metrics
+        if self.soft:
+            combined.update(self.soft.metrics)  # Add/overwrite with soft metrics if available
+        return combined
+
+
+def run_integrity_checks(df_ref: pd.DataFrame,df_batch: pd.DataFrame) -> CombinedIntegrityReport:
+    """
+    Combined hard and NannyML soft integrity checks.
 
     Args:
         df_ref (pd.DataFrame): Reference dataset for comparison (e.g. historical baseline).
         df_batch (pd.DataFrame): Current batch dataset to check.
 
     Returns:
-        Tuple[bool, Dict[str, Any]]: A tuple where the first element indicates if the batch passed hard checks,
-            and the second element is a report dictionary containing details and metrics.
+        CombinedIntegrityReport: Combined integrity report containing results from both hard and soft checks.
     """
     # Layer 1: Hard integrity checks (fail-fast)
     hard = run_hard_integrity_checks(df_batch)
-    report = {
-        "hard": {
-            "failures": hard.hard_failures,
-            "metrics": hard.metrics,
-        },
-        "nannyml": {},
-        "metrics": dict(hard.metrics),
-    }
+    report = CombinedIntegrityReport(hard=hard)
     if not hard.passed:
         return False, report
 
     # Layer 2: NannyML soft integrity checks (warnings, no hard fail)
-    soft = run_soft_integrity_checks(df_ref, df_batch)
-    report["nannyml"] = asdict(soft)
-    report["metrics"].update(soft.metrics)
+    report.soft = run_soft_integrity_checks(df_ref, df_batch)
     return True, report
 
 

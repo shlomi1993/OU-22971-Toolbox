@@ -17,6 +17,7 @@ from capstone_lib import (
     MODEL_NAME,
     ModelRegistry,
     DecisionAction,
+    CombinedIntegrityReport,
     load_taxi_table,
     run_integrity_checks,
     log_decision,
@@ -83,16 +84,16 @@ class MLFlowCapstoneFlow(FlowSpec):
     @step
     def start(self):
         """
-        Initialize the MLFlowCapstoneFlow, including MLflow config, model registry setup, and logger initialization.
+        Initialize the MLFlowCapstoneFlow, setting up logger, model registry, and attributes for use across steps.
         """
         # Initialize logger
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        # Initialize conditional attributes
+        # Initialize attributes to be used across steps
         self.decision_action = None
         self.integrity_warn = False
-
-        # Initialize retrain outputs
+        self.champion_model = None
+        self.champion_uri = None
         self.candidate_model_uri = None
         self.candidate_rmse_batch = None
         self.candidate_rmse_ref = None
@@ -137,34 +138,35 @@ class MLFlowCapstoneFlow(FlowSpec):
 
             # Perform hard and soft integrity checks
             ok, report = run_integrity_checks(self.df_ref, self.df_batch)
+            report: CombinedIntegrityReport  # Type hint for IDE
 
             # Log metrics and artifacts
-            mlflow.log_metrics(report["metrics"])
-            mlflow.log_dict({"hard_failures": report["hard"]["failures"]}, "hard_failures.json")
-            mlflow.log_dict({"nannyml_details": report["nannyml"].get("details", [])}, "nannyml_details.json")
+            mlflow.log_metrics(report.metrics)
+            mlflow.log_dict({"hard_failures": report.hard.failures}, "hard_failures.json")
+            mlflow.log_dict({"nannyml_details": report.soft.details}, "nannyml_details.json")
 
             # Make decision based on integrity results
             if ok:
                 self.logger.info("Hard integrity checks passed - accepting batch")
 
                 # Log NannyML warnings as MLflow tag and decision details
-                nannyml_warn = report["nannyml"].get("warn", False)
-                mlflow.set_tag("integrity_warn", str(nannyml_warn).lower())
-                if nannyml_warn:
+                nml_warn = report.soft.warn
+                mlflow.set_tag("integrity_warn", str(nml_warn).lower())
+                if nml_warn:
                     self.logger.warning("Soft integrity checks (NannyML) raised warnings")
 
                 # Log acceptance decision
                 self.decision_action = DecisionAction.BATCH_ACCEPTED
                 log_decision(
                     action=self.decision_action,
-                    reason="Hard rules passed" + ("; NannyML warnings present" if nannyml_warn else ""),
-                    metrics=report["hard"]["metrics"],
-                    details={"nannyml_warn": nannyml_warn, "nannyml_details": report["nannyml"].get("details", [])},
+                    reason="Hard rules passed" + (f"; {len(report.soft.details)} NannyML warnings present" if nml_warn else ""),
+                    metrics=report.hard.metrics,
+                    details={"nannyml_warn": nml_warn, "nannyml_details": report.soft.details},
                 )
 
                 # Set flags for downstream steps
                 batch_rejected = False
-                self.integrity_warn = nannyml_warn
+                self.integrity_warn = nml_warn
 
             else:
                 self.logger.error("Hard integrity checks failed - rejecting batch")
@@ -173,8 +175,8 @@ class MLFlowCapstoneFlow(FlowSpec):
                 self.decision_action = DecisionAction.REJECT_BATCH
                 log_decision(
                     action=self.decision_action,
-                    reason="; ".join(report["hard"]["failures"]),
-                    metrics=report["hard"]["metrics"],
+                    reason="; ".join(report.hard.failures),
+                    metrics=report.hard.metrics,
 
                 )
 
@@ -198,13 +200,16 @@ class MLFlowCapstoneFlow(FlowSpec):
         - Logs feature schema and dtypes to MLflow as feature_cols.json
         """
         self.init_mlflow()
-        self.X_ref, self.y_ref = engineer_features(self.df_ref)
-        self.X_batch, self.y_batch = engineer_features(self.df_batch)
 
         # Log feature spec to MLflow
         with mlflow.start_run(run_name="feature_engineering") as run:
             self.feature_engineering_run_id = run.info.run_id  # Capture run ID for testing
             mlflow.set_tag("pipeline_step", "feature_engineering")
+
+            # Perform feature engineering inside MLflow run context for tracking
+            self.X_ref, self.y_ref = engineer_features(self.df_ref)
+            self.X_batch, self.y_batch = engineer_features(self.df_batch)
+
             feature_spec = {col: str(self.X_ref[col].dtype) for col in FEATURE_COLS}
             mlflow.log_dict({"feature_cols": FEATURE_COLS, "dtypes": feature_spec}, "feature_cols.json")
 
@@ -226,8 +231,8 @@ class MLFlowCapstoneFlow(FlowSpec):
         if not needs_bootstrap:
             try:
                 self.champion_model, self.champion_uri = self.registry.load_champion()
-            except mlflow.exceptions.MlflowException as exc:
-                if "alias champion not found" in str(exc).lower():
+            except mlflow.exceptions.MlflowException as e:
+                if "alias champion not found" in str(e).lower():
                     self.logger.warning("Champion alias missing at load time; bootstrapping a new champion")
                     needs_bootstrap = True
                 else:
@@ -269,7 +274,7 @@ class MLFlowCapstoneFlow(FlowSpec):
             self.champion_model, self.champion_uri = self.registry.load_champion()
 
         # Load champion in normal path (when no bootstrap was needed)
-        if not hasattr(self, "champion_model") or self.champion_model is None:
+        if self.champion_model is None:
             self.champion_model, self.champion_uri = self.registry.load_champion()
         self.logger.info(f"Champion loaded: {self.champion_uri}")
         self.next(self.model_gate)
@@ -363,14 +368,14 @@ class MLFlowCapstoneFlow(FlowSpec):
         # raise RuntimeError("Simulated failure for demo")  # NOTE Inject error for demo
         self.init_mlflow()
 
-        # Train on merged reference and batch data
-        X_train = pd.concat([self.X_ref, self.X_batch], ignore_index=True)
-        y_train = np.concatenate([self.y_ref, self.y_batch])
-
         with mlflow.start_run(run_name="retrain") as run:
             self.retrain_run_id = run.info.run_id  # Capture run ID for testing
             mlflow.set_tag("pipeline_step", "retrain")
             mlflow.set_tag("trained_on_batches", f"{self.reference_path},{self.batch_path}")
+
+            # Train on merged reference and batch data
+            X_train = pd.concat([self.X_ref, self.X_batch], ignore_index=True)
+            y_train = np.concatenate([self.y_ref, self.y_batch])
 
             # Train model
             model = build_model()
