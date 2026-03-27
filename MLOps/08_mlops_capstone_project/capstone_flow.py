@@ -262,7 +262,8 @@ class MLFlowCapstoneFlow(FlowSpec):
                 tags = {
                     "role": "champion",
                     "trained_on": "reference",
-                    "validation_status": "approved"
+                    "validation_status": "approved",
+                    "bootstrap": "true"
                 }
                 version = self.registry.register_version(model_info.model_uri, tags)
                 self.registry.promote_to_champion(version, reason="bootstrap")
@@ -328,7 +329,7 @@ class MLFlowCapstoneFlow(FlowSpec):
 
             # Decision: retrain if RMSE increased beyond a threshold of 3% with integrity warnings or 5% otherwise
             threshold = 0.03 if self.integrity_warn else 0.05
-            retrain_needed = rmse_increase_pct > threshold + 1e-10
+            retrain_needed = rmse_increase_pct > threshold
 
             # Set retrain reason and action
             # retrain_needed = True  # NOTE Force retrain for demo
