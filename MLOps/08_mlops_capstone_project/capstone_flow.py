@@ -357,7 +357,7 @@ class MLFlowCapstoneFlow(FlowSpec):
         The retrained candidate model is evaluated on both the batch (for performance) and reference (for stability)
         datasets, and metrics are logged to MLflow.
         """
-        raise RuntimeError("Simulated failure for demo")  # NOTE Inject error for demo
+        # raise RuntimeError("Simulated failure for demo")  # NOTE Inject error for demo
         self.init_mlflow()
 
         with mlflow.start_run(run_name="retrain") as run:
