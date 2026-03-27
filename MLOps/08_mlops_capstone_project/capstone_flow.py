@@ -149,6 +149,7 @@ class MLFlowCapstoneFlow(FlowSpec):
 
                 # Log NannyML warnings as MLflow tag and decision details
                 nml_warn = report.soft.warn
+                self.integrity_warn = nml_warn
                 mlflow.set_tag("integrity_warn", str(nml_warn).lower())
                 if nml_warn:
                     self.logger.warning("Soft integrity checks (NannyML) raised warnings")
@@ -162,12 +163,9 @@ class MLFlowCapstoneFlow(FlowSpec):
                     details={"nannyml_warn": nml_warn, "nannyml_details": report.soft.details},
                 )
 
-                # Set flags for downstream steps
-                batch_rejected = False
-                self.integrity_warn = nml_warn
-
             else:
                 self.logger.error("Hard integrity checks failed - rejecting batch")
+                self.integrity_warn = False
 
                 # Log rejection decision
                 self.decision_action = DecisionAction.REJECT_BATCH
@@ -178,13 +176,9 @@ class MLFlowCapstoneFlow(FlowSpec):
 
                 )
 
-                # Set flags for downstream steps
-                batch_rejected = True
-                self.integrity_warn = False
-
         # Log results and proceed to feature engineering if batch accepted, otherwise end flow
-        self.logger.info(f"Integrity gate completed: batch_rejected={batch_rejected}, integrity_warn={self.integrity_warn}")
         self.integrity_route = "accepted" if ok else "rejected"
+        self.logger.info(f"Integrity gate completed: batch {self.integrity_route}" + (f" with warnings" if self.integrity_warn else ""))
         self.next({"accepted": self.feature_engineering, "rejected": self.end}, condition="integrity_route")
 
     # Step C - Feature Engineering
@@ -212,7 +206,7 @@ class MLFlowCapstoneFlow(FlowSpec):
             mlflow.log_dict({"feature_cols": FEATURE_COLS, "dtypes": feature_spec}, "feature_cols.json")
 
         # Log results and proceed to load champion
-        self.logger.info(f"Features engineered: ref={len(self.X_ref)}, batch={len(self.X_batch)}, cols={FEATURE_COLS}")
+        self.logger.info(f"Features engineered: {len(self.X_ref)} reference rows, {len(self.X_batch)} batch rows")
         self.next(self.load_champion)
 
     # Step D - Load Champion
@@ -231,7 +225,7 @@ class MLFlowCapstoneFlow(FlowSpec):
                 self.champion_model, self.champion_uri = self.registry.load_champion()
             except mlflow.exceptions.MlflowException as e:
                 if "alias champion not found" in str(e).lower():
-                    self.logger.warning("Champion alias missing at load time; bootstrapping a new champion")
+                    self.logger.warning("Champion alias missing at load time - bootstrapping a new champion")
                     needs_bootstrap = True
                 else:
                     raise
@@ -267,7 +261,7 @@ class MLFlowCapstoneFlow(FlowSpec):
                 }
                 version = self.registry.register_version(model_info.model_uri, tags)
                 self.registry.promote_to_champion(version, reason="bootstrap")
-                self.logger.info(f"Bootstrap champion registered: version={version}")
+                self.logger.info(f"Registered bootstrap champion version {version}")
 
             # Load champion after bootstrap
             self.champion_model, self.champion_uri = self.registry.load_champion()
@@ -332,7 +326,6 @@ class MLFlowCapstoneFlow(FlowSpec):
             retrain_needed = rmse_increase_pct > threshold
 
             # Set retrain reason and action
-            # retrain_needed = True  # NOTE Force retrain for demo
             if retrain_needed:
                 retrain_reason = f"RMSE increased by {rmse_increase_pct:.2%} which is above the threshold of {threshold:.2%}"
                 self.decision_action = DecisionAction.RETRAIN
@@ -351,7 +344,7 @@ class MLFlowCapstoneFlow(FlowSpec):
             log_decision(action=self.decision_action, retrain_recommended=retrain_needed, reason=retrain_reason, metrics=metrics)
 
         # Log results and proceed to retrain if needed, or end flow otherwise
-        self.logger.info(f"Model gate completed: retrain_needed={retrain_needed} ({retrain_reason})")
+        self.logger.info(f"Model gate completed: retrain is {'needed' if retrain_needed else 'not needed'} because {retrain_reason}")
         self.model_gate_route = "retrain" if retrain_needed else "end"
         self.next({"retrain": self.retrain, "end": self.end}, condition="model_gate_route")
 
@@ -364,7 +357,7 @@ class MLFlowCapstoneFlow(FlowSpec):
         The retrained candidate model is evaluated on both the batch (for performance) and reference (for stability)
         datasets, and metrics are logged to MLflow.
         """
-        # raise RuntimeError("Simulated failure for demo")  # NOTE Inject error for demo
+        raise RuntimeError("Simulated failure for demo")  # NOTE Inject error for demo
         self.init_mlflow()
 
         with mlflow.start_run(run_name="retrain") as run:
@@ -414,7 +407,7 @@ class MLFlowCapstoneFlow(FlowSpec):
         self.candidate_rmse_ref = ref_metrics.rmse
 
         # Log results and proceed to promotion gate
-        self.logger.info(f"Retrain done: candidate RMSE={self.candidate_rmse_batch:.4f} (batch), {self.candidate_rmse_ref:.4f} (ref)")
+        self.logger.info(f"Retrain done: candidate RMSE on batch={self.candidate_rmse_batch:.4f}, on reference={self.candidate_rmse_ref:.4f}")
         self.next(self.promotion_gate)
 
     # Step G - Promotion Gate
@@ -507,7 +500,7 @@ class MLFlowCapstoneFlow(FlowSpec):
                 version = self.registry.register_version(self.candidate_model_uri, tags)
                 self.registry.promote_to_champion(version, reason=reason)
                 mlflow.set_tag("promoted_version", version)
-                self.logger.info(f"PROMOTED candidate to champion: version={version}")
+                self.logger.info(f"PROMOTED candidate to champion version {version}")
 
             # Otherwise log rejection and register as rejected candidate for audit trail
             else:
@@ -523,7 +516,7 @@ class MLFlowCapstoneFlow(FlowSpec):
                     version = self.registry.register_version(self.candidate_model_uri, tags)
 
         # Log promotion results and end flow
-        self.logger.info(f"Promotion gate completed: promote={promote} ({reason})")
+        self.logger.info(f"Promotion gate completed: mode {'PROMOTED' if promote else 'REJECTED'} because {reason}")
         self.next(self.end)
 
     # End
