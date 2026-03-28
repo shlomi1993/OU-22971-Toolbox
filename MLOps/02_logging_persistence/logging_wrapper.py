@@ -27,7 +27,7 @@ def main() -> None:
 
     # Anchor everything to *this file's* location (works no matter where you run it from)
     here = Path(__file__).resolve().parent  # .../02_logging_persistence
-    project_root = here.parent              # .../mlflow
+    project_root = here.parent              # .../MLOps
     src_dir = project_root / "01_conda_environments"
     pipeline_py = src_dir / "ml_pipeline.py"
 

@@ -179,6 +179,7 @@ a project already provides an environment file, and your job is to **recreate it
 
 ---
 
+
 ## 6. Prove reproducibility
 
 Delete and recreate the environment from **environment.yml**:
@@ -195,3 +196,4 @@ The output should match the original run.
 
 ---
 
+> **Note:** `uv` is a modern, much faster, alternative to pip. Check it out: https://docs.astral.sh/uv/.
