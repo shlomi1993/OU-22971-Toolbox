@@ -16,7 +16,7 @@ Watch the complete demo walkthrough: [MLOps Capstone Demo](https://drive.google.
 1. **Create / activate the conda environment:**
 
    ```bash
-   conda env create -f environment.yml   # first time only
+   conda env create -f environment.yml  # first time only
    conda activate 22971-mlflow
    ```
 
@@ -54,45 +54,45 @@ Watch the complete demo walkthrough: [MLOps Capstone Demo](https://drive.google.
 The pipeline consists of 9 Metaflow steps that execute sequentially with conditional branching:
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                                                                 │
-│                           start                                 │
-│                             │                                   │
-│                             v                                   │
-│                         load_data                               │
-│                             │                                   │
-│                             v                                   │
-│                      integrity_gate                             │
-│                             │                                   │
-│                ┌────────────┴────────────┐                      │
-│                │                         │                      │
-│          (accepted)                 (rejected)                  │
-│                │                         │                      │
-│                v                         │                      │
-│       feature_engineering                │                      │
-│                │                         │                      │
-│                v                         │                      │
-│         load_champion                    │                      │
-│                │                         │                      │
-│                v                         │                      │
-│           model_gate                     │                      │
-│                │                         │                      │
-│      ┌─────────┴─────────┐               │                      │
-│      │                   │               │                      │
-│ (retrain needed)   (no retrain)          │                      │
-│      │                   │               │                      │
-│      v                   │               │                      │
-│   retrain                │               │                      │
-│      │                   │               │                      │
-│      v                   │               │                      │
-│ promotion_gate           │               │                      │
-│      │                   │               │                      │
-│      └───────────────────┴───────────────┘                      │
-│                          │                                      │
-│                          v                                      │
-│                         end                                     │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────┐
+│                                                           │
+│                           start                           │
+│                             │                             │
+│                             v                             │
+│                         load_data                         │
+│                             │                             │
+│                             v                             │
+│                      integrity_gate                       │
+│                             │                             │
+│                ┌────────────┴────────────┐                │
+│                │                         │                │
+│          (accepted)                  (rejected)           │
+│                │                         │                │
+│                v                         │                │
+│       feature_engineering                │                │
+│                │                         │                │
+│                v                         │                │
+│         load_champion                    │                │
+│                │                         │                │
+│                v                         │                │
+│           model_gate                     │                │
+│                │                         │                │
+│      ┌─────────┴─────────┐               │                │
+│      │                   │               │                │
+│ (retrain needed)   (no retrain)          │                │
+│      │                   │               │                │
+│      v                   │               │                │
+│   retrain                │               │                │
+│      │                   │               │                │
+│      v                   │               │                │
+│ promotion_gate           │               │                │
+│      │                   │               │                │
+│      └───────────────────┴───────────────┘                │
+│                          │                                │
+│                          v                                │
+│                         end                               │
+│                                                           │
+└───────────────────────────────────────────────────────────┘
 ```
 
 **Key Decision Points:**
@@ -227,7 +227,7 @@ python capstone_flow.py run \
 In MLflow UI, verify:
 1. `bootstrap_train` run creates the initial champion model and registers it in Model Registry
 2. `model_gate` run shows champion evaluation metrics with `retrain_recommended=false` and `promotion_recommended=false`
-3. **Inference demo:** `model_gate` run includes `predictions.parquet` artifact showing batch predictions on the new data
+3. `model_gate` run includes `predictions.parquet` artifact with batch inference results - features, predictions, and actual tip amounts
 4. `decision.json` artifacts explain outcomes like `action=batch_accepted` and `action=no_retrain`
 5. No `retrain` or `promotion_gate` runs since no action is needed
 
@@ -243,8 +243,9 @@ python capstone_flow.py run \
 
 In MLflow UI, verify:
 - `model_gate` run shows champion evaluation metrics and `retrain_recommended=true`
+- `model_gate` run includes `predictions.parquet` artifact with champion predictions on the batch
 - `retrain` run displays candidate vs champion metrics comparison such as `candidate_rmse` and `champion_rmse`
-- **Inference demo:** Both `model_gate` and `retrain` runs include `predictions.parquet` artifacts with features, predictions, and actual values
+- `retrain` run includes `predictions.parquet` artifact with candidate predictions - all features, predictions, and actual values
 - `promotion_gate` run includes decision tags and `decision.json` justifying the promotion
 - Model Registry shows `green_taxi_tip_model` with a new model version registered and `@champion` alias updated
 
@@ -264,6 +265,7 @@ This run demonstrates Metaflow's checkpointing and resume capability. By intenti
 In MLflow UI, verify:
 - Flow resumes from the `retrain` step and does not restart from the beginning
 - Previously completed steps like `integrity_gate`, `feature_engineering`, and `model_gate` are not re-executed
+- `retrain` run includes `predictions.parquet` artifact showing candidate model predictions
 - MLflow shows both the failed run and the successful resumed run
 - Final decisions and artifacts reflect the successful resumed execution
 
