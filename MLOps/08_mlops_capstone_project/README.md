@@ -47,6 +47,171 @@ Watch the complete demo walkthrough: [MLOps Capstone Demo](https://drive.google.
 
 5. **Open the MLflow UI** at http://localhost:5001. Look for experiment **`08_capstone_green_taxi`**.
 
+## Pipeline Implementation
+
+### Flow Steps Overview
+
+The pipeline consists of 9 Metaflow steps that execute sequentially with conditional branching:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│                           start                                 │
+│                             │                                   │
+│                             v                                   │
+│                         load_data                               │
+│                             │                                   │
+│                             v                                   │
+│                      integrity_gate                             │
+│                             │                                   │
+│                ┌────────────┴────────────┐                      │
+│                │                         │                      │
+│          (accepted)                 (rejected)                  │
+│                │                         │                      │
+│                v                         │                      │
+│       feature_engineering                │                      │
+│                │                         │                      │
+│                v                         │                      │
+│         load_champion                    │                      │
+│                │                         │                      │
+│                v                         │                      │
+│           model_gate                     │                      │
+│                │                         │                      │
+│      ┌─────────┴─────────┐               │                      │
+│      │                   │               │                      │
+│ (retrain needed)   (no retrain)          │                      │
+│      │                   │               │                      │
+│      v                   │               │                      │
+│   retrain                │               │                      │
+│      │                   │               │                      │
+│      v                   │               │                      │
+│ promotion_gate           │               │                      │
+│      │                   │               │                      │
+│      └───────────────────┴───────────────┘                      │
+│                          │                                      │
+│                          v                                      │
+│                         end                                     │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Key Decision Points:**
+- **integrity_gate**: Branches to `end` if hard rules fail, otherwise continues to `feature_engineering`
+- **model_gate**: Branches to `retrain` if RMSE degradation exceeds threshold, otherwise branches to `end`
+- **Conditional steps**: `retrain` and `promotion_gate` only execute when retraining is triggered
+
+1. **start** - Initialize MLflow tracking and model registry
+2. **load_data** - Load reference and batch datasets from parquet files
+3. **integrity_gate** - Run hard rules and NannyML checks (branches to `end` if batch rejected)
+4. **feature_engineering** - Transform raw data into model-ready features
+5. **load_champion** - Load existing champion or bootstrap new one
+6. **model_gate** - Evaluate champion and decide if retraining needed (branches to `retrain` or `end`)
+7. **retrain** - Train candidate model on combined data (conditional)
+8. **promotion_gate** - Evaluate candidate and promote if better (conditional)
+9. **end** - Log final outcome
+
+### Integrity Gate
+
+The integrity checks run on raw batch data before feature engineering to catch schema and data quality issues early.
+
+**Hard Rules** - fail-fast:
+- Required columns present:
+  -  `lpep_pickup_datetime`
+  -  `trip_distance`
+  -  `fare_amount`
+  -  `tip_amount`
+  -  `passenger_count`
+  -  `PULocationID`
+  -  `DOLocationID`
+  -  `payment_type`
+  -  `trip_type`.
+- Valid datetime ranges for pickup and dropoff times
+- No impossible values: negative distances, negative durations where dropoff before pickup, values outside acceptable ranges
+- Target variable availability for evaluation: tip_amount not more than 50% null
+
+If hard rules fail, the batch is rejected with `action=reject_batch` logged to `decision.json` and the flow stops.
+
+**NannyML Checks** - soft warnings:
+- Missing value drift using NannyML `MissingValuesCalculator`
+- Univariate distribution drift using NannyML `UnivariateDriftCalculator`
+- Multivariate drift using NannyML `DataReconstructionDriftCalculator` with PCA-based reconstruction error
+- Unseen categorical values in `PULocationID`, `DOLocationID` and `payment_type` features
+
+Soft warnings are logged with `integrity_warn=true` tag but do not stop execution. Results are saved to `nannyml_details.json` artifact.
+
+Implementation: See [capstone_lib.py](capstone_lib.py) functions `run_hard_integrity_checks()`, `run_soft_integrity_checks()`, and `run_integrity_checks()`.
+
+### Feature Engineering
+
+Transforms raw taxi trip data into 16 stable model-ready features:
+
+**Temporal features:** `pickup_hour`, `pickup_weekday`, `pickup_month` derived from `lpep_pickup_datetime`  
+**Duration:** `duration_min` calculated from pickup/dropoff timestamps  
+**Original numerics:** `trip_distance`, `fare_amount`, `passenger_count`  
+**Log transforms:** l`og_trip_distance`, `log_fare_amount`, `log_duration_min` for heavy-tailed distributions  
+**Location features:** `PULocationID`, `DOLocationID` as raw IDs plus `PU_frequency`, `DO_frequency` using frequency encoding  
+**Interaction features:** `distance_per_minute` as speed proxy, `fare_per_mile` as price efficiency
+
+Applies consistent preprocessing: clips outliers, handles missing values, filters to credit card transactions with payment_type=1.
+
+Feature schema is logged to MLflow as `feature_cols.json` for reproducibility.
+
+Implementation: See [capstone_lib.py](capstone_lib.py) function `engineer_features()` and [capstone_flow.py](capstone_flow.py) `feature_engineering` step.
+
+### Champion Bootstrap
+
+On first run when no champion exists, the flow automatically:
+1. Trains initial model on reference data using `GradientBoostingRegressor` with 200 estimators and `max_depth=6`
+2. Logs model and metrics to MLflow in `bootstrap_train` run
+3. Registers model version in Model Registry
+4. Sets `@champion` alias to this version
+5. Tags with `bootstrap=true` and `role=champion`
+
+On subsequent runs, loads existing champion from `models:/green_taxi_tip_model@champion`.
+
+Implementation: See [capstone_flow.py](capstone_flow.py) `load_champion` step.
+
+### Evaluation Gate - Model Gate
+
+The champion model is evaluated on the new batch after feature engineering:
+
+1. Load champion from Model Registry via `models:/green_taxi_tip_model@champion`
+2. Generate predictions on engineered batch features
+3. Compute RMSE on batch for champion performance and on reference for baseline performance
+4. Calculate performance degradation: `rmse_increase_pct = (batch_rmse - reference_rmse) / reference_rmse * 100`
+
+**Retrain Decision:**
+- If `rmse_increase_pct > 3%` **AND** integrity warnings present, set `retrain_recommended=true`
+- If `rmse_increase_pct > 5%` with no integrity warnings, set `retrain_recommended=true`
+- Otherwise, no retraining needed - flow ends
+
+Logs champion evaluation metrics, dataset lineage via `mlflow.log_input()`, predictions artifact (`predictions.parquet`), and decision to MLflow.
+
+Implementation: See [capstone_flow.py](capstone_flow.py) `model_gate` step.
+
+### Retrain-Promotion Logic
+
+**Retraining** - conditional step:
+- Triggered only when `retrain_recommended=true` from model gate
+- Trains new candidate model on expanded dataset with reference and batch combined
+- Uses same architecture: `GradientBoostingRegressor` with median imputation
+- Evaluates candidate on **both** batch for performance check and reference for stability check P3
+- Logs candidate metrics, training dataset lineage, and predictions to MLflow
+
+**Promotion Criteria** - all conditions must be met:
+1. **P1 - Valid evaluation:** Candidate has evaluation metrics and dataset lineage logged - guaranteed by flow structure
+2. **P2 - Performance improvement:** `candidate_rmse < champion_rmse * 0.99` for 1% minimum improvement threshold, configurable via `--min-improvement` parameter
+3. **P3 - Stability check:** Candidate doesn't regress on reference by >5% to prevent overfitting to new batch
+4. **P4 - Integrity sanity:** No hard integrity failures on the batch - guaranteed by flow structure
+
+**Promotion Mechanics:**
+- If all criteria met: Register candidate as new model version, update `@champion` alias to point to new version, tag old champion as `previous_champion`, log promotion decision
+- If criteria not met: Still register candidate but tag as `validation_status=rejected` for audit trail, log rejection decision
+
+Decision logged to `decision.json` with all P1-P4 criteria values and detailed reasoning.
+
+Implementation: See [capstone_flow.py](capstone_flow.py) `retrain` and `promotion_gate` steps.
+
 ## Flow Execution
 
 ### Run 1 — Baseline
@@ -62,8 +227,9 @@ python capstone_flow.py run \
 In MLflow UI, verify:
 1. `bootstrap_train` run creates the initial champion model and registers it in Model Registry
 2. `model_gate` run shows champion evaluation metrics with `retrain_recommended=false` and `promotion_recommended=false`
-3. `decision.json` artifacts explain outcomes like `action=batch_accepted` and `action=no_retrain`
-4. No `retrain` or `promotion_gate` runs since no action is needed
+3. **Inference demo:** `model_gate` run includes `predictions.parquet` artifact showing batch predictions on the new data
+4. `decision.json` artifacts explain outcomes like `action=batch_accepted` and `action=no_retrain`
+5. No `retrain` or `promotion_gate` runs since no action is needed
 
 ### Run 2 — Retrain & Promotion
 
@@ -78,6 +244,7 @@ python capstone_flow.py run \
 In MLflow UI, verify:
 - `model_gate` run shows champion evaluation metrics and `retrain_recommended=true`
 - `retrain` run displays candidate vs champion metrics comparison such as `candidate_rmse` and `champion_rmse`
+- **Inference demo:** Both `model_gate` and `retrain` runs include `predictions.parquet` artifacts with features, predictions, and actual values
 - `promotion_gate` run includes decision tags and `decision.json` justifying the promotion
 - Model Registry shows `green_taxi_tip_model` with a new model version registered and `@champion` alias updated
 
