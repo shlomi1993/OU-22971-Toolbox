@@ -66,7 +66,7 @@ The pipeline consists of 9 Metaflow steps that execute sequentially with conditi
 │                             │                             │
 │                ┌────────────┴────────────┐                │
 │                │                         │                │
-│          (accepted)                  (rejected)           │
+│            (accepted)                (rejected)           │
 │                │                         │                │
 │                v                         │                │
 │       feature_engineering                │                │
