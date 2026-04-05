@@ -50,4 +50,4 @@ The emphasis is practical engineering ability, with supporting theoretical under
 
 ## Maintenance
 
-Repo-wide maintenance scripts and helper runners live under [repo_maintenance/README.md](repo_maintenance/README.md).
+Repo-wide maintenance scripts and helper runners live under [repo_maintenance/](repo_maintenance/README.md).
