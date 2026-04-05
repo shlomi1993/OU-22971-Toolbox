@@ -13,7 +13,7 @@ The course is designed to give students hands-on control of modern technical too
 
 The emphasis is practical engineering ability, with supporting theoretical understanding through system architecture concepts.
 
-## Course content (parts)
+## Course content
 
 ### Part 1: [MLOps with MLflow](MLOps/README.md)
 
@@ -39,7 +39,7 @@ The emphasis is practical engineering ability, with supporting theoretical under
 - performance analysis with PyTorch Profiler and Perfetto or Chrome trace viewing
 - distributed GPU training on managed cloud images
 - five parallelism dimensions: data, tensor, pipeline, context, expert
-- capstone project: SimCLR-like distributed training with manual ResNet sharding, per-rank traces, and manual scaling analysis
+
 
 ## Extra resources
 
