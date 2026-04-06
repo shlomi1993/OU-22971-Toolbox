@@ -54,17 +54,13 @@ Later GPU sections reuse the same mental model with faster GPU-oriented communic
 **Key idea:** there is no shared memory across processes.
 Each process owns its own tensors, so any data movement between ranks must be explicit.
 
-### Minimal mental model
+### Minimal example
 
 After running:
 
 ```bash
-torchrun \
-  --standalone \
-  --nproc_per_node=4 \
-  training_job.py
+torchrun --standalone --nproc_per_node=4 training_job.py
 ```
-
 `torchrun` launches four processes on one node and assigns ranks `0`, `1`, `2`, and `3`.
 
 ```text
@@ -158,7 +154,7 @@ What to notice:
 - `all_reduce`, `all_gather`, and `barrier` are more symmetric across ranks
 - by default, these operations block at the call site; async variants exist and we preview them at the end
 
-See the collective diagrams in the [PyTorch tutorial](https://docs.pytorch.org/tutorials/intermediate/dist_tuto.html#collective-communication).
+See the diagrams in the [PyTorch tutorial](https://docs.pytorch.org/tutorials/intermediate/dist_tuto.html#collective-communication).
 
 ---
 
