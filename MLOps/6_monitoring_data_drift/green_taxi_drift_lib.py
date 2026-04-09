@@ -274,6 +274,7 @@ def run_integrity_checks(
     else:
         miss = pd.DataFrame(
             {
+                "column": col,
                 "dtype": df.dtypes.astype(str),
                 "missing_frac": df.isna().mean(),
                 "missing_count": df.isna().sum(),

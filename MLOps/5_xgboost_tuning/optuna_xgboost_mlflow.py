@@ -32,15 +32,17 @@ class OptunaPruningCallback(xgb.callback.TrainingCallback):
         self.trial = trial
         self.data_name = data_name
         self.metric_name = metric_name
+        self.mlflow_metric_name = f"{data_name}_{metric_name}_at_iter"
+        self.last_epoch = None
 
     def after_iteration(self, model, epoch, evals_log):
-        value = evals_log[self.data_name][self.metric_name][-1]
-        self.trial.report(float(value), step=epoch)
+        self.last_epoch = epoch
+        value = float(evals_log[self.data_name][self.metric_name][-1])
+        #Can be slow
+        mlflow.log_metric(self.mlflow_metric_name, value, step=epoch)
+        self.trial.report(value, step=epoch)
 
         if self.trial.should_prune():
-            # side-effect before control-flow interruption
-            mlflow.set_tag("trial_pruned", "TRUE")
-            mlflow.log_metric("pruned_at_iteration", epoch)
             raise optuna.TrialPruned()
 
         return False
@@ -132,6 +134,8 @@ def main():
             }
 
             # One MLflow child run per trial (nested under the parent study run).
+            pruned_exc = None
+            best_auc = None
             with mlflow.start_run(run_name=f"trial_{trial.number:04d}", nested=True):
                 mlflow.set_tag("optuna_trial_number", trial.number)
                 mlflow.set_tag("trial_pruned", "unknown")
@@ -144,44 +148,53 @@ def main():
                 # Reports intermediate valid AUC each boosting round for pruning.
                 pruning_cb = OptunaPruningCallback(trial, data_name="valid", metric_name="auc")
 
-                _booster = xgb.train(
-                    params=params,
-                    dtrain=dtrain,
-                    num_boost_round=args.num_boost_round,
-                    evals=[(dtrain, "train"), (dvalid, "valid")],
-                    evals_result=evals_result,
-                    callbacks=[pruning_cb],
-                    verbose_eval=False,
-                )
-
-                mlflow.set_tag("trial_pruned", "FALSE")
-                valid_auc = np.asarray(evals_result["valid"]["auc"], dtype=float)
-                best_iter = int(valid_auc.argmax())
-                best_auc = float(valid_auc[best_iter])
-
-                mlflow.log_metric("best_val_auc", best_auc)
-                mlflow.log_metric("best_iteration", best_iter)
-                mlflow.log_metric("last_val_auc", float(valid_auc[-1]))
-
-                if args.log_curve:
-                    curve = pd.DataFrame(
-                        {
-                            "iter": np.arange(len(valid_auc)),
-                            "train_auc": np.asarray(evals_result["train"]["auc"], dtype=float),
-                            "valid_auc": valid_auc,
-                        }
+                try:
+                    _booster = xgb.train(
+                        params=params,
+                        dtrain=dtrain,
+                        num_boost_round=args.num_boost_round,
+                        evals=[(dtrain, "train"), (dvalid, "valid")],
+                        evals_result=evals_result,
+                        callbacks=[pruning_cb],
+                        verbose_eval=False,
                     )
-                    curve.to_csv("learning_curve.csv", index=False)
-                    mlflow.log_artifact("learning_curve.csv")
+                except optuna.TrialPruned as exc:
+                    mlflow.set_tag("trial_pruned", "TRUE")
+                    if pruning_cb.last_epoch is not None:
+                        mlflow.log_metric("pruned_at_iteration", pruning_cb.last_epoch)
+                    pruned_exc = exc
+                else:
+                    mlflow.set_tag("trial_pruned", "FALSE")
+                    valid_auc = np.asarray(evals_result["valid"]["auc"], dtype=float)
+                    best_iter = int(valid_auc.argmax())
+                    best_auc = float(valid_auc[best_iter])
 
-                return best_auc
+                    mlflow.log_metric("best_val_auc", best_auc)
+                    mlflow.log_metric("best_iteration", best_iter)
+                    mlflow.log_metric("last_val_auc", float(valid_auc[-1]))
+
+                    if args.log_curve:
+                        curve = pd.DataFrame(
+                            {
+                                "iter": np.arange(len(valid_auc)),
+                                "train_auc": np.asarray(evals_result["train"]["auc"], dtype=float),
+                                "valid_auc": valid_auc,
+                            }
+                        )
+                        curve.to_csv("learning_curve.csv", index=False)
+                        mlflow.log_artifact("learning_curve.csv")
+
+            if pruned_exc is not None:
+                raise pruned_exc
+
+            return best_auc
 
         study.optimize(objective, n_trials=args.n_trials, timeout=args.timeout)
 
         # Log best params to the parent run for easy UI scanning
         mlflow.log_metric("study_best_val_auc", float(study.best_value))
         for k, v in study.best_params.items():
-            mlflow.log_param(f"best_{k}", v)
+            mlflow.log_param(f"final_best_{k}", v)
 
         # Final model:
         # - find best boosting iteration on validation
