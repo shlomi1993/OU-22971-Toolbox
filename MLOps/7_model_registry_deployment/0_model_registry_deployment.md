@@ -24,11 +24,11 @@ Core objects:
 
 ## The workflow
 
-1) Train -> log model (tracking)
-2) Register it -> creates a new **model version** (registry)
-3) Attach metadata (tags + description + eval pointers)
-4) Promote by moving an alias (`candidate -> production`)
-5) Deploy by serving `@production`
+1) Train -> log model (tracking).
+2) Register it -> creates a new **model version** (registry).
+3) Attach metadata (tags + description + eval pointers).
+4) Promote by moving an alias (`candidate -> production`).
+5) Deploy by serving `@production`.
 
 ---
 
