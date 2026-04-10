@@ -6,8 +6,8 @@
 *~
 
 # ---- Python ----
-__pycache__/
-*.py[cod]
+**/__pycache__/
+**/*.py[cod]
 *.pyo
 *.egg-info/
 *.egg
@@ -16,7 +16,7 @@ build/
 .eggs/
 
 # ---- Jupyter ----
-.ipynb_checkpoints/
+**/.ipynb_checkpoints/
 
 # ---- Conda / venv ----
 .conda/
@@ -24,13 +24,46 @@ build/
 venv/
 
 # ---- MLflow (local tracking stores) ----
-mlflow_tracking/
+**/mlflow_tracking/
+**/mlruns/
+**/mlartifacts/
+**/mlflow.db
 
 # ---- Metaflow (local run metadata) ----
 .metaflow/
 
-# ---- Large data files (download locally, don't commit) ----
+# ---- Generated artifacts and runs ----
+**/runs/
+**/artifacts/
+**/outputs/
+**/traces/
+**/artifact.json
+**/classification_report.txt
+**/confusion_matrix.png
+**/gridsearch_results.csv
+**/model.pkl
+**/stdout.log
+**/meta.txt
+**/*.log
+**/run_logs
+
+# ---- Data directories ----
+**/data*/
+**/*_data/
 *.parquet
+
+# Keep the Ray lesson folder tracked while still ignoring generated data under it.
+!Ray/3_ray_data/
+Ray/3_ray_data/_tmp_ray_data_unit_*/
+Ray/3_ray_data/fake_data/
+
+# Distributed DL lesson-generated fake data
+Distributed_DL/2_training_challenges/fake_data/
+
+# Ray cluster scratch space
+Ray/.tmp-ray-host/
+Ray/1_cluster_setup/head_workspace/*
+!Ray/1_cluster_setup/head_workspace/.gitkeep
 
 # ---- OS junk ----
 .DS_Store
@@ -38,3 +71,14 @@ Thumbs.db
 
 # ---- Build artifacts ----
 .dist/
+
+# Maintainer smoke-test logs
+test_logs/
+
+# Live unit material
+/Distributed_DL/5_parallelism_strategies/*
+!/Distributed_DL/5_parallelism_strategies/README.md
+
+# Preserve bundled teaching assets and reference outputs.
+!Distributed_DL/4_ddp_on_cloud_gpus/runpod_output/*
+!Distributed_DL/4_ddp_on_cloud_gpus/colab_output/*
