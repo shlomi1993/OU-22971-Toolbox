@@ -31,7 +31,7 @@ Watch the complete demo walkthrough: [MLOps Capstone Demo](https://drive.google.
 3. **Place data files** (parquet) under `TLC_data/`:
    - [`green_tripdata_2020-01.parquet`](https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2020-01.parquet) (used for reference and baseline batch)
    - [`green_tripdata_2020-04.parquet`](https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2020-04.parquet) (Run 2 — triggers retrain due to COVID-19 shift)
-   - [`green_tripdata_2020-06.parquet`](https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2020-06.parquet) (Run 3 — for resume demo)
+   - [`green_tripdata_2020-08.parquet`](https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2020-08.parquet) (Run 3 — for resume demo)
 
    Or download from: https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page
 
@@ -219,9 +219,7 @@ Implementation: See [capstone_flow.py](capstone_flow.py) `retrain` and `promotio
 This is the initial run that bootstraps the champion model and compares January 2020 to itself by using the same data for both reference and batch. With identical data distributions, no drift or degradation is detected, and no retraining is triggered, and hence no promotion.
 
 ```bash
-python capstone_flow.py run \
-    --reference-path TLC_data/green_tripdata_2020-01.parquet \
-    --batch-path TLC_data/green_tripdata_2020-01.parquet
+python capstone_flow.py run --batch-path TLC_data/green_tripdata_2020-01.parquet
 ```
 
 In MLflow UI, verify:
@@ -236,9 +234,7 @@ In MLflow UI, verify:
 This run uses the April 2020 batch, which exhibits COVID-19 related distribution shifts like fewer trips and different patterns. The model performance degrades beyond the acceptable threshold, triggering automatic retraining. A new candidate model is trained and compared to the champion. If better, it gets promoted to production via the `@champion` alias.
 
 ```bash
-python capstone_flow.py run \
-    --reference-path TLC_data/green_tripdata_2020-01.parquet \
-    --batch-path TLC_data/green_tripdata_2020-04.parquet
+python capstone_flow.py run --ref-path TLC_data/green_tripdata_2020-01.parquet --batch-path TLC_data/green_tripdata_2020-04.parquet
 ```
 
 In MLflow UI, verify:
@@ -253,8 +249,13 @@ In MLflow UI, verify:
 
 This run demonstrates Metaflow's checkpointing and resume capability. By intentionally failing the flow mid-execution and then resuming, you'll see that completed steps are skipped and only the failed step and downstream steps are re-executed. This is critical for production pipelines with expensive computations.
 
-1. Temporarily introduce an error in the `retrain` step by inserting the statement `raise RuntimeError("demo failure")` at the beginning of the retrain step function in the file [`capstone_flow.py`](capstone_flow.py).
-2. Run the flow with a batch that causes retrain. It should fail at the `retrain` step.
+1. Temporarily introduce an error in the `retrain` step by inserting the statement `raise RuntimeError("demo failure")` at the beginning of the `retrain` step function in the file [`capstone_flow.py`](capstone_flow.py).
+2. Run the flow with a batch that causes retrain:
+
+   ```bash
+   python capstone_flow.py run --ref-path TLC_data/green_tripdata_2020-04.parquet --batch-path TLC_data/green_tripdata_2020-08.parquet
+   ```
+   This should fail at the `retrain` step.
 3. Fix the error by removing the inserted line.
 4. Resume:
 

@@ -92,7 +92,7 @@ def flow(tmp_path: Path) -> MLFlowCapstoneFlow:
     f.tracking_uri = str(tmp_path / "mlruns")  # Use local file-based tracking (no server needed)
     f.experiment_name = "test_experiment"
     f.model_name = "test_model"
-    f.reference_path = f"/tmp/ref_{uid}.parquet"
+    f.ref_path = f"/tmp/ref_{uid}.parquet"
     f.batch_path = f"/tmp/batch_{uid}.parquet"
     f.min_improvement = 0.01
     f.logger = logging.getLogger(f.__class__.__name__)
@@ -169,7 +169,7 @@ def test_load_data_loads_ref_and_batch(flow: MLFlowCapstoneFlow, taxi_ref: pd.Da
     taxi_ref.to_parquet(ref_path)
     taxi_batch.to_parquet(batch_path)
 
-    flow.reference_path = str(ref_path)
+    flow.ref_path = str(ref_path)
     flow.batch_path = str(batch_path)
 
     flow.load_data()
@@ -915,7 +915,7 @@ def test_data_edge_case_large_row_count_difference(flow: MLFlowCapstoneFlow, tmp
     large_ref.to_parquet(ref_path)
     small_batch.to_parquet(batch_path)
 
-    flow.reference_path = str(ref_path)
+    flow.ref_path = str(ref_path)
     flow.batch_path = str(batch_path)
 
     flow.load_data()
@@ -1485,7 +1485,7 @@ def test_retrain_logs_training_params(flow: MLFlowCapstoneFlow,
 
     flow.X_ref, flow.y_ref = X_ref, y_ref
     flow.X_batch, flow.y_batch = X_batch, y_batch
-    flow.reference_path = "data/ref.parquet"
+    flow.ref_path = "data/ref.parquet"
     flow.batch_path = "data/batch.parquet"
 
     try:
@@ -1496,7 +1496,7 @@ def test_retrain_logs_training_params(flow: MLFlowCapstoneFlow,
         pass
 
     # Verify paths were set for logging
-    assert flow.reference_path == "data/ref.parquet", "reference_path should be set"
+    assert flow.ref_path == "data/ref.parquet", "reference_path should be set"
     assert flow.batch_path == "data/batch.parquet", "batch_path should be set"
 
 

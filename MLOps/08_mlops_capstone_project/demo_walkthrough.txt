@@ -18,7 +18,7 @@ TERMINAL 1:
 mlflow server --workers 1 --port 5001 --backend-store-uri sqlite:///mlflow_tracking/mlflow.db --default-artifact-root mlflow_tracking/mlruns
 
 TERMINAL 2:
-python capstone_flow.py run --reference-path TLC_data/green_tripdata_2020-01.parquet --batch-path TLC_data/green_tripdata_2020-01.parquet
+python capstone_flow.py run --batch-path TLC_data/green_tripdata_2020-01.parquet
 □ Review interesting logs in the terminal
 
 BROWSER (http://localhost:5001):
@@ -34,7 +34,7 @@ BROWSER (http://localhost:5001):
 PART 3 — RUN 2: RETRAIN + PROMOTION (~2 min)
 
 TERMINAL:
-python capstone_flow.py run --reference-path TLC_data/green_tripdata_2020-01.parquet --batch-path TLC_data/green_tripdata_2020-04.parquet
+python capstone_flow.py run --ref-path TLC_data/green_tripdata_2020-01.parquet --batch-path TLC_data/green_tripdata_2020-04.parquet
 □ Review interesting logs in the terminal
 
 BROWSER:
@@ -54,7 +54,7 @@ STEP 1 — INJECT FAILURE:
 □ Show nothing new in the UI
 
 TERMINAL:
-python capstone_flow.py run --reference-path TLC_data/green_tripdata_2020-01.parquet --batch-path TLC_data/green_tripdata_2020-06.parquet
+python capstone_flow.py run --ref-path TLC_data/green_tripdata_2020-04.parquet --batch-path TLC_data/green_tripdata_2020-08.parquet
 (Watch it fail at retrain step)
 
 STEP 2 — FIX:
@@ -76,7 +76,7 @@ PART 5 — WRAP-UP (~30 sec)
 SUMMARY:
 ✓ Run 1: Baseline - January batch - no retrain (showed predictions.parquet in model_gate)
 ✓ Run 2: Retrain + promotion - April batch - degradation detected (showed predictions.parquet in retrain)
-✓ Run 3: Failure recovery - June batch - showing Metaflow checkpointing
+✓ Run 3: Failure recovery - August batch - showing Metaflow checkpointing
 ✓ All decisions logged with decision.json and MLflow tags
 ✓ Model Registry tracks champion lineage
 ✓ **Inference demo completed:** batch predictions logged as parquet artifacts with actual vs predicted values
