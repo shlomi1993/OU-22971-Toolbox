@@ -252,8 +252,8 @@ def run_integrity_checks(
             }
         )
 
-    tables["schema_presence"] = pd.DataFrame({"missing_column": missing})
-    tables["schema_extra_columns"] = pd.DataFrame({"extra_column": extra})
+    tables["schema_presence"] = pd.DataFrame({"column": missing}, columns=["column"])
+    tables["schema_extra_columns"] = pd.DataFrame({"column": extra}, columns=["column"])
     tables["schema_dtypes"] = pd.DataFrame(
         dtype_rows,
         columns=["column", "expected_dtype", "actual_dtype", "family_ok", "exact_match"],
@@ -267,20 +267,20 @@ def run_integrity_checks(
     # ---- missingness
     if df.shape[1] == 0:
         tables["missingness"] = pd.DataFrame(
-            columns=["dtype", "missing_frac", "missing_count", "n_unique"]
+            columns=["column", "dtype", "missing_frac", "missing_count", "n_unique"]
         )
         metrics["missing_frac_mean"] = float("nan")
         metrics["missing_frac_max"] = float("nan")
     else:
         miss = pd.DataFrame(
             {
-                "column": col,
-                "dtype": df.dtypes.astype(str),
-                "missing_frac": df.isna().mean(),
-                "missing_count": df.isna().sum(),
-                "n_unique": df.nunique(dropna=False),
+                "column": df.columns,
+                "dtype": df.dtypes.astype(str).to_numpy(),
+                "missing_frac": df.isna().mean().to_numpy(),
+                "missing_count": df.isna().sum().to_numpy(),
+                "n_unique": df.nunique(dropna=False).to_numpy(),
             }
-        ).sort_values("missing_frac", ascending=False)
+        ).sort_values("missing_frac", ascending=False, kind="stable")
         tables["missingness"] = miss
         metrics["missing_frac_mean"] = float(np.nanmean(df.isna().mean().to_numpy()))
         metrics["missing_frac_max"] = float(np.nanmax(df.isna().mean().to_numpy()))
@@ -361,10 +361,23 @@ def run_integrity_checks(
 
         tables["datetime_checks"] = pd.DataFrame(
             [
-                {"check": "duration_negative", "frac": metrics["duration_neg_frac"]},
-                {"check": "duration_over_6h", "frac": metrics["duration_over_6h_frac"]},
-                {"check": "duration_nan", "frac": metrics["duration_nan_frac"]},
-            ]
+                {
+                    "column": "duration_min",
+                    "check": "duration_negative",
+                    "bad_frac": metrics["duration_neg_frac"],
+                },
+                {
+                    "column": "duration_min",
+                    "check": "duration_over_6h",
+                    "bad_frac": metrics["duration_over_6h_frac"],
+                },
+                {
+                    "column": "duration_min",
+                    "check": "duration_nan",
+                    "bad_frac": metrics["duration_nan_frac"],
+                },
+            ],
+            columns=["column", "check", "bad_frac"],
         )
 
     # ---- zone validity (optional)
