@@ -1,0 +1,111 @@
+PRE-RECORDING SETUP
+conda activate 22971-mlflow
+./reset.sh
+cd MLOps/08_mlops_capstone_project
+mlflow server --workers 1 --port 5001 --backend-store-uri sqlite:///mlflow_tracking/mlflow.db --default-artifact-root mlflow_tracking/mlruns
+python capstone_flow.py run --batch-path TLC_data/green_tripdata_2020-01.parquet
+python capstone_flow.py run --ref-path TLC_data/green_tripdata_2020-01.parquet --batch-path TLC_data/green_tripdata_2020-04.parquet
+
+
+EXPOSITION (~10 sec)
+טוב אז שלום לכולם אני שלומי בן שושן
+ובסרטון זה אציג את המימוש שלי לפרויקט חיזוי הטיפים על נסיעות במוניות ירוקות בניו יורק,
+ במסגרת הפרק על אמ אל אופס בקורס ארגז הכלים ללמידת מכונה וניתוח נתוני עתק
+
+
+PART 1 — CODE WALKTHROUGH (~3 min)
+SHOW FILES:
+□ README.md - brief
+□ environment.yml - venv already activated
+□ test_capstone_flow.py - only mention
+□ capstone_flow.py - scroll through 9 @step methods - elaborate:
+  □ integrity gate (hard rules + NannyML)
+  □ evaluation gate (champion metrics)
+  □ retrain + promotion decision logic
+□ capstone_lib.py - highlight key functions in parallel to capstone_flow.py
+
+
+PART 2 — RUN 1: BASELINE (~2 min)
+□ Show server was executed on terminal 1
+□ Show first run on terminal 2: python capstone_flow.py run --batch-path TLC_data/green_tripdata_2020-01.parquet
+□ Review interesting logs in the terminal
+□ Go to browser http://localhost:5001, open experiment "08_capstone_green_taxi"
+□ Review runs:
+  □ The workflow completes normally, no retraining, no promotion
+  □ integrity_gate
+    □ TAGS: pipeline_step, batch_path, ref_path, integrity_warn
+    □ METRICS: hard rule metrics
+    □ ARTIFACTS: hard_failures.json, nannyml_details.json, decision.json
+  □ feature_engineering
+    □ TAGS: pipeline_step
+    □ ARTIFACTS: feature_cols.json
+  □ bootstrap_train
+    □ TAGS: pipeline_step, bootstrap, model_uri
+    □ METRICS: train_rmse, train_mae, train_r2
+    □ ARTIFACTS: feature_cols.json, model
+  □ model_gate
+    □ TAGS: pipeline_step, champion_uri, integrity_warn
+    □ METRICS: champion_rmse/mae/r2, baseline_rmse/mae/r2, rmse_increase_pct
+    □ ARTIFACTS: predictions.parquet, decision.json
+□  Review models: Models → green_taxi_tip_model → Version 1 with @champion alias
+
+
+PART 3 — RUN 2: RETRAIN + PROMOTION (~2 min)
+□ Show second run on terminal 2: python capstone_flow.py run --ref-path TLC_data/green_tripdata_2020-01.parquet --batch-path TLC_data/green_tripdata_2020-04.parquet
+□ Review interesting logs in the terminal
+□ Go to browser http://localhost:5001, refresh experiment "08_capstone_green_taxi"
+□ Review runs:
+  □ The workflow detects degradation, retrains, and promotes automatically
+  □ integrity_gate
+    □ TAGS: pipeline_step, batch_path, ref_path, integrity_warn
+    □ METRICS: hard rule metrics
+    □ ARTIFACTS: hard_failures.json, nannyml_details.json, decision.json
+  □ feature_engineering
+    □ TAGS: pipeline_step
+    □ ARTIFACTS: feature_cols.json
+  □ model_gate
+    □ TAGS: pipeline_step, champion_uri, integrity_warn
+    □ METRICS: champion_rmse/mae/r2, baseline_rmse/mae/r2, rmse_increase_pct (check > 5%)
+    □ ARTIFACTS: predictions.parquet, decision.json (action="retrain")
+  □ retrain
+    □ TAGS: pipeline_step, trained_on_batches, model_uri
+    □ METRICS: candidate_rmse/mae/r2, candidate_ref_rmse/mae/r2
+    □ ARTIFACTS: feature_cols.json, predictions.parquet, model
+    □ INFERENCE DEMO: Open predictions.parquet artifact → show columns: features + prediction + actual
+  □ promotion_gate
+    □ TAGS: pipeline_step, promoted_version
+    □ METRICS: champion_rmse_batch, candidate_rmse_batch, candidate_rmse_ref, champion_rmse_ref, min_improvement_pct, ref_regression_pct
+    □ ARTIFACTS: decision.json (with P1-P4 details, action="promote")
+□ Review models: Models → green_taxi_tip_model → Version 2 with @champion alias (Version 1 = previous_champion)
+
+
+PART 4 — RUN 3: FAILURE + RESUME (~2 min)
+□ Inject failure: Add at capstone_flow.py:line 326 (retrain method): raise RuntimeError("Simulated failure for demo")
+□ Show third run on terminal 2: python capstone_flow.py run --ref-path TLC_data/green_tripdata_2020-04.parquet --batch-path TLC_data/green_tripdata_2020-08.parquet
+□ Watch it fail at retrain step in the terminal logs
+□ Fix the code: Remove the raise RuntimeError(...) line
+□ Resume from failed step on terminal 2: python capstone_flow.py resume retrain
+□ Watch it resume from retrain, skipping earlier steps
+□ Go to browser http://localhost:5001, refresh experiment "08_capstone_green_taxi"
+□ Review runs:
+  □ The workflow resumes from failure, completes retrain and promotion
+  □ retrain
+    □ TAGS: pipeline_step, trained_on_batches, model_uri
+    □ METRICS: candidate_rmse/mae/r2, candidate_ref_rmse/mae/r2
+    □ ARTIFACTS: feature_cols.json, predictions.parquet, model
+  □ promotion_gate
+    □ TAGS: pipeline_step, promoted_version (if promoted)
+    □ METRICS: champion_rmse_batch, candidate_rmse_batch, candidate_rmse_ref, champion_rmse_ref, min_improvement_pct, ref_regression_pct
+    □ ARTIFACTS: decision.json (with P1-P4 details, action="promote" or "no_promote")
+  □ Verify: No duplicate integrity_gate/feature_engineering runs (checkpoint resume worked correctly)
+□ Review models: Models → green_taxi_tip_model → Version 3 with @champion alias (if promoted)
+
+
+PART 5 — SUMMARY (~1 min)
+✓ Run 1: Baseline - January batch - no retrain (showed predictions.parquet in model_gate)
+✓ Run 2: Retrain + promotion - April batch - degradation detected (showed predictions.parquet in retrain)
+✓ Run 3: Failure recovery - August batch - showing Metaflow checkpointing
+✓ All decisions logged with decision.json and MLflow tags
+✓ Model Registry tracks champion lineage
+□ The next step is to redeploy, there are guidance in the readme
+✓ I enjoyed and learned a lot
