@@ -13,16 +13,16 @@ The course is designed to give students hands-on control of modern technical too
 
 The emphasis is practical engineering ability, with supporting theoretical understanding through system architecture concepts.
 
-## Course Content (Units)
+## Course Content
 
-### Unit 1: MLOps with MLflow
+### Part 1: [MLOps with MLflow](MLOps/README.md)
 
 - model registry management
 - experiment tracking (parameters, metrics, artifacts)
 - hyperparameter optimization with Optuna integration
 - deployment and monitoring
 
-### Unit 2: Distributed Computing with Ray
+### Part 2: [Distributed Computing with Ray](Ray/README.md)
 
 - async execution, scalability, load management, fault tolerance
 - remote functions and distributed state
@@ -31,21 +31,23 @@ The emphasis is practical engineering ability, with supporting theoretical under
 - distributed model training
 - Ray Data for parallel and sharded data processing
 
-### Unit 3: Distributed Deep Learning with PyTorch Distributed
+### Part 3: [Distributed Deep Learning with PyTorch Distributed](Distributed_DL/README.md)
 
+- dev container setup for torchrun
 - collective communication: broadcast, reduce, gather, scatter
 - parallel training challenges: compute, memory, communication
-- performance analysis with PyTorch Profiler and TensorBoard
-- distributed GPU training
+- performance analysis with PyTorch Profiler and Perfetto or Chrome trace viewing
+- distributed GPU training on managed cloud images
 - five parallelism dimensions: data, tensor, pipeline, context, expert
 
-## Repository Structure
 
-- `MLOps/`: Unit 1 materials and scripts
-
-## Extra Resources
+## Extra resources
 
 - [Full Stack Deep Learning](https://fullstackdeeplearning.com/course/)
 - [Distributed Systems lecture series](https://www.youtube.com/playlist?list=PLeKd45zvjcDFUEv_ohr_HdUFe97RItdiB)
 - [Ultra-Scale Playbook](https://huggingface.co/spaces/nanotron/ultrascale-playbook)
 - [The Missing Semester](https://missing.csail.mit.edu/)
+
+## Maintenance
+
+Repo-wide maintenance scripts and helper runners live under [repo_maintenance/](repo_maintenance/README.md).
