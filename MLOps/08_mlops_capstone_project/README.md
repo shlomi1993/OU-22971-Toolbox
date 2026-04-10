@@ -293,16 +293,14 @@ The server will:
 
 **Test online inference:**
 
-Create a `payload.json` file with sample features (16 columns matching FEATURE_COLS):
+Create a `payload.json` file with sample features (16 columns matching `FEATURE_COLS`):
 
 ```json
 {
   "dataframe_split": {
-    "columns": ["trip_distance", "fare_amount", "passenger_count", "duration_min", 
-                "log_trip_distance", "log_fare_amount", "log_duration_min",
-                "pickup_hour", "pickup_weekday", "pickup_month",
-                "PULocationID", "DOLocationID", "PU_frequency", "DO_frequency",
-                "distance_per_minute", "fare_per_mile"],
+    "columns": ["trip_distance", "fare_amount", "passenger_count", "duration_min", "log_trip_distance",
+                "log_fare_amount", "log_duration_min", "pickup_hour", "pickup_weekday", "pickup_month", "PULocationID",
+                "DOLocationID", "PU_frequency", "DO_frequency", "distance_per_minute", "fare_per_mile"],
     "data": [[2.5, 15.0, 1.0, 12.0, 1.25, 2.77, 2.56, 14.0, 2.0, 1.0, 132.0, 233.0, 0.02, 0.025, 0.21, 6.0]]
   }
 }
