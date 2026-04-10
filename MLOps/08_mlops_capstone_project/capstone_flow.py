@@ -35,17 +35,17 @@ class MLFlowCapstoneFlow(FlowSpec):
         new batch → integrity gate → feature engineering → performance gate → retrain? → promote? -> redeploy server
     """
 
-    reference_path = Parameter(
-        "reference-path",
-        help="Path to reference parquet (e.g. 2020-01)",
-        type=str,
-        required=True,
-    )
     batch_path = Parameter(
         "batch-path",
         help="Path to new batch parquet (e.g. 2020-04)",
         type=str,
         required=True,
+    )
+    ref_path = Parameter(
+        "ref-path",
+        help="Path to reference parquet (e.g. 2020-01)",
+        type=str,
+        default=None,
     )
     tracking_uri = Parameter(
         "tracking-uri",
@@ -110,10 +110,17 @@ class MLFlowCapstoneFlow(FlowSpec):
     def load_data(self):
         """
         Load reference and batch datasets from specified paths.
+        If no reference path is provided, use the batch as the reference (baseline run).
         """
-        # Load reference and batch datasets
-        self.df_ref = load_taxi_table(self.reference_path)
+        # Load batch dataset
         self.df_batch = load_taxi_table(self.batch_path)
+
+        # Load reference dataset, or use batch as reference if not provided
+        if self.ref_path is None:
+            self.logger.info("No reference path provided - using batch as reference (baseline run)")
+            self.df_ref = self.df_batch.copy()
+        else:
+            self.df_ref = load_taxi_table(self.ref_path)
 
         # Log dataset sizes and proceed to integrity gate
         self.logger.info(f"Loaded {len(self.df_ref)} reference rows and {len(self.df_batch)} batch rows")
@@ -133,7 +140,7 @@ class MLFlowCapstoneFlow(FlowSpec):
             self.integrity_run_id = run.info.run_id  # Capture run ID for testing
             mlflow.set_tag("pipeline_step", "integrity_gate")
             mlflow.set_tag("batch_path", self.batch_path)
-            mlflow.set_tag("reference_path", self.reference_path)
+            mlflow.set_tag("ref_path", self.ref_path)
 
             # Perform hard and soft integrity checks
             ok, report = run_integrity_checks(self.df_ref, self.df_batch)
@@ -363,7 +370,7 @@ class MLFlowCapstoneFlow(FlowSpec):
         with mlflow.start_run(run_name="retrain") as run:
             self.retrain_run_id = run.info.run_id  # Capture run ID for testing
             mlflow.set_tag("pipeline_step", "retrain")
-            mlflow.set_tag("trained_on_batches", f"{self.reference_path},{self.batch_path}")
+            mlflow.set_tag("trained_on_batches", f"{self.ref_path},{self.batch_path}")
 
             # Train on merged reference and batch data
             X_train = pd.concat([self.X_ref, self.X_batch], ignore_index=True)
@@ -389,7 +396,7 @@ class MLFlowCapstoneFlow(FlowSpec):
             model_info = mlflow.sklearn.log_model(model, name="model", input_example=self.X_batch.head(5))
             mlflow.set_tag("model_uri", model_info.model_uri)
             mlflow.log_dict({"feature_cols": FEATURE_COLS}, "feature_cols.json")
-            mlflow.log_params({"reference_path": self.reference_path, "batch_path": self.batch_path})
+            mlflow.log_params({"ref_path": self.ref_path, "batch_path": self.batch_path})
 
             # Inference demo: log batch predictions as artifact
             y_pred = model.predict(self.X_batch)
@@ -492,7 +499,7 @@ class MLFlowCapstoneFlow(FlowSpec):
             if promote:
                 tags = {
                     "role": "candidate",
-                    "trained_on_batches": f"{self.reference_path},{self.batch_path}",
+                    "trained_on_batches": f"{self.ref_path},{self.batch_path}",
                     "eval_batch_id": self.batch_path,
                     "validation_status": "approved",
                     "decision_reason": reason,
@@ -508,7 +515,7 @@ class MLFlowCapstoneFlow(FlowSpec):
                 if self.candidate_model_uri:
                     tags = {
                         "role": "candidate",
-                        "trained_on_batches": f"{self.reference_path},{self.batch_path}",
+                        "trained_on_batches": f"{self.ref_path},{self.batch_path}",
                         "eval_batch_id": self.batch_path,
                         "validation_status": "rejected",
                         "decision_reason": reason,
