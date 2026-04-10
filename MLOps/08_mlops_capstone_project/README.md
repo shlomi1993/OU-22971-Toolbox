@@ -270,6 +270,61 @@ In MLflow UI, verify:
 - MLflow shows both the failed run and the successful resumed run
 - Final decisions and artifacts reflect the successful resumed execution
 
+## Model Deployment
+
+The pipeline logs batch predictions as `predictions.parquet` artifacts in the `model_gate` and `retrain` steps. For real-time inference, one can deploy the champion model using MLflow's built-in serving:
+
+**Start the model server:**
+
+```bash
+# Set tracking URI
+export MLFLOW_TRACKING_URI=http://localhost:5001  # macOS/Linux
+# OR
+$env:MLFLOW_TRACKING_URI = "http://localhost:5001"  # Windows PowerShell
+
+# Serve the current champion model
+mlflow models serve -m "models:/green_taxi_tip_model@champion" -p 5002 --env-manager local
+```
+
+The server will:
+- Load the current `@champion` model from the registry
+- Expose a REST API at `http://127.0.0.1:5002/invocations`
+- Keep running until stopped with Ctrl+C
+
+**Test online inference:**
+
+Create a `payload.json` file with sample features (16 columns matching FEATURE_COLS):
+
+```json
+{
+  "dataframe_split": {
+    "columns": ["trip_distance", "fare_amount", "passenger_count", "duration_min", 
+                "log_trip_distance", "log_fare_amount", "log_duration_min",
+                "pickup_hour", "pickup_weekday", "pickup_month",
+                "PULocationID", "DOLocationID", "PU_frequency", "DO_frequency",
+                "distance_per_minute", "fare_per_mile"],
+    "data": [[2.5, 15.0, 1.0, 12.0, 1.25, 2.77, 2.56, 14.0, 2.0, 1.0, 132.0, 233.0, 0.02, 0.025, 0.21, 6.0]]
+  }
+}
+```
+
+Then test:
+
+```bash
+# macOS/Linux
+curl http://127.0.0.1:5002/invocations -H "Content-Type: application/json" --data-binary "@payload.json"
+
+# Windows (PowerShell)
+curl.exe http://127.0.0.1:5002/invocations -H "Content-Type: application/json" --data-binary "@payload.json"
+```
+
+**Redeploy after promotion:**
+
+After the pipeline promotes a new champion:
+1. Stop the server (Ctrl+C in the terminal running it)
+2. Restart with the same command above
+3. The server will now serve the newly promoted champion
+
 ## Project Structure
 
 | File | Purpose |
