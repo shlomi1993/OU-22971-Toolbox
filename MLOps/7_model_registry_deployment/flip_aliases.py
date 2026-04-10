@@ -11,7 +11,7 @@ What this script does:
 This is the entire "deployment switch" in MLflow: alias reassignment.
 
 Example:
-  python flip_aliases.py --tracking-uri http://localhost:5000 --model-name toy_registry_demo_model
+  python flip_aliases.py --tracking-uri http://localhost:5001 --model-name toy_registry_demo_model
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ from mlflow import MlflowClient
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--tracking-uri", type=str, default="http://localhost:5000")
+    p.add_argument("--tracking-uri", type=str, default="http://localhost:5001")
     p.add_argument("--model-name", type=str, default="toy_registry_demo_model")
     args = p.parse_args()
 

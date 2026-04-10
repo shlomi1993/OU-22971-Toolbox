@@ -44,7 +44,7 @@ from green_taxi_drift_lib import (
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
-    p.add_argument("--tracking-uri", type=str, default="http://localhost:5000")
+    p.add_argument("--tracking-uri", type=str, default="http://localhost:5001")
     p.add_argument("--experiment", type=str, default="6_green_taxi_drift")
     p.add_argument("--run-name", default=None)
 

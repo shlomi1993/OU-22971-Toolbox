@@ -1,1 +1,0 @@
-{"columns":["column","bad_frac","bad_count","n_unique"],"data":[["payment_type",0.0099876557,356,5],["store_and_fwd_flag",0.0,0,2],["trip_type",0.0,0,2],["RatecodeID",0.0,0,6]]}

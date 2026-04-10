@@ -20,10 +20,10 @@ Notes:
 - `await_registration_for=300` makes `model_info.registered_model_version` reliably available
   immediately after `log_model` returns.
 - Serving is separate:
-    mlflow models serve -m "models:/<model-name>@production" -p 5001 --env-manager local
+    mlflow models serve -m "models:/<model-name>@production" -p 5002 --env-manager local
 
 Example:
-  python train_register.py --data data/toy_regression.csv --tracking-uri http://localhost:5000
+  python train_register.py --data data/toy_regression.csv --tracking-uri http://localhost:5001
 """
 from __future__ import annotations
 
@@ -58,7 +58,7 @@ def ensure_registered_model(client: MlflowClient, name: str) -> None:
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--data", type=Path, default=Path("data/toy_regression.csv"))
-    p.add_argument("--tracking-uri", type=str, default="http://localhost:5000")
+    p.add_argument("--tracking-uri", type=str, default="http://localhost:5001")
     p.add_argument("--experiment", type=str, default="7_registry_deployment_demo")
     p.add_argument("--model-name", type=str, default="toy_registry_demo_model")
     p.add_argument("--seed", type=int, default=0)

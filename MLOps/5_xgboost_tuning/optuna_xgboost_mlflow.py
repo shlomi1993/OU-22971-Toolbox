@@ -49,7 +49,7 @@ class OptunaPruningCallback(xgb.callback.TrainingCallback):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--tracking-uri", type=str, default="http://localhost:5000")
+    p.add_argument("--tracking-uri", type=str, default="http://localhost:5001")
     p.add_argument("--experiment", type=str, default="5_optuna_tuning")
     p.add_argument("--study-name", type=str, default="xgb_optuna_auc")
     p.add_argument("--seed", type=int, default=0)

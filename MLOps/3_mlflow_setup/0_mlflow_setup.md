@@ -83,12 +83,12 @@ A shared MLflow server (team setup).
 2. Start a local tracking server (run in a shell):
 
    ```powershell
-   mlflow server --workers 1 --port 5000 --backend-store-uri sqlite:///mlflow_tracking/mlflow.db --default-artifact-root mlflow_tracking/mlruns
+   mlflow server --workers 1 --port 5001 --backend-store-uri sqlite:///mlflow_tracking/mlflow.db --default-artifact-root mlflow_tracking/mlruns
    ```
 
 3. Open the UI (in a browser):
 
-   - `http://localhost:5000`
+   - `http://localhost:5001`
 
 What this means:
 
@@ -114,7 +114,7 @@ Copy to `startup_test.py` and run the script:
 import json
 import mlflow
 
-mlflow.set_tracking_uri("http://localhost:5000")  # Which server to use for logging?
+mlflow.set_tracking_uri("http://localhost:5001")  # Which server to use for logging?
 mlflow.set_experiment("3_mlflow_setup")           # Which experiment to log into?
 
 with mlflow.start_run():

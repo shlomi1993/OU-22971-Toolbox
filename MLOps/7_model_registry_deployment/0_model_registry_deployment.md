@@ -108,17 +108,17 @@ client.set_model_version_tag("green_taxi_tip_model", "1", "validation_status", "
 
 1. Set the MLflow tracking URI environment variable:
     ```powershell
-    $env:MLFLOW_TRACKING_URI = "http://localhost:5000"
+    $env:MLFLOW_TRACKING_URI = "http://localhost:5001"
     ```
 2. Start the server:
     ```powershell
-    mlflow models serve -m "models:/green_taxi_tip_model@production" -p 5001 --env-manager local
+    mlflow models serve -m "models:/green_taxi_tip_model@production" -p 5002 --env-manager local
     ```
 
 Online inference:
 
 ```powershell
-curl.exe http://127.0.0.1:5001/invocations -H "Content-Type: application/json"  --data-binary "@payload.json"
+curl.exe http://127.0.0.1:5002/invocations -H "Content-Type: application/json"  --data-binary "@payload.json"
 ```
 
 Note:

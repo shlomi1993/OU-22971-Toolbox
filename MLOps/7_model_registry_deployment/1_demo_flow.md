@@ -9,9 +9,9 @@ conda activate 22971-mlflow
 ```
 2)  Start the tracking server:
 ```powershell
- mlflow server --workers 1 --port 5000 --backend-store-uri sqlite:///mlflow_tracking/mlflow.db --default-artifact-root mlflow_tracking/mlruns
+ mlflow server --workers 1 --port 5001 --backend-store-uri sqlite:///mlflow_tracking/mlflow.db --default-artifact-root mlflow_tracking/mlruns
  ```
-3) Open the UI: http://localhost:5000 -> **Models**.
+3) Open the UI: http://localhost:5001 -> **Models**.
 
 ---
 
@@ -40,11 +40,11 @@ This creates a single registered model family with two versions:
 In a *new terminal* (keep it open):
 1. Set URI environment var:
     ```powershell
-    $env:MLFLOW_TRACKING_URI = "http://localhost:5000"
+    $env:MLFLOW_TRACKING_URI = "http://localhost:5001"
     ```
 2. Serve the model:
     ```powershell
-    mlflow models serve -m "models:/toy_registry_demo_model@production" -p 5001 --env-manager local
+    mlflow models serve -m "models:/toy_registry_demo_model@production" -p 5002 --env-manager local
     ```
 
 ---
@@ -66,7 +66,7 @@ In a *new terminal* (keep it open):
 ### 4.2 `POST /invocations` (online inference)
 In a *new terminal*:
 ```powershell
-curl.exe http://127.0.0.1:5001/invocations -H "Content-Type: application/json" --data-binary "@payload.json"
+curl.exe http://127.0.0.1:5002/invocations -H "Content-Type: application/json" --data-binary "@payload.json"
 ```
 
 ---
@@ -86,7 +86,7 @@ python flip_aliases.py
 Run the same commands again:
 
 ```powershell
-curl.exe http://127.0.0.1:5001/invocations -H "Content-Type: application/json" --data-binary "@payload.json"
+curl.exe http://127.0.0.1:5002/invocations -H "Content-Type: application/json" --data-binary "@payload.json"
 ```
 
 **Expected result:** same predictions as before.
@@ -108,7 +108,7 @@ mlflow models serve -m "models:/toy_registry_demo_model@production" -p 5001 --en
 ## 8) Check inference again
 
 ```powershell
-curl.exe http://127.0.0.1:5001/invocations -H "Content-Type: application/json" --data-binary "@payload.json"
+curl.exe http://127.0.0.1:5002/invocations -H "Content-Type: application/json" --data-binary "@payload.json"
 ```
 
 Now you should get prediction from the new production model.

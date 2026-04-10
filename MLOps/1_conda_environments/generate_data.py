@@ -2,13 +2,10 @@
 """
 generate_data.py
 
-Scripted version of the data-generation logic originally developed
-in an exploratory Jupyter notebook.
+Scripted version of the data-generation logic originally developed in an exploratory Jupyter notebook.
 
-Generates synthetic data, injects controlled corruption, applies a
-manual cleaning step, and saves datasets and plots as reproducible
-artifacts (CSV + PNG). Downstream code should consume the saved files,
-not re-run generation.
+Generates synthetic data, injects controlled corruption, applies a manual cleaning step, and saves datasets and plots as
+reproducible artifacts (CSV + PNG). Downstream code should consume the saved files, not re-run generation.
 
 Outputs (written to ./data/):
 - original.csv / original.png
@@ -24,10 +21,11 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+
 from sklearn.datasets import make_blobs
 
 
-def generate_data(seed: int):
+def generate_data(seed: int) -> tuple[np.ndarray, np.ndarray]:
     X, y = make_blobs(
         n_samples=600,
         centers=2,
@@ -38,7 +36,8 @@ def generate_data(seed: int):
     return X, y
 
 
-def make_dirty(X, y, seed, n_outliers=18, n_nans=10, label_noise=0.05):
+def make_dirty(X: np.ndarray, y: np.ndarray, seed: int, n_outliers: int = 18, n_nans: int = 10,
+               label_noise: float = 0.05) -> tuple[np.ndarray, np.ndarray]:
     rng = np.random.default_rng(seed)
 
     X_dirty = X.copy()
@@ -57,7 +56,7 @@ def make_dirty(X, y, seed, n_outliers=18, n_nans=10, label_noise=0.05):
     return X_dirty, y_dirty
 
 
-def manual_clean(X_dirty, y_dirty, cutoff):
+def manual_clean(X_dirty: np.ndarray, y_dirty: np.ndarray, cutoff: float) -> tuple[np.ndarray, np.ndarray]:
     mask = (
         ~np.isnan(X_dirty).any(axis=1)
         & (np.abs(X_dirty[:, 0]) < cutoff)
@@ -66,7 +65,7 @@ def manual_clean(X_dirty, y_dirty, cutoff):
     return X_dirty[mask], y_dirty[mask]
 
 
-def to_df(X, y):
+def to_df(X: np.ndarray, y: np.ndarray) -> pd.DataFrame:
     return pd.DataFrame(
         {
             "x1": X[:, 0],
@@ -76,7 +75,7 @@ def to_df(X, y):
     )
 
 
-def save_scatter(X, y, title, path):
+def save_scatter(X: np.ndarray, y: np.ndarray, title: str, path: str):
     plt.figure()
     plt.scatter(X[:, 0], X[:, 1], c=y, s=20)
     plt.title(title)
@@ -85,7 +84,7 @@ def save_scatter(X, y, title, path):
     plt.close()
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--cutoff", type=float, default=10.0)
@@ -112,7 +111,7 @@ def main():
 
     save_scatter(
         X_clean, y_clean,
-        title=f"Cleaned data (cutoff = +/-{args.cutoff})",
+        title=f"Cleaned data (cutoff = ±{args.cutoff})",
         path=os.path.join(args.outdir, "clean.png"),
     )
 

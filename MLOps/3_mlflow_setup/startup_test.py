@@ -1,7 +1,7 @@
 import json
 import mlflow
 
-mlflow.set_tracking_uri("http://localhost:5000")  # Which server to use for logging?
+mlflow.set_tracking_uri("http://localhost:5001")  # Which server to use for logging?
 mlflow.set_experiment("3_mlflow_setup")           # Which experiment to log into?
 
 with mlflow.start_run():

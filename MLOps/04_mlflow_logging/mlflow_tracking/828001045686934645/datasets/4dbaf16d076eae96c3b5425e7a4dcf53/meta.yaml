@@ -1,8 +1,0 @@
-digest: 1f16cb38
-name: dataset
-profile: '{"num_rows": 572, "num_elements": 1716}'
-schema: '{"mlflow_colspec": [{"type": "double", "name": "x1", "required": true}, {"type":
-  "double", "name": "x2", "required": true}, {"type": "long", "name": "y", "required":
-  true}]}'
-source: '{"uri": "data1/clean.csv"}'
-source_type: local

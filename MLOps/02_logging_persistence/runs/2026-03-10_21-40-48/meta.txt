@@ -1,3 +1,0 @@
-script=/Users/shlomibenshushan/Repositories/OU-22971-Toolbox/MLOps/01_conda_environments/ml_pipeline.py
-data=/Users/shlomibenshushan/Repositories/OU-22971-Toolbox/MLOps/01_conda_environments/data/clean.csv
-run_id=2026-03-10_21-40-48
