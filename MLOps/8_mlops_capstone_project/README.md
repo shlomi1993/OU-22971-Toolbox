@@ -9,7 +9,7 @@ New batch → integrity checks → feature engineering → performance evaluatio
 
 ## 🎥 Demo Video
 
-Watch the complete demo walkthrough: [MLOps Capstone Demo](https://drive.google.com/file/d/1Oo6qLciW6hLclkFiXSVzqebLdbAvpDz6/view?usp=sharing)
+Watch the complete demo walkthrough: [MLOps Capstone Demo](https://drive.google.com/file/d/1-6FRI-oOrrfWkn62MOwl5lNVNByvqsKG/view?usp=sharing)
 
 ## Setup
 
