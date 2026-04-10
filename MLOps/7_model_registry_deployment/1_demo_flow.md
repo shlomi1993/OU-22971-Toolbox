@@ -39,10 +39,23 @@ This creates a single registered model family with two versions:
 
 In a *new terminal* (keep it open):
 1. Set URI environment var:
+   
+   Powershell:
     ```powershell
     $env:MLFLOW_TRACKING_URI = "http://localhost:5000"
     ```
-2. Serve the model:
+    bash:
+   ```bash
+   export MLFLOW_TRACKING_URI="http://localhost:5000"
+   ```
+2. **Linux only:** rollback an incompatible dependency:
+   
+   bash:
+   ```bash
+   pip install "starlette<1.0"
+   ```
+
+3. Serve the model:
     ```powershell
     mlflow models serve -m "models:/toy_registry_demo_model@production" -p 5001 --env-manager local
     ```
@@ -65,8 +78,15 @@ In a *new terminal* (keep it open):
 ```
 ### 4.2 `POST /invocations` (online inference)
 In a *new terminal*:
+
+Powershell:
 ```powershell
 curl.exe http://127.0.0.1:5001/invocations -H "Content-Type: application/json" --data-binary "@payload.json"
+```
+
+bash:
+```bash
+curl http://127.0.0.1:5001/invocations -H "Content-Type: application/json" --data-binary "@payload.json"
 ```
 
 ---
