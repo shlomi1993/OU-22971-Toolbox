@@ -25,7 +25,7 @@ services:
     command: >
       bash -lc "source /opt/conda/etc/profile.d/conda.sh &&
       conda activate 22971-ray &&
-      ray start --head --node-ip-address=$(hostname -i) --port=6379 --dashboard-host=0.0.0.0 --dashboard-port=8265 --resources='{\"head\": 1}' --block"
+      ray start --head --node-ip-address=$(hostname -i) --port=6379 --dashboard-host=0.0.0.0 --dashboard-port=8265 --resources='{\"dragon balls\": 7}' --block"
 
   ray-worker:
     build:
@@ -39,4 +39,4 @@ services:
     command: >
       bash -lc "source /opt/conda/etc/profile.d/conda.sh &&
       conda activate 22971-ray &&
-      ray start --node-ip-address=$(hostname -i) --address=ray-head:6379 --resources='{\"worker\": 1}' --block"
+      ray start --node-ip-address=$(hostname -i) --address=ray-head:6379 --resources='{\"spice melange\": 1}' --block"
