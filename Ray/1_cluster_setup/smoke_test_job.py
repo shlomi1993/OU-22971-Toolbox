@@ -1,7 +1,7 @@
-from pathlib import Path
 import socket
-
 import ray
+
+from pathlib import Path
 
 
 def ping(label: str, i: int) -> str:
@@ -28,19 +28,14 @@ if __name__ == "__main__":
     ray.init(address="auto")
 
     print(f"Driver connected from {socket.gethostname()}", flush=True)
-    results = ray.get(
-        [
-            ping_head.remote(0),
-            ping_head.remote(1),
-            ping_worker.remote(2),
-            ping_worker.remote(3),
-        ]
-    )
+    results = ray.get([
+        ping_head.remote(0),
+        ping_head.remote(1),
+        ping_worker.remote(2),
+        ping_worker.remote(3)
+    ])
     print("Results:", results, flush=True)
 
     out_path = Path("/workspace/smoke_test_output.txt")
-    out_path.write_text(
-        "Ray smoke test succeeded\n" + "\n".join(results) + "\n",
-        encoding="utf-8",
-    )
+    out_path.write_text( "Ray smoke test succeeded\n" + "\n".join(results) + "\n", encoding="utf-8")
     print(f"Wrote artifact to {out_path}", flush=True)
