@@ -23,7 +23,133 @@ We will **use Docker** to spin up a small local Ray (virtual) cluster with:
 
 That gives us a dedicated place for small output files without mixing them into the lesson files themselves.
 
-### 0. `Dockerfile`
+### 1. Build and start the cluster
+
+Build the image:
+
+```powershell
+docker compose build
+```
+
+Start a cluster with **1 worker**:
+
+```powershell
+docker compose up -d --scale ray-worker=1
+```
+
+Want more workers? Change only the scale value:
+
+```powershell
+docker compose up -d --scale ray-worker=3
+```
+
+---
+
+### 2. Check that the cluster is alive
+
+Open the dashboard:
+
+```text
+http://localhost:8265
+```
+
+Open Docker Desktop and check that:
+- `ray-head` is running
+- the `ray-worker` containers are running
+- container logs do not show startup failures
+
+You can also inspect the cluster from the head container:
+
+```powershell
+docker exec ray-head bash -lc "source /opt/conda/etc/profile.d/conda.sh && conda activate 22971-ray && ray status"
+```
+
+---
+
+### 3. Submit a smoke-test job
+
+The file `smoke_test_job.py` in this folder:
+- connects to the cluster
+- launches `make_wish` tasks that request the head-only `dragon balls` resource and `hyperspace_jump` tasks that request the worker-only `spice melange` resource
+- prints output to the console
+- writes a small file to `/workspace/smoke_test_output.txt`
+
+
+```powershell
+ray job submit --address http://127.0.0.1:8265 --working-dir . -- python smoke_test_job.py
+```
+
+What this does:
+- uploads the current working directory to the cluster
+- runs the script on the head node
+- streams `stdout` and `stderr` back to your terminal
+
+In this setup, with `ray job submit`, the driver process runs on the head container, not on your host machine.
+
+If all is well, you should see:
+- driver output
+- task output showing `make_wish` using `dragon balls` and `hyperspace_jump` using `spice melange`
+- a message saying the artifact file was written
+
+---
+
+### 4. Get the output file
+
+The job writes:
+
+```text
+/workspace/smoke_test_output.txt
+```
+
+Inside Docker, `/workspace` is the mounted `head_workspace` folder on the **head** container.
+So on the host machine, the same file appears here:
+
+```text
+head_workspace/smoke_test_output.txt
+```
+
+---
+
+### 5. Async submission and log inspection
+
+For longer jobs, submit without waiting:
+
+```powershell
+ray job submit --address http://127.0.0.1:8265 --working-dir . --no-wait -- python smoke_test_job.py
+```
+
+Ray prints a submission ID.
+Use it later with:
+
+```powershell
+ray job status --address http://127.0.0.1:8265 <submission_id>
+```
+
+```powershell
+ray job logs --address http://127.0.0.1:8265 <submission_id>
+```
+
+---
+
+### 6. Stop the cluster
+
+```powershell
+docker compose down
+```
+
+## Virtual cluster use
+
+Use this Docker setup to test distributed behavior on one machine:
+
+- develop locally with `ray.init()`
+- test cluster packaging and placement with `ray job submit` on a virtual cluster
+- benchmark on a real physical cluster
+
+This virtual cluster is useful for correctness and workflow testing, but not for trustworthy multi-node performance numbers, because all containers still share one physical machine.
+
+## File Walkthrough
+
+### 1. `Dockerfile`
 
 ```dockerfile
 # Base Linux image with Miniconda already installed.
@@ -46,7 +172,7 @@ We pin the base image tag so this setup stays reproducible.
 
 ---
 
-### 1. `docker-compose.yml`
+### 2. `docker-compose.yml`
 
 ```yaml
 services:
@@ -76,7 +202,7 @@ services:
     command: >
       bash -lc "source /opt/conda/etc/profile.d/conda.sh &&
       conda activate 22971-ray &&
-      ray start --head --node-ip-address=$(hostname -i) --port=6379 --dashboard-host=0.0.0.0 --dashboard-port=8265 --resources='{\"head\": 1}' --block"
+      ray start --head --node-ip-address=$(hostname -i) --port=6379 --dashboard-host=0.0.0.0 --dashboard-port=8265 --resources='{\"dragon balls\": 7}' --block"
 
   ray-worker:
     build:
@@ -90,10 +216,8 @@ services:
     command: >
       bash -lc "source /opt/conda/etc/profile.d/conda.sh &&
       conda activate 22971-ray &&
-      ray start --node-ip-address=$(hostname -i) --address=ray-head:6379 --resources='{\"worker\": 1}' --block"
+      ray start --node-ip-address=$(hostname -i) --address=ray-head:6379 --resources='{\"spice melange\": 1}' --block"
 ```
-
-### Walkthrough
 
 #### `services`
 We define two service types:
@@ -105,8 +229,7 @@ The Docker build uses:
 - `dockerfile: 1_cluster_setup/Dockerfile` so we can keep the Docker-specific files in this folder
 
 #### `healthcheck` + `depends_on`
-The head container now publishes a healthcheck that runs `ray status` against its local GCS address.
-That is more reliable than plain container ordering because Docker can wait until the Ray head is actually accepting connections.
+The head container publishes a healthcheck that runs `ray status` against its local GCS address.
 
 The worker uses:
 1. `depends_on: condition: service_healthy`
@@ -122,11 +245,14 @@ Each container runs a shell command that:
 3. starts the appropriate Ray process
 4. stays alive via `--block`
 
-We also attach one small custom resource per node type:
-- the head advertises `head`
-- workers advertise `worker`
+We also attach one small custom resource per node type for the smoke test:
+- the head advertises `7` units of `dragon balls`
+- each worker advertises `1` unit of `spice melange`
 
-That lets the smoke test pin specific tasks at the decorator level so we can prove work lands on both node types.
+The resources are logical labels defined by the user, not built-in Ray concepts. The scheduler only cares that a task requests a label and some node advertises that label.
+In the current smoke test, `make_wish` requests all `7` units of `dragon balls`, while `hyperspace_jump` requests only `0.01` units of `spice melange`.
+
+More details [here](https://docs.ray.io/en/latest/ray-core/scheduling/resources.html).
 
 #### `ray-head`
 Starts the cluster head.
@@ -152,8 +278,7 @@ volumes:
 We mount only `head_workspace` into the **head** container:
 - files written to `/workspace` by the driver appear on the host under `1_cluster_setup/head_workspace`
 - only the head has this bind mount; a worker writing to its own local filesystem writes inside that worker container, not into `head_workspace`
-- this keeps generated artifacts separate from the markdown, compose file, and lesson scripts
-- job submission still works because `ray job submit --working-dir .` uploads the current folder to the cluster through the Jobs API; it does **not** rely on this bind mount
+- `ray job submit --working-dir .` uploads the current folder to the cluster through the Jobs API; it does **not** rely on this bind mount
 
 The worker nodes do **not** need a host mount for cluster communication.
 
@@ -171,130 +296,3 @@ The Ray cluster address `6379` still exists, but it is only used inside the Dock
 Ray uses **shared memory** heavily for passing objects between processes on the same node.
 If `/dev/shm` is too small, performance degrades and large objects may fail in awkward ways.
 So we explicitly reserve a larger shared-memory segment for each container to keep Ray's object store in `/dev/shm` instead of falling back to the disk based `/tmp`.
-
----
-
-### 2. Build and start the cluster
-
-Build the image:
-
-```powershell
-docker compose build
-```
-
-Start a cluster with **1 worker**:
-
-```powershell
-docker compose up -d --scale ray-worker=1
-```
-
-Want more workers? Change only the scale value:
-
-```powershell
-docker compose up -d --scale ray-worker=3
-```
-
----
-
-### 3. Check that the cluster is alive
-
-Open the dashboard:
-
-```text
-http://localhost:8265
-```
-
-Open Docker Desktop and check that:
-- `ray-head` is running
-- the `ray-worker` containers are running
-- container logs do not show startup failures
-
-You can also inspect the cluster from the head container:
-
-```powershell
-docker exec ray-head bash -lc "source /opt/conda/etc/profile.d/conda.sh && conda activate 22971-ray && ray status"
-```
-
----
-
-### 4. Submit a smoke-test job
-
-The file `smoke_test_job.py` in this folder:
-- connects to the cluster
-- launches a few tiny tasks on both the head and the worker
-- prints output to the console
-- writes a small file to `/workspace/smoke_test_output.txt`
-
-Submit it from PowerShell:
-
-```powershell
-ray job submit --address http://127.0.0.1:8265 --working-dir . -- python smoke_test_job.py
-```
-
-What this does:
-- uploads the current working directory to the cluster
-- runs the script on the head node
-- streams `stdout` and `stderr` back to your terminal
-
-In this setup, with `ray job submit`, the driver process runs on the head container, not on your host machine.
-
-If all is well, you should see:
-- driver output
-- task output from both node types
-- a message saying the artifact file was written
-
----
-
-### 5. Get the output file
-
-The job writes:
-
-```text
-/workspace/smoke_test_output.txt
-```
-
-Inside Docker, `/workspace` is the mounted `head_workspace` folder on the **head** container.
-So on the host machine, the same file appears here:
-
-```text
-head_workspace/smoke_test_output.txt
-```
-
----
-
-### 6. Inspect logs later
-
-For longer jobs, submit without waiting:
-
-```powershell
-ray job submit --address http://127.0.0.1:8265 --working-dir . --no-wait -- python smoke_test_job.py
-```
-
-Ray prints a submission ID.
-Use it later with:
-
-```powershell
-ray job status --address http://127.0.0.1:8265 <submission_id>
-```
-
-```powershell
-ray job logs --address http://127.0.0.1:8265 <submission_id>
-```
-
----
-
-### 7. Stop the cluster
-
-```powershell
-docker compose down
-```
-
-## Virtual cluster use
-
-Use this Docker setup to test distributed behavior on one machine:
-
-- develop locally with `ray.init()`
-- test cluster packaging and placement with `ray job submit` on this virtual cluster
-- benchmark on a real physical cluster
-
-This virtual cluster is useful for correctness and workflow testing, but not for trustworthy multi-node performance numbers, because all containers still share one physical machine.

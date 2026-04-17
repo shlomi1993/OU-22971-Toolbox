@@ -4,24 +4,27 @@ import ray
 from pathlib import Path
 
 
-def ping(label: str, i: int) -> str:
+def announce_task(task_name: str, label: str, amount: float, i: int) -> str:
     host = socket.gethostname()
-    msg = f"{label} task {i} ran on {host}"
+    msg = (
+        f"{task_name} requested {amount:g} units of resource '{label}' "
+        f"for task {i} and ran on {host}"
+    )
     print(msg, flush=True)
     return msg
 
 
-# Demo-only instrumentation: these custom resources make placement visible in the smoke test.
-# Requires the custom "head" resource, which exists only on the head node.
-@ray.remote(resources={"head": 0.001})
-def ping_head(i: int) -> str:
-    return ping("head", i)
+# Demo-only instrumentation: these are arbitrary user-defined resource labels.
+# We attach them in docker-compose.yml so placement is easy to see in the smoke test.
+@ray.remote(resources={"dragon balls": 7.0})
+def make_wish(i: int) -> str:
+    return announce_task("make_wish", "dragon balls", 7.0, i)
 
 
-# Requires the custom "worker" resource, which exists only on worker nodes.
-@ray.remote(resources={"worker": 0.001})
-def ping_worker(i: int) -> str:
-    return ping("worker", i)
+# This label exists only on the worker containers because we chose to advertise it there.
+@ray.remote(resources={"spice melange": 0.01})
+def hyperspace_jump(i: int) -> str:
+    return announce_task("hyperspace_jump", "spice melange",0.01, i)
 
 
 if __name__ == "__main__":
@@ -29,10 +32,10 @@ if __name__ == "__main__":
 
     print(f"Driver connected from {socket.gethostname()}", flush=True)
     results = ray.get([
-        ping_head.remote(0),
-        ping_head.remote(1),
-        ping_worker.remote(2),
-        ping_worker.remote(3)
+        make_wish.remote(0),
+        make_wish.remote(1),
+        hyperspace_jump.remote(2),
+        hyperspace_jump.remote(3),
     ])
     print("Results:", results, flush=True)
 
