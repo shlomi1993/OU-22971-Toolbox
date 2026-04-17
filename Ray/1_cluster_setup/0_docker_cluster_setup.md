@@ -252,6 +252,8 @@ We also attach one small custom resource per node type for the smoke test:
 The resources are logical labels defined by the user, not built-in Ray concepts. The scheduler only cares that a task requests a label and some node advertises that label.
 In the current smoke test, `make_wish` requests all `7` units of `dragon balls`, while `hyperspace_jump` requests only `0.01` units of `spice melange`.
 
+More details [here](https://docs.ray.io/en/latest/ray-core/scheduling/resources.html).
+
 #### `ray-head`
 Starts the cluster head.
 
