@@ -6,16 +6,13 @@ from pathlib import Path
 
 def announce_task(task_name: str, label: str, amount: float, i: int) -> str:
     host = socket.gethostname()
-    msg = (
-        f"{task_name} requested {amount:g} units of resource '{label}' "
-        f"for task {i} and ran on {host}"
-    )
+    msg = f"{task_name.capitalize()} requested {amount:g} units of resource '{label}' for task {i} and ran on {host}"
     print(msg, flush=True)
     return msg
 
 
 # Demo-only instrumentation: these are arbitrary user-defined resource labels.
-# We attach them in docker-compose.yml so placement is easy to see in the smoke test.
+# We attach them in `docker-compose.yml` so placement is easy to see in the smoke test.
 @ray.remote(resources={"dragon balls": 7.0})
 def make_wish(i: int) -> str:
     return announce_task("make_wish", "dragon balls", 7.0, i)
