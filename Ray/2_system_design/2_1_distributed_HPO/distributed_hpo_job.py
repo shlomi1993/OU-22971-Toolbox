@@ -21,7 +21,7 @@ SEED = 0
 NUM_BOOST_ROUND = 60
 TEST_SIZE = 0.20
 N_FOLDS = 3
-N_TRIALS = 12
+N_TRIALS = 20  # Increased to see more pruning
 MAX_CONCURRENT = 4
 
 # Suppress Optuna logging for cleaner output
@@ -30,11 +30,11 @@ optuna.logging.set_verbosity(optuna.logging.WARNING)
 
 def suggest_xgb_params(trial: optuna.trial.Trial) -> dict:
     return {
-        "max_depth": trial.suggest_int("max_depth", 2, 6),
-        "eta": trial.suggest_float("eta", 1e-2, 0.3, log=True),
-        "subsample": trial.suggest_float("subsample", 0.6, 1.0),
-        "colsample_bytree": trial.suggest_float("colsample_bytree", 0.6, 1.0),
-        "lambda": trial.suggest_float("lambda", 1e-3, 10.0, log=True),
+        "max_depth": trial.suggest_int("max_depth", 1, 8),  # Wider range: shallow (1) to deep (8)
+        "eta": trial.suggest_float("eta", 1e-3, 0.5, log=True),  # Include very slow learners
+        "subsample": trial.suggest_float("subsample", 0.3, 1.0),  # Allow aggressive subsampling
+        "colsample_bytree": trial.suggest_float("colsample_bytree", 0.3, 1.0),  # Allow aggressive feature sampling
+        "lambda": trial.suggest_float("lambda", 1e-4, 50.0, log=True),  # Include very high regularization
     }
 
 
@@ -100,7 +100,7 @@ class PruningStudyActor:
 
         completed_scores = [r["score"] for r in self.results_by_trial.values()]
         median_score = np.median(completed_scores)
-        return intermediate_value < median_score * 0.98  # Prune if 2% below median (fresh state)
+        return intermediate_value < median_score * 0.995  # Prune if 0.5% below median (fresh state)
 
     def report_trial_result(self, trial_id: int, score: float, best_iteration: int, was_pruned: bool = False) -> None:
         self.results_by_trial[trial_id] = {"score": float(score), "best_iteration": int(best_iteration)}
@@ -199,7 +199,7 @@ def run_trial_with_local_pruning(trial_spec: dict[str, Any], fold_bundle_refs: l
         # Local pruning decision (no actor query)
         if baseline > 0:
             intermediate_score = float(np.mean(fold_scores))
-            if intermediate_score < baseline * 0.98:  # Same threshold, stale baseline
+            if intermediate_score < baseline * 0.995:  # Same threshold, stale baseline
                 return {
                     "trial_id": trial_spec["trial_id"],
                     "score": intermediate_score,
@@ -273,14 +273,14 @@ def main() -> None:
         }
         fold_bundle_refs.append(ray.put(bundle))
 
-    print("\n[Actor-based pruning] Fresh state from completed trials")
+    print("\n[Actor-based pruning]")
     t0 = time.perf_counter()
     actor_study = PruningStudyActor.remote(seed=SEED)
     actor_snapshot = run_study(actor_study, fold_bundle_refs, run_trial_with_actor_pruning, use_local_pruning=False)
     actor_time = time.perf_counter() - t0
     print(f"Score: {actor_snapshot['best_score']:.5f} | Pruned: {actor_snapshot['pruned']}/{actor_snapshot['completed']} | Queries: {actor_snapshot['actor_queries']} | Time: {actor_time:.2f}s")
 
-    print("\n[Local pruning] Stale baseline from trial start")
+    print("\n[Local pruning]")
     t0 = time.perf_counter()
     local_study = LocalPruningActor.remote(seed=SEED)
     local_snapshot = run_study(local_study, fold_bundle_refs, run_trial_with_local_pruning, use_local_pruning=True)
@@ -290,7 +290,11 @@ def main() -> None:
     pruning_diff = actor_snapshot['pruned'] - local_snapshot['pruned']
     print(f"\n[Tradeoff] Actor pruned {abs(pruning_diff)} {'more' if pruning_diff > 0 else 'fewer'} trials (fresh state) but took {actor_time/local_time:.1f}x longer ({actor_snapshot['actor_queries']} network calls)")
     if actor_snapshot['pruned'] == 0 and local_snapshot['pruned'] == 0:
-        print("Note: No pruning occurred - trials too consistent. Aggressive threshold (2% below median) may trigger with more trials.")
+        print("  Note: No pruning occurred - trials too consistent.")
+    elif pruning_diff > 0:
+        print(f"  Key insight: Fresh state enabled {pruning_diff} more early stops than stale baseline.")
+    elif pruning_diff < 0:
+        print(f"  Unexpected: Stale baseline pruned more (timing effects or threshold sensitivity).")
 
     ray.shutdown()
 
