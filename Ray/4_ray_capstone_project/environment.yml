@@ -1,0 +1,14 @@
+name: 22971-ray-capstone
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - numpy=2.4.*
+  - pandas=2.3.*
+  - pyarrow
+  - ipykernel
+  - pytest
+  - pip
+  - pip:
+      - ray[default]==2.54.*
