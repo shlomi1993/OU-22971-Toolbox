@@ -22,3 +22,5 @@ rm -rf "$PROJECT_DIR/prepared"
 
 echo "Removing output artifacts..."
 rm -rf "$PROJECT_DIR/output"
+
+echo "Reset complete."
