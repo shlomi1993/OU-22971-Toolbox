@@ -210,7 +210,7 @@ class ZoneActor:
         Returns:
             bool: True if a decision exists (reported or already accepted).
         """
-        return tick_id in self.accepted_decisions or (self.reported_decision and self.reported_decision.tick_id == tick_id)
+        return tick_id in self.accepted_decisions or (self.reported_decision is not None and self.reported_decision.tick_id == tick_id)
 
     def write_decision(self, tick_id: int, decision: str, used_fallback: bool = False) -> str:
         """

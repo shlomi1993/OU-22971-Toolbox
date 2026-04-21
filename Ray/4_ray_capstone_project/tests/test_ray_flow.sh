@@ -41,7 +41,7 @@ fi
 echo ""
 echo ">>> Step 2: Prepare replay assets"
 python prepare.py \
-    --reference-parquet "$REF_FILE" \
+    --ref-parquet "$REF_FILE" \
     --replay-parquet "$REPLAY_FILE" \
     --output-dir "$PREPARED_DIR" \
     --n-zones 20 \
