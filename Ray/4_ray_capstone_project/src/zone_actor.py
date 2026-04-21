@@ -4,7 +4,7 @@ import ray
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from src.tlc import FALLBACK_POLICY_PREVIOUS, Decision, RoundedDataclass, RunConfig
 
@@ -23,7 +23,7 @@ class WriteStatus(str, Enum):
 
 
 @dataclass
-class ZoneDecision:
+class ZoneDecision(RoundedDataclass):
     """
     Result from a scoring task.
     """

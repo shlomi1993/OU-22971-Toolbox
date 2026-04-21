@@ -68,6 +68,12 @@ class RoundedDataclass:
         return obj
 
     def to_dict(self) -> Dict[str, Any]:
+        """
+        Convert dataclass to dict with rounded floats and string keys.
+
+        Returns:
+            Dict[str, Any]: The dataclass as a dict with rounded floats.
+        """
         return self._round_floats(asdict(self))
 
 
@@ -108,7 +114,7 @@ class RunConfig(RoundedDataclass):
 def load_parquet(path: Path) -> pd.DataFrame:
     """
     Load a parquet file and validate required columns.
-    
+
     Args:
         path (Path): Path to the parquet file.
 
@@ -125,7 +131,13 @@ def load_parquet(path: Path) -> pd.DataFrame:
 def validate_adjacent_months(ref_df: pd.DataFrame, replay_df: pd.DataFrame) -> Tuple[str, str]:
     """
     Validate that reference and replay datasets are adjacent months from the same year.
-    Returns (ref_month_label, replay_month_label).
+
+    Args:
+        ref_df (pd.DataFrame): Reference month data.
+        replay_df (pd.DataFrame): Replay month data.
+
+    Returns:
+        Tuple[str, str]: (ref_label, replay_label) in "YYYY-MM" format. Example: ("2021-01", "2021-02")
     """
     ref_dates = pd.to_datetime(ref_df["lpep_pickup_datetime"], errors="coerce")
     replay_dates = pd.to_datetime(replay_df["lpep_pickup_datetime"], errors="coerce")
@@ -140,10 +152,7 @@ def validate_adjacent_months(ref_df: pd.DataFrame, replay_df: pd.DataFrame) -> T
 
     expected_next = ref_month + 1 if ref_month < 12 else 1
     if replay_month != expected_next:
-        raise ValueError(
-            f"Replay month {replay_month} is not adjacent to reference month {ref_month} "
-            f"(expected {expected_next})"
-        )
+        raise ValueError(f"Replay month {replay_month} is not adjacent to reference month {ref_month} (expected {expected_next})")
 
     ref_label = f"{ref_year}-{ref_month:02d}"
     replay_label = f"{replay_year}-{replay_month:02d}"
@@ -154,16 +163,20 @@ def validate_adjacent_months(ref_df: pd.DataFrame, replay_df: pd.DataFrame) -> T
 def select_active_zones(ref_df: pd.DataFrame, n_zones: int, seed: int) -> List[int]:
     """
     Select the n busiest pickup zones from the reference month deterministically.
+
+    Args:
+        ref_df (pd.DataFrame): Reference month data.
+        n_zones (int): Number of active zones to select.
+        seed (int): Random seed for reproducibility.
+
+    Returns:
+        List[int]: Sorted list of selected active zone IDs. Example: [138, 161, 238, ...]
     """
     counts = ref_df.groupby("PULocationID").size().sort_values(ascending=False)
-    rng = np.random.RandomState(seed)
 
-    # Take top zones; if ties exist at the boundary, break with seed
+    # If there are ties at the cutoff, this will select a deterministic subset based on the seed.
     top = counts.head(n_zones * 2)
-    if len(top) <= n_zones:
-        selected = top.index.tolist()[:n_zones]
-    else:
-        selected = top.head(n_zones).index.tolist()
+    selected = top.index.tolist()[:n_zones] if len(top) <= n_zones else top.head(n_zones).index.tolist()
 
     selected.sort()
     logger.info(f"Selected {len(selected)} active zones: {selected}")
@@ -173,7 +186,13 @@ def select_active_zones(ref_df: pd.DataFrame, n_zones: int, seed: int) -> List[i
 def aggregate_ticks(df: pd.DataFrame, tick_minutes: int = TICK_MINUTES) -> pd.DataFrame:
     """
     Aggregate pickups into fixed-width time ticks.
-    Returns DataFrame with columns: zone_id, tick_start, demand.
+
+    Args:
+        df (pd.DataFrame): Input data with lpep_pickup_datetime and PULocation columns.
+        tick_minutes (int): Width of each tick in minutes.
+
+    Returns:
+        pd.DataFrame: Aggregated data.
     """
     df = df.copy()
     df["pickup_dt"] = pd.to_datetime(df["lpep_pickup_datetime"], errors="coerce")
@@ -187,7 +206,12 @@ def aggregate_ticks(df: pd.DataFrame, tick_minutes: int = TICK_MINUTES) -> pd.Da
 def build_baseline_table(ref_agg: pd.DataFrame) -> pd.DataFrame:
     """
     Build per-zone reference baseline by hour_of_day and day_of_week.
-    Returns DataFrame with columns: zone_id, hour_of_day, day_of_week, mean_demand, std_demand.
+
+    Args:
+        ref_agg (pd.DataFrame): Aggregated reference data with zone_id, tick_start, and demand.
+
+    Returns:
+        pd.DataFrame: Baseline data, one row per (zone_id, hour_of_day, day_of_week) with mean_demand and std_demand.
     """
     ref_agg = ref_agg.copy()
     ref_agg["hour_of_day"] = ref_agg["tick_start"].dt.hour
@@ -205,7 +229,13 @@ def build_baseline_table(ref_agg: pd.DataFrame) -> pd.DataFrame:
 def build_replay_table(replay_agg: pd.DataFrame, active_zones: List[int]) -> pd.DataFrame:
     """
     Build the replay table: one row per (zone_id, tick_start), filtered to active zones.
-    Sorted by tick_start for ordered replay.
+
+    Args:
+         replay_agg (pd.DataFrame): Aggregated replay data with zone_id, tick_start, and demand.
+         active_zones (List[int]): List of active zone IDs to include in the replay table.
+
+    Returns:
+        pd.DataFrame: Replay table with zone_id, tick_start, and demand, filtered to active zones.
     """
     replay = replay_agg[replay_agg["zone_id"].isin(active_zones)].copy()
     replay.sort_values(["tick_start", "zone_id"], inplace=True)
@@ -216,8 +246,17 @@ def build_replay_table(replay_agg: pd.DataFrame, active_zones: List[int]) -> pd.
 def cross_check_replay(raw_df: pd.DataFrame, replay_table: pd.DataFrame,
                        active_zones: List[int], tick_minutes: int = TICK_MINUTES) -> bool:
     """
-    Pandas cross-check: confirm prepared replay counts match a direct grouped calculation
-    on a sample window (first 4 ticks).
+    Pandas cross-check: confirm prepared replay counts match a direct grouped calculation on a sample window.
+
+    Args:
+        raw_df (pd.DataFrame): Original raw replay data with lpep_pickup_datetime and PULocationID.
+        replay_table (pd.DataFrame): Prepared replay table with zone_id, tick_start, and demand.
+        active_zones (List[int]): List of active zone IDs that should be included in the check.
+        tick_minutes (int): The tick width in minutes used for aggregation, to ensure consistent tick boundaries in the
+            direct calculation.
+
+    Returns:
+        bool: True if the cross-check passes, False otherwise.
     """
     sample_ticks = sorted(replay_table["tick_start"].unique())[:4]
     if len(sample_ticks) == 0:
@@ -247,7 +286,13 @@ def cross_check_replay(raw_df: pd.DataFrame, replay_table: pd.DataFrame,
 
 
 def write_json(data: Any, path: Path) -> None:
-    """Write a JSON-serializable object to disk."""
+    """
+    Write a JSON-serializable object to disk.
+
+    Args:
+        data (Any): JSON-serializable object to write.
+        path (Path): Path to the output file.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as f:
         json.dump(data, f, indent=2, default=str)
@@ -255,7 +300,13 @@ def write_json(data: Any, path: Path) -> None:
 
 
 def write_metrics_csv(tick_metrics: List[TickMetrics], path: Path) -> None:
-    """Write tick metrics to a CSV file."""
+    """
+    Write tick metrics to a CSV file.
+
+    Args:
+        tick_metrics (List[TickMetrics]): List of tick metrics to write.
+        path (Path): Path to the output CSV file.
+    """
     rows = [m.to_dict() for m in tick_metrics]
     for row in rows:
         row.pop("per_zone_latency", None)
@@ -265,11 +316,14 @@ def write_metrics_csv(tick_metrics: List[TickMetrics], path: Path) -> None:
     logger.info(f"Wrote {path}")
 
 
-def write_tick_summary(tick_metrics: List[TickMetrics], decisions: Dict[int, Dict[int, str]],
-                       path: Path) -> None:
+def write_tick_summary(tick_metrics: List[TickMetrics], decisions: Dict[int, Dict[int, str]], path: Path) -> None:
     """
     Write a tick-level summary JSON with decisions and metrics.
-    decisions: {tick_id: {zone_id: decision}}
+
+    Args:
+        tick_metrics (List[TickMetrics]): List of tick metrics.
+        decisions (Dict[int, Dict[int, str]]): Decisions for each tick and zone.
+        path (Path): Path to the output JSON file.
     """
     summary = []
     for m in tick_metrics:
@@ -282,19 +336,21 @@ def write_tick_summary(tick_metrics: List[TickMetrics], decisions: Dict[int, Dic
 
 
 def write_latency_log(tick_metrics: List[TickMetrics], path: Path) -> None:
-    """Write per-zone latency log as JSON."""
+    """
+    Write per-zone latency log as JSON.
+
+    Args:
+        tick_metrics (List[TickMetrics]): List of tick metrics.
+        path (Path): Path to the output JSON file.
+    """
     log_entries = []
     for m in tick_metrics:
         for zone_id, lat in m.per_zone_latency.items():
-            log_entries.append({
-                "tick_id": m.tick_id,
-                "zone_id": zone_id,
-                "latency_s": round(lat, 4),
-            })
+            log_entries.append({"tick_id": m.tick_id, "zone_id": zone_id, "latency_s": round(lat, 4)})
     write_json(log_entries, path)
 
 
-def load_prepared(prepared_dir: Path):
+def load_prepared(prepared_dir: Path) -> Tuple[pd.DataFrame, pd.DataFrame, List[int]]:
     """
     Load prepared assets from disk.
 
@@ -302,7 +358,7 @@ def load_prepared(prepared_dir: Path):
         prepared_dir (Path): Directory containing baseline.parquet, replay.parquet, active_zones.json.
 
     Returns:
-        Tuple of (replay DataFrame, baseline DataFrame, active_zones list).
+        Tuple[pd.DataFrame, pd.DataFrame, List[int]]: (replay_table, baseline_table, active_zones)
     """
     replay = pd.read_parquet(prepared_dir / "replay.parquet")
     baseline = pd.read_parquet(prepared_dir / "baseline.parquet")
