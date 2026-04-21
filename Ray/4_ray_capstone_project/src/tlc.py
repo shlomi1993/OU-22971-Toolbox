@@ -1,14 +1,13 @@
-# tlc_lib.py — shared constants, dataclasses, and helpers for the TLC zone replay system.
 
 import json
 import logging
-from dataclasses import dataclass, field
-from enum import Enum
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
-
 import numpy as np
 import pandas as pd
+
+from dataclasses import asdict, dataclass, field
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Tuple
 
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
@@ -19,7 +18,6 @@ TICK_MINUTES = 15
 DEFAULT_N_ZONES = 20
 DEFAULT_SEED = 42
 FALLBACK_POLICY_PREVIOUS = "always_previous"
-FIRST_TICK_FALLBACK = "OK"
 
 REQUIRED_PARQUET_COLS = [
     "lpep_pickup_datetime",
@@ -27,8 +25,13 @@ REQUIRED_PARQUET_COLS = [
     "PULocationID",
 ]
 
-if TYPE_CHECKING:
-    from src.zone_actor import RunConfig, ZoneSnapshot
+
+class Decision(str, Enum):
+    """
+    Scoring outcome for a zone at a given tick.
+    """
+    NEED = "NEED"
+    OK = "OK"
 
 
 class RunMode(str, Enum):
@@ -38,8 +41,41 @@ class RunMode(str, Enum):
 
 
 @dataclass
-class TickMetrics:
-    """Metrics for a single tick."""
+class RoundedDataclass:
+    """
+    Mixin base for dataclasses that need JSON-friendly serialization.
+    Provides to_dict() with recursive float rounding and string keys.
+    """
+
+    @staticmethod
+    def _round_floats(obj: Any, n_digits: int = 4) -> Any:
+        """
+        Recursively round floats in nested dicts/lists and stringify dict keys.
+
+        Args:
+            obj (Any): The object to round (can be a float, dict, list, or other).
+            n_digits (int): Number of decimal places to round to.
+
+        Returns:
+            Any: The rounded object.
+        """
+        if isinstance(obj, float):
+            return round(obj, n_digits)
+        if isinstance(obj, dict):
+            return {str(k): RoundedDataclass._round_floats(v, n_digits) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [RoundedDataclass._round_floats(item, n_digits) for item in obj]
+        return obj
+
+    def to_dict(self) -> Dict[str, Any]:
+        return self._round_floats(asdict(self))
+
+
+@dataclass
+class TickMetrics(RoundedDataclass):
+    """
+    Metrics for a single tick.
+    """
     tick_id: int
     mode: str
     n_zones_completed: int = 0
@@ -52,24 +88,33 @@ class TickMetrics:
     total_tick_latency_s: float = 0.0
     per_zone_latency: Dict[int, float] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "tick_id": self.tick_id,
-            "mode": self.mode,
-            "n_zones_completed": self.n_zones_completed,
-            "n_zones_fallback": self.n_zones_fallback,
-            "n_late_reports": self.n_late_reports,
-            "n_duplicate_reports": self.n_duplicate_reports,
-            "mean_zone_latency_s": round(self.mean_zone_latency_s, 4),
-            "max_zone_latency_s": round(self.max_zone_latency_s, 4),
-            "max_mean_ratio": round(self.max_mean_ratio, 4),
-            "total_tick_latency_s": round(self.total_tick_latency_s, 4),
-            "per_zone_latency": {str(k): round(v, 4) for k, v in self.per_zone_latency.items()},
-        }
+
+@dataclass
+class RunConfig(RoundedDataclass):
+    """
+    Runtime configuration for the replay loop.
+    """
+    n_zones: int = DEFAULT_N_ZONES
+    tick_minutes: int = TICK_MINUTES
+    max_inflight_zones: int = 4
+    tick_timeout_s: float = 2.0
+    completion_fraction: float = 0.75
+    slow_zone_fraction: float = 0.25
+    slow_zone_sleep_s: float = 1.0
+    fallback_policy: str = FALLBACK_POLICY_PREVIOUS
+    seed: int = DEFAULT_SEED
 
 
 def load_parquet(path: Path) -> pd.DataFrame:
-    """Load a parquet file and validate required columns."""
+    """
+    Load a parquet file and validate required columns.
+    
+    Args:
+        path (Path): Path to the parquet file.
+
+    Returns:
+        pd.DataFrame: Parquet file contents.
+    """
     df = pd.read_parquet(path)
     missing = set(REQUIRED_PARQUET_COLS) - set(df.columns)
     if missing:
@@ -201,20 +246,6 @@ def cross_check_replay(raw_df: pd.DataFrame, replay_table: pd.DataFrame,
     return bool(match)
 
 
-def compute_decision(snapshot: "ZoneSnapshot") -> str:
-    """
-    Simple thresholded scoring rule.
-    NEED if recent demand exceeds baseline mean + 1 std, else OK.
-    Deterministic from snapshot input.
-    """
-    if not snapshot.recent_demand:
-        return FIRST_TICK_FALLBACK
-
-    recent_avg = np.mean(snapshot.recent_demand)
-    threshold = snapshot.baseline_mean + max(snapshot.baseline_std, 1.0)
-    return "NEED" if recent_avg > threshold else "OK"
-
-
 def write_json(data: Any, path: Path) -> None:
     """Write a JSON-serializable object to disk."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -280,7 +311,7 @@ def load_prepared(prepared_dir: Path):
     return replay, baseline, active_zones
 
 
-def select_slow_zones(active_zones: List[int], config: "RunConfig") -> set:
+def select_slow_zones(active_zones: List[int], config: RunConfig) -> set:
     """
     Deterministically select slow zones based on config.
 

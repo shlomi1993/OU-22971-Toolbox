@@ -3,7 +3,7 @@ import logging
 
 from pathlib import Path
 
-from src.tlc_lib import (
+from src.tlc import (
     DEFAULT_N_ZONES,
     DEFAULT_SEED,
     TICK_MINUTES,
