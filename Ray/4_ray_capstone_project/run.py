@@ -10,10 +10,10 @@ from pathlib import Path
 from typing import Dict, List
 from ray.actor import ActorHandle
 
-from src.tlc_lib import (
+from src.tlc import (
+    RunConfig,
     RunMode,
     TickMetrics,
-    compute_decision,
     get_tick_ids,
     load_prepared,
     select_slow_zones,
@@ -22,7 +22,7 @@ from src.tlc_lib import (
     write_metrics_csv,
     write_tick_summary,
 )
-from src.zone_actor import RunConfig, ZoneActor, ZoneDecision, ZoneSnapshot
+from src.zone_actor import ZoneActor, ZoneDecision, ZoneSnapshot
 
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
@@ -52,7 +52,7 @@ def score_zone(snapshot: ZoneSnapshot, slow_sleep_s: float = 0.0, actor_handle: 
     if slow_sleep_s > 0:
         time.sleep(slow_sleep_s)
 
-    decision = compute_decision(snapshot)
+    decision = snapshot.compute_decision()
     latency = time.time() - start
 
     if mode == RunMode.ASYNC and actor_handle is not None:

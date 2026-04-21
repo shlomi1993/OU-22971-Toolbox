@@ -101,7 +101,7 @@ All fallback usage is logged in `actor_counters.json` and `metrics.csv`.
 
 | File | Purpose |
 |---|---|
-| `tlc_lib.py` | Shared constants, dataclasses, data loading, scoring logic, artifact writers |
+| `tlc.py` | Shared constants, dataclasses, data loading, scoring logic, artifact writers |
 | `prepare.py` | Data preparation: load parquets, validate, build baseline and replay tables |
 | `run.py` | Runtime: ZoneActor, score_zone task, blocking/async/stress drivers |
 | `test_capstone.py` | Pytest unit tests for all modules |

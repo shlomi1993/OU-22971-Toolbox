@@ -8,8 +8,8 @@ SETUP (before recording)
 - Have two terminals open: one for running, one for inspecting artifacts
 
 PART 1 — Code Walkthrough (~3 min)
-- Show project files: tlc_lib.py, prepare.py, run.py
-- tlc_lib.py:
+- Show project files: tlc.py, prepare.py, run.py
+- tlc.py:
   - Constants, dataclasses (RunConfig, ZoneSnapshot, ZoneDecision, TickMetrics)
   - Data loading and validation (load_parquet, validate_adjacent_months)
   - Zone selection: select_active_zones — top-N busiest, deterministic with seed

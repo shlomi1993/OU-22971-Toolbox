@@ -1,4 +1,4 @@
-# test_tlc_replay.py — Unit tests for tlc_lib, prepare, and run modules.
+# test_tlc_replay.py — Unit tests for tlc, prepare, and run modules.
 
 import json
 from pathlib import Path
@@ -8,14 +8,14 @@ import pandas as pd
 import pytest
 import ray
 
-from src.tlc_lib import (
+from src.tlc import (
+    Decision,
     FALLBACK_POLICY_PREVIOUS,
-    FIRST_TICK_FALLBACK,
+    RunConfig,
     TickMetrics,
     aggregate_ticks,
     build_baseline_table,
     build_replay_table,
-    compute_decision,
     cross_check_replay,
     load_parquet,
     select_active_zones,
@@ -25,7 +25,7 @@ from src.tlc_lib import (
     write_metrics_csv,
     write_tick_summary,
 )
-from src.zone_actor import RunConfig, WriteStatus, ZoneSnapshot, apply_fallback
+from src.zone_actor import WriteStatus, ZoneSnapshot, apply_fallback
 
 
 @pytest.fixture(scope="session")
@@ -187,23 +187,23 @@ class TestComputeDecision:
     def test_need_when_high_demand(self):
         snap = ZoneSnapshot(zone_id=1, tick_id=0, recent_demand=[10, 12, 15],
                             baseline_mean=5.0, baseline_std=2.0)
-        assert compute_decision(snap) == "NEED"
+        assert snap.compute_decision() == "NEED"
 
     def test_ok_when_normal_demand(self):
         snap = ZoneSnapshot(zone_id=1, tick_id=0, recent_demand=[3, 4, 5],
                             baseline_mean=5.0, baseline_std=2.0)
-        assert compute_decision(snap) == "OK"
+        assert snap.compute_decision() == "OK"
 
     def test_empty_demand_returns_fallback(self):
         snap = ZoneSnapshot(zone_id=1, tick_id=0, recent_demand=[],
                             baseline_mean=5.0, baseline_std=2.0)
-        assert compute_decision(snap) == FIRST_TICK_FALLBACK
+        assert snap.compute_decision() == Decision.OK
 
     def test_deterministic(self):
         snap = ZoneSnapshot(zone_id=1, tick_id=0, recent_demand=[10, 12],
                             baseline_mean=5.0, baseline_std=2.0)
-        d1 = compute_decision(snap)
-        d2 = compute_decision(snap)
+        d1 = snap.compute_decision()
+        d2 = snap.compute_decision()
         assert d1 == d2
 
 
@@ -212,10 +212,10 @@ class TestApplyFallback:
         assert apply_fallback(FALLBACK_POLICY_PREVIOUS, "NEED") == "NEED"
 
     def test_previous_policy_without_history(self):
-        assert apply_fallback(FALLBACK_POLICY_PREVIOUS, None) == FIRST_TICK_FALLBACK
+        assert apply_fallback(FALLBACK_POLICY_PREVIOUS, None) == Decision.OK
 
     def test_unknown_policy_returns_ok(self):
-        assert apply_fallback("unknown", "NEED") == FIRST_TICK_FALLBACK
+        assert apply_fallback("unknown", "NEED") == Decision.OK
 
 
 class TestRunConfig:
@@ -339,7 +339,7 @@ class TestZoneActor:
         ray.get(actor.activate_tick.remote(0))
         ray.get(actor.finalize_tick.remote(0, FALLBACK_POLICY_PREVIOUS))
         decisions = ray.get(actor.get_accepted_decisions.remote())
-        assert decisions[0] == FIRST_TICK_FALLBACK  # No previous, so OK
+        assert decisions[0] == Decision.OK  # No previous, so OK
 
     def test_get_snapshot(self, ray_session, prepared_dir):
         from run import ZoneActor

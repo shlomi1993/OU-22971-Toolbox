@@ -1,25 +1,15 @@
+import numpy as np
 import pandas as pd
 import ray
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-from src.tlc_lib import (
-    DEFAULT_N_ZONES,
-    DEFAULT_SEED,
-    FALLBACK_POLICY_PREVIOUS,
-    FIRST_TICK_FALLBACK,
-    TICK_MINUTES,
-)
+from src.tlc import FALLBACK_POLICY_PREVIOUS, Decision, RoundedDataclass, RunConfig
 
 
-class Decision(str, Enum):
-    """
-    Scoring outcome for a zone at a given tick.
-    """
-    NEED = "NEED"
-    OK = "OK"
+Baseline = Dict[Tuple[int, int], Tuple[float, float]]
 
 
 class WriteStatus(str, Enum):
@@ -30,25 +20,6 @@ class WriteStatus(str, Enum):
     WRITTEN = "written"
     DUPLICATE = "duplicate"
     LATE = "late"
-
-
-@dataclass
-class RunConfig:
-    """
-    Runtime configuration for the replay loop.
-    """
-    n_zones: int = DEFAULT_N_ZONES
-    tick_minutes: int = TICK_MINUTES
-    max_inflight_zones: int = 4
-    tick_timeout_s: float = 2.0
-    completion_fraction: float = 0.75
-    slow_zone_fraction: float = 0.25
-    slow_zone_sleep_s: float = 1.0
-    fallback_policy: str = FALLBACK_POLICY_PREVIOUS
-    seed: int = DEFAULT_SEED
-
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
 
 
 @dataclass
@@ -63,7 +34,7 @@ class ZoneDecision:
 
 
 @dataclass
-class ZoneSnapshot:
+class ZoneSnapshot(RoundedDataclass):
     """
     Minimal snapshot passed to a scoring task.
     """
@@ -75,8 +46,19 @@ class ZoneSnapshot:
     is_slow_zone: bool = False
     slow_sleep_s: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+    def compute_decision(self) -> Decision:
+        """
+        Simple threshold scoring rule.
+
+        Returns:
+            Decision: "NEED" if recent demand exceeds baseline mean + 1 std, else "OK".
+        """
+        if not self.recent_demand:
+            return Decision.OK
+
+        recent_avg = np.mean(self.recent_demand)
+        threshold = self.baseline_mean + max(self.baseline_std, 1.0)
+        return Decision.NEED if recent_avg > threshold else Decision.OK
 
 
 def apply_fallback(policy: str, last_decision: Optional[str]) -> str:
@@ -91,14 +73,14 @@ def apply_fallback(policy: str, last_decision: Optional[str]) -> str:
         str: The fallback decision to apply.
     """
     if policy != FALLBACK_POLICY_PREVIOUS:
-        return FIRST_TICK_FALLBACK
+        return Decision.OK
     if last_decision is not None:
         return last_decision
-    return FIRST_TICK_FALLBACK
+    return Decision.OK
 
 
 @dataclass
-class ZoneCounters:
+class ZoneCounters(RoundedDataclass):
     """
     Observability counters for a single zone actor.
     """
@@ -106,12 +88,6 @@ class ZoneCounters:
     n_duplicates: int = 0
     n_late: int = 0
     n_fallbacks: int = 0
-
-    def to_dict(self) -> Dict[str, int]:
-        return asdict(self)
-
-
-Baseline = Dict[Tuple[int, int], Tuple[float, float]]
 
 
 @ray.remote
