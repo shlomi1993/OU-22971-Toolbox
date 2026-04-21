@@ -43,8 +43,7 @@ class RunMode(str, Enum):
 @dataclass
 class RoundedDataclass:
     """
-    Mixin base for dataclasses that need JSON-friendly serialization.
-    Provides to_dict() with recursive float rounding and string keys.
+    Base dataclass with utility to round floats and stringify keys for JSON serialization.
     """
 
     @staticmethod
@@ -57,7 +56,7 @@ class RoundedDataclass:
             n_digits (int): Number of decimal places to round to.
 
         Returns:
-            Any: The rounded object.
+            Any: The object with floats rounded and dict keys stringified.
         """
         if isinstance(obj, float):
             return round(obj, n_digits)
@@ -160,14 +159,13 @@ def validate_adjacent_months(ref_df: pd.DataFrame, replay_df: pd.DataFrame) -> T
     return ref_label, replay_label
 
 
-def select_active_zones(ref_df: pd.DataFrame, n_zones: int, seed: int) -> List[int]:
+def select_active_zones(ref_df: pd.DataFrame, n_zones: int) -> List[int]:
     """
     Select the n busiest pickup zones from the reference month deterministically.
 
     Args:
         ref_df (pd.DataFrame): Reference month data.
         n_zones (int): Number of active zones to select.
-        seed (int): Random seed for reproducibility.
 
     Returns:
         List[int]: Sorted list of selected active zone IDs. Example: [138, 161, 238, ...]
@@ -177,8 +175,8 @@ def select_active_zones(ref_df: pd.DataFrame, n_zones: int, seed: int) -> List[i
     # If there are ties at the cutoff, this will select a deterministic subset based on the seed.
     top = counts.head(n_zones * 2)
     selected = top.index.tolist()[:n_zones] if len(top) <= n_zones else top.head(n_zones).index.tolist()
-
     selected.sort()
+
     logger.info(f"Selected {len(selected)} active zones: {selected}")
     return selected
 
