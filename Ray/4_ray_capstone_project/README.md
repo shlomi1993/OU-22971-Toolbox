@@ -14,11 +14,7 @@ conda activate 22971-ray-capstone
 Download two adjacent monthly Green Taxi parquet files from [TLC](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page):
 
 ```bash
-mkdir -p TLC_data
-curl -L -o TLC_data/green_tripdata_2023-01.parquet \
-    https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2023-01.parquet
-curl -L -o TLC_data/green_tripdata_2023-02.parquet \
-    https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2023-02.parquet
+bash scripts/download_data.sh
 ```
 
 ## Running locally
@@ -27,8 +23,8 @@ curl -L -o TLC_data/green_tripdata_2023-02.parquet \
 
 ```bash
 python prepare.py \
-    --reference-parquet TLC_data/green_tripdata_2023-01.parquet \
-    --replay-parquet TLC_data/green_tripdata_2023-02.parquet \
+    --ref-parquet data/green_tripdata_2023-01.parquet \
+    --replay-parquet data/green_tripdata_2023-02.parquet \
     --output-dir prepared \
     --n-zones 20 --seed 42
 ```
@@ -57,13 +53,13 @@ python run.py --prepared-dir prepared --output-dir output --mode stress
 ### Full system test
 
 ```bash
-bash test_flow.sh
+bash tests/test_ray_flow.sh
 ```
 
 ### Unit tests
 
 ```bash
-pytest test_capstone.py -v
+pytest tests/test_ray_capstone_project.py -v
 ```
 
 ### Reset
@@ -101,13 +97,12 @@ All fallback usage is logged in `actor_counters.json` and `metrics.csv`.
 
 | File | Purpose |
 |---|---|
-| `tlc.py` | Shared constants, dataclasses, data loading, scoring logic, artifact writers |
+| `src/tlc.py` | Shared constants, dataclasses, data loading, scoring logic, artifact writers |
 | `prepare.py` | Data preparation: load parquets, validate, build baseline and replay tables |
 | `run.py` | Runtime: ZoneActor, score_zone task, blocking/async/stress drivers |
-| `test_capstone.py` | Pytest unit tests for all modules |
-| `test_flow.sh` | End-to-end system test script |
-| `reset.sh` | Cleanup script |
-| `demo_walkthrough.txt` | Video demo guide |
+| `tests/test_ray_capstone_project.py` | Pytest unit tests for all modules |
+| `tests/test_ray_flow.sh` | End-to-end system test script |
+| `scripts/download_data.sh` | Download TLC parquet data into `data/` |
 
 ## Output artifacts
 

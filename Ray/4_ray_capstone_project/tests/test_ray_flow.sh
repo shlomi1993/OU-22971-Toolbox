@@ -2,17 +2,21 @@
 # test_flow.sh — System test: downloads data, prepares assets, runs all 3 demo modes.
 set -euo pipefail
 
+KEEP_ARTIFACTS=false
+for arg in "$@"; do
+    case "$arg" in
+        --keep-artifacts|-k) KEEP_ARTIFACTS=true ;;
+    esac
+done
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_DIR"
 
-DATA_DIR="$PROJECT_DIR/TLC_data"
+DATA_DIR="$PROJECT_DIR/data"
 PREPARED_DIR="$PROJECT_DIR/prepared"
 OUTPUT_DIR="$PROJECT_DIR/output"
 
-# TLC Green Taxi URLs (2023-01 reference, 2023-02 replay)
-REF_URL="https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2023-01.parquet"
-REPLAY_URL="https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2023-02.parquet"
 REF_FILE="$DATA_DIR/green_tripdata_2023-01.parquet"
 REPLAY_FILE="$DATA_DIR/green_tripdata_2023-02.parquet"
 
@@ -23,19 +27,7 @@ echo "============================================"
 # --- Download data ---
 echo ""
 echo ">>> Step 1: Download TLC data"
-mkdir -p "$DATA_DIR"
-if [ ! -f "$REF_FILE" ]; then
-    echo "Downloading reference month..."
-    curl -L -o "$REF_FILE" "$REF_URL"
-else
-    echo "Reference file already exists, skipping."
-fi
-if [ ! -f "$REPLAY_FILE" ]; then
-    echo "Downloading replay month..."
-    curl -L -o "$REPLAY_FILE" "$REPLAY_URL"
-else
-    echo "Replay file already exists, skipping."
-fi
+bash "$PROJECT_DIR/scripts/download_data.sh"
 
 # --- Prepare assets ---
 echo ""
@@ -111,3 +103,14 @@ echo "============================================"
 echo ""
 echo "Output artifacts:"
 find "$OUTPUT_DIR" -type f | sort
+
+# --- Cleanup ---
+if [ "$KEEP_ARTIFACTS" = false ]; then
+    echo ""
+    echo ">>> Cleaning up generated artifacts"
+    rm -rf "$PREPARED_DIR" "$OUTPUT_DIR"
+    echo "Removed $PREPARED_DIR and $OUTPUT_DIR"
+else
+    echo ""
+    echo ">>> Keeping artifacts (--keep-artifacts)"
+fi
