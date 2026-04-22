@@ -1,7 +1,7 @@
 # test_ray_flow.ps1 — System test: downloads data, prepares assets, runs all 3 demo modes.
 #
 # This file executes:
-#   1. scripts/download_data.ps1
+#   1. scripts/powershell/download_data.ps1
 #   2. prepare --ref-parquet data/green_tripdata_2023-01.parquet --replay-parquet data/green_tripdata_2023-02.parquet --output-dir prepared --n-zones 20 --seed 42
 #   3. run --prepared-dir prepared --output-dir output --mode blocking --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0 --seed 42
 #   4. run --prepared-dir prepared --output-dir output --mode async --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0 --tick-timeout-s 2.0 --completion-fraction 0.75 --max-inflight-zones 4 --seed 42
@@ -51,7 +51,7 @@ Write-Cyan "============================="
 # --- Download data ---
 Write-Host ""
 Write-Cyan "Step 1: Download TLC data"
-Log-And-Run "powershell -File `"$ProjectDir\scripts\download_data.ps1`""
+Log-And-Run "powershell -File `"$ProjectDir\scripts\powershell\download_data.ps1`""
 
 # --- Prepare assets ---
 Write-Host ""

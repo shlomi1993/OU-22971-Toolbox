@@ -1,5 +1,5 @@
 # Install wrapper scripts into the active conda environment's Scripts directory
-# Run this script with: powershell -File scripts/install.ps1
+# Run this script with: powershell -File scripts/powershell/install.ps1
 
 $ErrorActionPreference = "Stop"
 
@@ -43,4 +43,4 @@ Write-Host "  prepare --ref-parquet <file> --replay-parquet <file> --output-dir 
 Write-Host "  run --prepared-dir <dir> --output-dir <dir> --mode <blocking|async|stress>"
 Write-Host ""
 Write-Host "Note: Requires Git Bash or WSL bash in PATH." -ForegroundColor Yellow
-Write-Host "To uninstall, run: powershell -File scripts/uninstall.ps1"
+Write-Host "To uninstall, run: powershell -File scripts/powershell/uninstall.ps1"

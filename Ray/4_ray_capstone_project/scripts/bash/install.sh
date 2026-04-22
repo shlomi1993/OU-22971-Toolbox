@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Install wrapper scripts into the active conda environment's bin directory
-# Run this script with: bash scripts/install.sh
+# Run this script with: bash scripts/bash/install.sh
 
 set -euo pipefail
 
@@ -31,7 +31,7 @@ for cmd in prepare run; do
         echo "  Warning: $DEST exists and is not a symlink. Skipping."
         continue
     fi
-    
+
     echo "  Creating symlink: $cmd -> $SRC"
     ln -s "$SRC" "$DEST"
 done
@@ -41,4 +41,4 @@ echo "Installation complete! You can now run:"
 echo "  prepare --ref-parquet <file> --replay-parquet <file> --output-dir <dir>"
 echo "  run --prepared-dir <dir> --output-dir <dir> --mode <blocking|async|stress>"
 echo ""
-echo "To uninstall, run: bash scripts/uninstall.sh"
+echo "To uninstall, run: bash scripts/bash/uninstall.sh"
