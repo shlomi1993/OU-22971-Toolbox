@@ -469,14 +469,14 @@ Replace `--mode blocking` with `async` or `stress` for the other run modes.
 
 ## Runtime configuration
 
-| Parameter | Default | Description |
+| Parameter | Description | Default |
 |---|---|---|
-| `n_zones` | 20 | Number of active pickup zones |
-| `tick_minutes` | 15 | Width of each replay tick |
-| `max_inflight_zones` | 4 | Max concurrent scoring tasks (async) |
-| `tick_timeout_s` | 2.0 | Timeout before finalizing late zones (async) |
-| `completion_fraction` | 0.75 | Fraction of zones needed before considering finalization |
-| `slow_zone_fraction` | 0.25 | Fraction of zones receiving artificial delay |
-| `slow_zone_sleep_s` | 1.0 | Artificial delay in seconds for slow zones |
-| `fallback_policy` | `always_previous` | Policy for zones without a decision at tick finalization |
-| `seed` | 42 | Random seed for deterministic zone selection and skew |
+| `n_zones` | Number of active pickup zones | 20 |
+| `tick_minutes` | Width of each replay tick | 15 |
+| `max_inflight_zones` | Max concurrent scoring tasks (async) | 4 |
+| `tick_timeout_s` | Timeout before finalizing late zones (async) | 2.0 |
+| `completion_fraction` | Fraction of zones needed before considering finalization | 0.75 |
+| `slow_zone_fraction` | Fraction of zones receiving artificial delay | 0.25 |
+| `slow_zone_sleep_s` | Artificial delay in seconds for slow zones | 1.0 |
+| `fallback_policy` | Policy for zones without a decision at tick finalization | `always_previous` |
+| `seed` | Random seed for deterministic zone selection and skew | 42 |
