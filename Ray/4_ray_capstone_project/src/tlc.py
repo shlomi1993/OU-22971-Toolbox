@@ -41,14 +41,6 @@ REQUIRED_PARQUET_COLS = [
 ]
 
 
-class Decision(str, Enum):
-    """
-    Scoring outcome for a zone at a given tick.
-    """
-    NEED = "NEED"
-    OK = "OK"
-
-
 class RunMode(str, Enum):
     BLOCKING = "blocking"
     ASYNC = "async"

@@ -11,16 +11,39 @@
 
 set -euo pipefail
 
+# ANSI color codes
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+# Error handler
+error_handler() {
+    local line_num=$1
+    echo ""
+    echo -e "${RED}ERROR: Test failed at line $line_num${NC}"
+    echo -e "${RED}Unexpected failure occurred${NC}"
+    exit 1
+}
+
+trap 'error_handler $LINENO' ERR
+
+# ANSI color codes
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+# Suppress Ray warnings
+
+trap 'error_handler $LINENO' ERR
+
 # Suppress Ray warnings
 export RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO=0
 export RAY_DEDUP_LOGS=0
 
-# ANSI color codes
-GREEN='\033[0;32m'
-NC='\033[0m' # No Color
-
 log_and_run() {
-    echo -e "${GREEN}>>> $*${NC}"
+    echo -e "${GREEN}$*${NC}"
     "$@"
 }
 
@@ -42,18 +65,18 @@ OUTPUT_DIR="$PROJECT_DIR/output"
 REF_FILE="$DATA_DIR/green_tripdata_2023-01.parquet"
 REPLAY_FILE="$DATA_DIR/green_tripdata_2023-02.parquet"
 
-echo "============================================"
-echo "  Ray Capstone - System Test"
-echo "============================================"
+echo ""
+echo -e "${CYAN}Ray Capstone - Full Flow Test${NC}"
+echo -e "${CYAN}=============================${NC}"
 
 # --- Download data ---
 echo ""
-echo "Step 1: Download TLC data"
+echo -e "${CYAN}Step 1: Download TLC data${NC}"
 log_and_run bash "$PROJECT_DIR/scripts/download_data.sh"
 
 # --- Prepare assets ---
 echo ""
-echo "Step 2: Prepare replay assets"
+echo -e "${CYAN}Step 2: Prepare replay assets${NC}"
 log_and_run prepare \
     --ref-parquet "$REF_FILE" \
     --replay-parquet "$REPLAY_FILE" \
@@ -64,7 +87,7 @@ echo "Prepared assets written to $PREPARED_DIR"
 
 # --- Run 1: Blocking baseline ---
 echo ""
-echo "Step 3: Run blocking baseline"
+echo -e "${CYAN}Step 3: Run blocking baseline${NC}"
 log_and_run run \
     --prepared-dir "$PREPARED_DIR" \
     --output-dir "$OUTPUT_DIR" \
@@ -76,7 +99,7 @@ echo "Blocking run complete. Artifacts in $OUTPUT_DIR/blocking/"
 
 # --- Run 2: Async controller ---
 echo ""
-echo "Step 4: Run async controller"
+echo -e "${CYAN}Step 4: Run async controller${NC}"
 log_and_run run \
     --prepared-dir "$PREPARED_DIR" \
     --output-dir "$OUTPUT_DIR" \
@@ -91,7 +114,7 @@ echo "Async run complete. Artifacts in $OUTPUT_DIR/async/"
 
 # --- Run 3: Stress test ---
 echo ""
-echo "Step 5: Run stress test (harsher skew)"
+echo -e "${CYAN}Step 5: Run stress test (harsher skew)${NC}"
 log_and_run run \
     --prepared-dir "$PREPARED_DIR" \
     --output-dir "$OUTPUT_DIR" \
@@ -104,35 +127,35 @@ echo "Stress run complete. Artifacts in $OUTPUT_DIR/stress/"
 
 # --- Verify artifacts ---
 echo ""
-echo "Step 6: Verify output artifacts"
+echo -e "${CYAN}Step 6: Verify output artifacts${NC}"
 for mode in blocking async; do
     for f in run_config.json metrics.csv latency_log.json tick_summary.json actor_counters.json; do
         if [ ! -f "$OUTPUT_DIR/$mode/$f" ]; then
-            echo "FAIL: Missing $OUTPUT_DIR/$mode/$f"
+            echo -e "${RED}FAIL: Missing $OUTPUT_DIR/$mode/$f${NC}"
             exit 1
         fi
     done
 done
 if [ ! -f "$OUTPUT_DIR/stress/comparison.json" ]; then
-    echo "FAIL: Missing stress comparison.json"
+    echo -e "${RED}FAIL: Missing stress comparison.json${NC}"
     exit 1
 fi
 
+# --- Verdict ---
 echo ""
-echo "============================================"
-echo "  All system tests PASSED"
-echo "============================================"
-echo ""
-echo "Output artifacts:"
-find "$OUTPUT_DIR" -type f | sort
+echo -e "${GREEN}Full flow tests passed!${NC}"
 
 # --- Cleanup ---
+echo ""
 if [ "$KEEP_ARTIFACTS" = false ]; then
-    echo ""
     echo "Cleaning up generated artifacts"
     rm -rf "$PREPARED_DIR" "$OUTPUT_DIR"
     echo "Removed $PREPARED_DIR and $OUTPUT_DIR"
 else
-    echo ""
-    echo "Keeping artifacts (--keep-artifacts)"
+    echo "Keeping artifacts"
 fi
+
+# --- List output artifacts ---
+echo ""
+echo "Output artifacts:"
+find "$OUTPUT_DIR" -type f | sort

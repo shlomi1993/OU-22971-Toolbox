@@ -26,7 +26,6 @@ from typing import Dict, Generator, List, Tuple
 from src.tlc import (
     FALLBACK_POLICY_PREVIOUS,
     TICK_MINUTES,
-    Decision,
     RunConfig,
     TickMetrics,
     aggregate_ticks,
@@ -41,7 +40,7 @@ from src.tlc import (
     write_metrics_csv,
     write_tick_summary,
 )
-from src.zone_actor import WriteStatus, ZoneActor, ZoneSnapshot, apply_fallback
+from src.zone_actor import Recommendation, WriteStatus, ZoneActor, ZoneSnapshot, apply_fallback
 
 os.environ["RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO"] = "0"  # Ensure Ray doesn't override our environment variables during testing
 
@@ -169,15 +168,15 @@ def test_snapshot_decision_threshold() -> None:
     snap_need = ZoneSnapshot(zone_id=1, tick_id=0, recent_demand=[15.0, 16.0], baseline_mean=10.0, baseline_std=2.0)
     snap_ok = ZoneSnapshot(zone_id=1, tick_id=0, recent_demand=[8.0, 9.0], baseline_mean=10.0, baseline_std=2.0)
     snap_empty = ZoneSnapshot(zone_id=1, tick_id=0, recent_demand=[], baseline_mean=10.0, baseline_std=2.0)
-    assert snap_need.compute_decision() == Decision.NEED, "Demand above baseline+std must produce NEED"
-    assert snap_ok.compute_decision() == Decision.OK, "Demand below baseline+std must produce OK"
-    assert snap_empty.compute_decision() == Decision.OK, "Empty recent demand must produce OK"
+    assert snap_need.compute_decision() == Recommendation.NEED, "Demand above baseline+std must produce NEED"
+    assert snap_ok.compute_decision() == Recommendation.OK, "Demand below baseline+std must produce OK"
+    assert snap_empty.compute_decision() == Recommendation.OK, "Empty recent demand must produce OK"
 
 
 def test_fallback_always_previous_policy() -> None:
     assert apply_fallback(FALLBACK_POLICY_PREVIOUS, "NEED") == "NEED", "Fallback should return previous decision when available"
-    assert apply_fallback(FALLBACK_POLICY_PREVIOUS, None) == Decision.OK, "Fallback should default to OK when no previous decision exists (first-use edge case)"
-    assert apply_fallback("unknown_policy", "NEED") == Decision.OK, "Unknown fallback policy should default to OK"
+    assert apply_fallback(FALLBACK_POLICY_PREVIOUS, None) == Recommendation.OK, "Fallback should default to OK when no previous decision exists (first-use edge case)"
+    assert apply_fallback("unknown_policy", "NEED") == Recommendation.OK, "Unknown fallback policy should default to OK"
 
 
 # ── ZoneActor fault-tolerance invariants ────────────────────────────────────
@@ -317,7 +316,7 @@ def test_first_tick_finalize_without_report_defaults_ok() -> None:
     ray.get(actor.finalize_tick.remote(0, FALLBACK_POLICY_PREVIOUS))
 
     decisions = ray.get(actor.get_accepted_decisions.remote())
-    assert decisions[0] == Decision.OK, "First tick with no report and no history must default to OK"
+    assert decisions[0] == Recommendation.OK, "First tick with no report and no history must default to OK"
     counters = ray.get(actor.get_counters.remote())
     assert counters.n_fallbacks == 1, "First-use fallback must be counted"
 
