@@ -1,4 +1,15 @@
-import argparse
+"""
+Runtime execution module for distributed replay with Ray.
+
+Orchestrates blocking, async, and stress test modes using Ray remote actors and tasks.
+Each mode creates ZoneActors, launches scoring tasks with simulated skew, and writes detailed metrics and decision logs.
+
+Execution modes:
+- blocking: Wait for all zones before advancing each tick (baseline)
+- async: Bounded concurrency with timeout and partial-readiness fallback
+- stress: Harsh skew (60% slow zones, 3s delay) to stress-test async controller
+"""
+
 import json
 import logging
 import time
@@ -11,6 +22,7 @@ from typing import Dict, List
 from ray.actor import ActorHandle
 
 from src.tlc import (
+    DEFAULT_SEED,
     RunConfig,
     RunMode,
     TickMetrics,
@@ -344,51 +356,42 @@ def run_stress(prepared_dir: Path, output_dir: Path, config: RunConfig) -> List[
     return async_metrics
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Run TLC-backed per-zone recommendation replay")
-    parser.add_argument("--prepared-dir", type=Path, required=True)
-    parser.add_argument("--output-dir", type=Path, required=True)
-    parser.add_argument("--mode", choices=[m.value for m in RunMode], required=True)
-    parser.add_argument("--n-zones", type=int, default=20)
-    parser.add_argument("--max-inflight-zones", type=int, default=4)
-    parser.add_argument("--tick-timeout-s", type=float, default=2.0)
-    parser.add_argument("--completion-fraction", type=float, default=0.75)
-    parser.add_argument("--slow-zone-fraction", type=float, default=0.25)
-    parser.add_argument("--slow-zone-sleep-s", type=float, default=1.0)
-    parser.add_argument("--fallback-policy", default="always_previous")
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--ray-address", default=None)
-    return parser
+def run_replay(prepared_dir: Path, output_dir: Path, mode: str, n_zones: int, max_inflight_zones: int,
+               tick_timeout_s: float, completion_fraction: float, slow_zone_fraction: float, slow_zone_sleep_s: float,
+               fallback_policy: str, seed: int = DEFAULT_SEED, ray_address: str = None) -> None:
+    """
+    Run the replay in the specified mode with the given configuration.
 
+    Args:
+        prepared_dir (Path): Directory with prepared assets from prepare.py.
+        output_dir (Path): Root output directory for artifacts.
+        mode (str): Execution mode: "blocking", "async", or "stress".
+        n_zones (int): Number of active zones.
+        max_inflight_zones (int): Max concurrent tasks (async mode).
+        tick_timeout_s (float): Tick timeout in seconds (async mode).
+        completion_fraction (float): Completion fraction for finalization.
+        slow_zone_fraction (float): Fraction of zones to slow down.
+        slow_zone_sleep_s (float): Sleep duration for slow zones.
+        fallback_policy (str): Fallback policy for late zones.
+        seed (int, optional): Random seed for reproducibility. Defaults to DEFAULT_SEED.
+        ray_address (str, optional): Ray cluster address. None for local. Defaults to None.
+    """
+    with ray.init(address=ray_address):
+        config = RunConfig(
+            n_zones=n_zones,
+            max_inflight_zones=max_inflight_zones,
+            tick_timeout_s=tick_timeout_s,
+            completion_fraction=completion_fraction,
+            slow_zone_fraction=slow_zone_fraction,
+            slow_zone_sleep_s=slow_zone_sleep_s,
+            fallback_policy=fallback_policy,
+            seed=seed,
+        )
 
-def main() -> int:
-    args = build_parser().parse_args()
-
-    ray.init(address=args.ray_address if args.ray_address else None)
-
-    config = RunConfig(
-        n_zones=args.n_zones,
-        max_inflight_zones=args.max_inflight_zones,
-        tick_timeout_s=args.tick_timeout_s,
-        completion_fraction=args.completion_fraction,
-        slow_zone_fraction=args.slow_zone_fraction,
-        slow_zone_sleep_s=args.slow_zone_sleep_s,
-        fallback_policy=args.fallback_policy,
-        seed=args.seed,
-    )
-
-    mode = RunMode(args.mode)
-
-    if mode == RunMode.BLOCKING:
-        run_blocking(args.prepared_dir, args.output_dir, config)
-    elif mode == RunMode.ASYNC:
-        run_async(args.prepared_dir, args.output_dir, config)
-    else:
-        run_stress(args.prepared_dir, args.output_dir, config)
-
-    ray.shutdown()
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+        mode_enum = RunMode(mode)
+        if mode_enum == RunMode.BLOCKING:
+            run_blocking(prepared_dir, output_dir, config)
+        elif mode_enum == RunMode.ASYNC:
+            run_async(prepared_dir, output_dir, config)
+        else:
+            run_stress(prepared_dir, output_dir, config)

@@ -1,10 +1,21 @@
-import argparse
+"""
+Data preparation module for TLC replay experiments.
+
+Validates adjacent-month parquet files, selects the n busiest zones, aggregates pickups into 15-minute ticks, builds
+per-zone baseline statistics (mean/std by hour and day of week), and writes prepared assets to disk.
+
+Output artifacts:
+- baseline.parquet: Per-zone baseline statistics
+- replay.parquet: Aggregated replay demand by zone and tick
+- active_zones.json: List of selected zone IDs
+- prep_meta.json: Preparation metadata
+"""
+
 import logging
 
 from pathlib import Path
 
 from src.tlc import (
-    DEFAULT_N_ZONES,
     DEFAULT_SEED,
     TICK_MINUTES,
     aggregate_ticks,
@@ -22,8 +33,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 logger = logging.getLogger(__name__)
 
 
-def prepare_assets(ref_parquet: Path, replay_parquet: Path, output_dir: Path, n_zones: int = DEFAULT_N_ZONES,
-                   seed: int = DEFAULT_SEED) -> None:
+def prepare_assets(ref_parquet: Path, replay_parquet: Path, output_dir: Path, n_zones: int, seed: int = DEFAULT_SEED) -> None:
     """
     Read reference and replay parquets, validate adjacent months, select active zones, build baseline and replay tables,
     run cross-check, and write prepared assets.
@@ -33,7 +43,7 @@ def prepare_assets(ref_parquet: Path, replay_parquet: Path, output_dir: Path, n_
         replay_parquet (Path): Path to the replay month parquet.
         output_dir (Path): Directory to write prepared assets.
         n_zones (int): Number of active zones to select.
-        seed (int): Random seed for reproducibility. Default is 42.
+        seed (int, optional): Random seed for reproducibility. Default is DEFAULT_SEED.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -80,23 +90,3 @@ def prepare_assets(ref_parquet: Path, replay_parquet: Path, output_dir: Path, n_
     write_json(active_zones, output_dir / "active_zones.json")
 
     logger.info(f"Prepared assets written to {output_dir}")
-
-
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Prepare TLC replay assets")
-    parser.add_argument("--ref-parquet", type=Path, required=True)
-    parser.add_argument("--replay-parquet", type=Path, required=True)
-    parser.add_argument("--output-dir", type=Path, required=True)
-    parser.add_argument("--n-zones", type=int, default=DEFAULT_N_ZONES)
-    parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
-    return parser
-
-
-def main() -> None:
-    args = build_parser().parse_args()
-    prepare_assets(args.ref_parquet, args.replay_parquet, args.output_dir, args.n_zones, args.seed)
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

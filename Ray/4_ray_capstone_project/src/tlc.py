@@ -1,3 +1,13 @@
+"""
+Shared utilities and data structures for TLC replay experiments.
+
+Provides:
+- Constants: Tick duration, default parameters, fallback policies
+- Dataclasses: RunConfig, TickMetrics, Decision enum, RunMode enum
+- Data functions: Parquet loading, validation, aggregation, baseline building
+- Artifact writers: JSON, CSV, latency logs, tick summaries
+- Helper functions: Zone selection, slow zone sampling, prepared asset loading
+"""
 
 import json
 import logging
@@ -17,6 +27,11 @@ logger = logging.getLogger(__name__)
 TICK_MINUTES = 15
 DEFAULT_N_ZONES = 20
 DEFAULT_SEED = 42
+DEFAULT_MAX_INFLIGHT_ZONES = 4
+DEFAULT_TICK_TIMEOUT_S = 2.0
+DEFAULT_COMPLETION_FRACTION = 0.75
+DEFAULT_SLOW_ZONE_FRACTION = 0.25
+DEFAULT_SLOW_ZONE_SLEEP_S = 1.0
 FALLBACK_POLICY_PREVIOUS = "always_previous"
 
 REQUIRED_PARQUET_COLS = [
@@ -101,11 +116,11 @@ class RunConfig(RoundedDataclass):
     """
     n_zones: int = DEFAULT_N_ZONES
     tick_minutes: int = TICK_MINUTES
-    max_inflight_zones: int = 4
-    tick_timeout_s: float = 2.0
-    completion_fraction: float = 0.75
-    slow_zone_fraction: float = 0.25
-    slow_zone_sleep_s: float = 1.0
+    max_inflight_zones: int = DEFAULT_MAX_INFLIGHT_ZONES
+    tick_timeout_s: float = DEFAULT_TICK_TIMEOUT_S
+    completion_fraction: float = DEFAULT_COMPLETION_FRACTION
+    slow_zone_fraction: float = DEFAULT_SLOW_ZONE_FRACTION
+    slow_zone_sleep_s: float = DEFAULT_SLOW_ZONE_SLEEP_S
     fallback_policy: str = FALLBACK_POLICY_PREVIOUS
     seed: int = DEFAULT_SEED
 
