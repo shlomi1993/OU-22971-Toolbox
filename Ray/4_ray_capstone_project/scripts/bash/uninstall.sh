@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Uninstall wrapper scripts from the active conda environment's bin directory
-# Run this script with: bash scripts/uninstall.sh
+# Run this script with: bash scripts/bash/uninstall.sh
 
 set -euo pipefail
 
@@ -19,7 +19,7 @@ echo ""
 # Remove symlinks from conda environment's bin directory
 for cmd in prepare run; do
     DEST="$CONDA_BIN/$cmd"
-    
+
     if [ -L "$DEST" ]; then
         echo "  Removing: $cmd"
         rm "$DEST"

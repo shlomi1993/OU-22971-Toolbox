@@ -33,12 +33,12 @@ Download two adjacent monthly Green Taxi parquet files from [TLC](https://www.ny
 
 **Linux/macOS:**
 ```bash
-bash scripts/download_data.sh
+bash scripts/bash/download_data.sh
 ```
 
 **Windows PowerShell:**
 ```powershell
-powershell -File scripts/download_data.ps1
+powershell -File scripts/powershell/download_data.ps1
 ```
 
 This downloads `green_tripdata_2023-01.parquet` (reference) and `green_tripdata_2023-02.parquet` (replay) into `data/`.
@@ -47,12 +47,12 @@ To reset all generated artifacts and stop Ray:
 
 **Linux/macOS:**
 ```bash
-bash scripts/reset_ray.sh
+bash scripts/bash/reset_ray.sh
 ```
 
 **Windows PowerShell:**
 ```powershell
-powershell -File scripts/reset_ray.ps1
+powershell -File scripts/powershell/reset_ray.ps1
 ```
 
 ---
@@ -207,7 +207,7 @@ For convenience, you can install command wrappers that allow you to run `prepare
 conda activate 22971-ray-capstone
 
 # Install command wrappers
-bash scripts/install.sh
+bash scripts/bash/install.sh
 
 # Now you can use shortened commands
 prepare --ref-parquet data/2023-01.parquet --replay-parquet data/2023-02.parquet --output-dir prepared/
@@ -220,7 +220,7 @@ run --prepared-dir prepared/ --output-dir output/ --mode async
 conda activate 22971-ray-capstone
 
 # Install command wrappers (requires Git Bash or WSL bash in PATH)
-powershell -File scripts/install.ps1
+powershell -File scripts/powershell/install.ps1
 
 # Now you can use shortened commands
 prepare --ref-parquet data/2023-01.parquet --replay-parquet data/2023-02.parquet --output-dir prepared/
@@ -296,15 +296,15 @@ The demo consists of three separate runs on the same replay data, followed by ar
 **Linux/macOS:**
 ```bash
 conda activate 22971-ray-capstone
-bash scripts/reset_ray.sh
-bash scripts/download_data.sh
+bash scripts/bash/reset_ray.sh
+bash scripts/bash/download_data.sh
 ```
 
 **Windows PowerShell:**
 ```powershell
 conda activate 22971-ray-capstone
-powershell -File scripts/reset_ray.ps1
-powershell -File scripts/download_data.ps1
+powershell -File scripts/powershell/reset_ray.ps1
+powershell -File scripts/powershell/download_data.ps1
 ```
 
 Have two terminals: one for running commands, one for inspecting artifacts.
@@ -440,14 +440,14 @@ Each run mode writes artifacts into its own subdirectory under `output/`:
 | `tests/test_ray_capstone_project.py` | Pytest unit tests for all modules |
 | `tests/test_ray_flow.sh` | End-to-end system test for Linux/macOS (runs all 3 demo modes, verifies artifacts) |
 | `tests/test_ray_flow.ps1` | End-to-end system test for Windows PowerShell |
-| `scripts/download_data.sh` | Download TLC parquet data into `data/` (Linux/macOS) |
-| `scripts/download_data.ps1` | Download TLC parquet data into `data/` (Windows) |
-| `scripts/reset_ray.sh` | Stop Ray, remove `prepared/` and `output/` directories (Linux/macOS) |
-| `scripts/reset_ray.ps1` | Stop Ray, remove `prepared/` and `output/` directories (Windows) |
-| `scripts/install.sh` | Install command wrappers into conda environment (Linux/macOS) |
-| `scripts/install.ps1` | Install command wrappers into conda environment (Windows) |
-| `scripts/uninstall.sh` | Remove command wrappers from conda environment (Linux/macOS) |
-| `scripts/uninstall.ps1` | Remove command wrappers from conda environment (Windows) |
+| `scripts/bash/download_data.sh` | Download TLC parquet data into `data/` (Linux/macOS) |
+| `scripts/powershell/download_data.ps1` | Download TLC parquet data into `data/` (Windows) |
+| `scripts/bash/reset_ray.sh` | Stop Ray, remove `prepared/` and `output/` directories (Linux/macOS) |
+| `scripts/powershell/reset_ray.ps1` | Stop Ray, remove `prepared/` and `output/` directories (Windows) |
+| `scripts/bash/install.sh` | Install command wrappers into conda environment (Linux/macOS) |
+| `scripts/powershell/install.ps1` | Install command wrappers into conda environment (Windows) |
+| `scripts/bash/uninstall.sh` | Remove command wrappers from conda environment (Linux/macOS) |
+| `scripts/powershell/uninstall.ps1` | Remove command wrappers from conda environment (Windows) |
 | `environment.yml` | Conda environment specification |
 
 ---

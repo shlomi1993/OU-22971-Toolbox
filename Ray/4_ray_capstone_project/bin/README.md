@@ -16,7 +16,7 @@ To install these commands in your conda environment (so you can run `prepare` an
 conda activate 22971-ray-capstone
 
 # Run the installation script
-bash scripts/install.sh
+bash scripts/bash/install.sh
 ```
 
 This creates symlinks in your conda environment's `bin/` directory, making the commands available whenever the environment is activated.
@@ -42,7 +42,7 @@ To remove the command wrappers from your conda environment:
 conda activate 22971-ray-capstone
 
 # Run the uninstallation script
-bash scripts/uninstall.sh
+bash scripts/bash/uninstall.sh
 ```
 
 ## How It Works

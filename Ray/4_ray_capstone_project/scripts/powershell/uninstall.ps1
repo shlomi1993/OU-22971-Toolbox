@@ -1,5 +1,5 @@
 # Uninstall wrapper scripts from the active conda environment's Scripts directory
-# Run this script with: powershell -File scripts/uninstall.ps1
+# Run this script with: powershell -File scripts/powershell/uninstall.ps1
 
 $ErrorActionPreference = "Stop"
 

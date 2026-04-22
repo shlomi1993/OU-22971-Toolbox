@@ -1,5 +1,5 @@
 # Reset Ray environment - stop Ray and remove generated artifacts
-# Run this script with: powershell -File scripts/reset_ray.ps1
+# Run this script with: powershell -File scripts/powershell/reset_ray.ps1
 
 $ErrorActionPreference = "Stop"
 
