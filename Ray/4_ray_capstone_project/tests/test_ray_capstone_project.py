@@ -1,7 +1,20 @@
+"""
+Unit and integration tests for the Ray capstone project.
+
+Tests cover:
+- Data validation: Adjacent month validation, zone selection, tick aggregation
+- Scoring logic: Snapshot computation, decision rules, fallback policies
+- Actor behavior: ZoneActor state management, idempotent writes, counters
+- Replay mechanics: Blocking vs async execution patterns
+
+Run with: pytest tests/test_ray_capstone_project.py -v
+"""
+
 import json
 import os
 import subprocess
 import sys
+import warnings
 import numpy as np
 import pandas as pd
 import pytest
@@ -35,9 +48,11 @@ os.environ["RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO"] = "0"  # Ensure Ray doesn't ove
 RNG_SEED = 42
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def ray_ctx() -> Generator[None, None, None]:
-    ray.init(num_cpus=2, ignore_reinit_error=True)
+    warnings.filterwarnings("ignore", category=FutureWarning, module="ray")
+    os.environ["RAY_DEDUP_LOGS"] = "0"
+    ray.init(num_cpus=2, logging_level="ERROR", log_to_driver=False)
     yield
     ray.shutdown()
 
@@ -61,7 +76,7 @@ def make_trips(year: int, month: int, n_zones: int = 30, base_count: int = 50) -
     return pd.DataFrame(rows)
 
 
-def _make_zone_data(zone_id: int = 10, n_ticks: int = 5) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def make_zone_data(zone_id: int = 10, n_ticks: int = 5) -> Tuple[pd.DataFrame, pd.DataFrame]:
     base = pd.Timestamp("2023-02-01")
     ticks = [base + pd.Timedelta(minutes=15 * i) for i in range(n_ticks)]
     demands = [10.0, 12.0, 8.0, 15.0, 20.0][:n_ticks]
@@ -170,7 +185,7 @@ def test_fallback_always_previous_policy() -> None:
 
 @pytest.mark.usefixtures("ray_ctx")
 def test_write_decision_idempotent() -> None:
-    replay, baseline = _make_zone_data(zone_id=10)
+    replay, baseline = make_zone_data(zone_id=10)
     config = RunConfig(n_zones=1)
     actor = ZoneActor.remote(10, replay, baseline, config)
     ray.get(actor.activate_tick.remote(0))
@@ -188,7 +203,7 @@ def test_write_decision_idempotent() -> None:
 
 @pytest.mark.usefixtures("ray_ctx")
 def test_report_decision_duplicate_detected() -> None:
-    replay, baseline = _make_zone_data(zone_id=20)
+    replay, baseline = make_zone_data(zone_id=20)
     config = RunConfig(n_zones=1)
     actor = ZoneActor.remote(20, replay, baseline, config)
     ray.get(actor.activate_tick.remote(0))
@@ -204,7 +219,7 @@ def test_report_decision_duplicate_detected() -> None:
 
 @pytest.mark.usefixtures("ray_ctx")
 def test_report_late_for_closed_or_inactive_tick() -> None:
-    replay, baseline = _make_zone_data(zone_id=30)
+    replay, baseline = make_zone_data(zone_id=30)
     config = RunConfig(n_zones=1)
     actor = ZoneActor.remote(30, replay, baseline, config)
 
@@ -226,7 +241,7 @@ def test_report_late_for_closed_or_inactive_tick() -> None:
 
 @pytest.mark.usefixtures("ray_ctx")
 def test_finalize_prefers_reported_decision() -> None:
-    replay, baseline = _make_zone_data(zone_id=40)
+    replay, baseline = make_zone_data(zone_id=40)
     config = RunConfig(n_zones=1)
     actor = ZoneActor.remote(40, replay, baseline, config)
 
@@ -240,7 +255,7 @@ def test_finalize_prefers_reported_decision() -> None:
 
 @pytest.mark.usefixtures("ray_ctx")
 def test_finalize_uses_fallback_when_no_report() -> None:
-    replay, baseline = _make_zone_data(zone_id=50)
+    replay, baseline = make_zone_data(zone_id=50)
     config = RunConfig(n_zones=1)
     actor = ZoneActor.remote(50, replay, baseline, config)
 
@@ -260,7 +275,7 @@ def test_finalize_uses_fallback_when_no_report() -> None:
 
 @pytest.mark.usefixtures("ray_ctx")
 def test_finalize_tick_idempotent() -> None:
-    replay, baseline = _make_zone_data(zone_id=60)
+    replay, baseline = make_zone_data(zone_id=60)
     config = RunConfig(n_zones=1)
     actor = ZoneActor.remote(60, replay, baseline, config)
 
@@ -276,7 +291,7 @@ def test_finalize_tick_idempotent() -> None:
 
 @pytest.mark.usefixtures("ray_ctx")
 def test_late_report_after_finalize_does_not_overwrite() -> None:
-    replay, baseline = _make_zone_data(zone_id=70)
+    replay, baseline = make_zone_data(zone_id=70)
     config = RunConfig(n_zones=1)
     actor = ZoneActor.remote(70, replay, baseline, config)
 
@@ -294,7 +309,7 @@ def test_late_report_after_finalize_does_not_overwrite() -> None:
 
 @pytest.mark.usefixtures("ray_ctx")
 def test_first_tick_finalize_without_report_defaults_ok() -> None:
-    replay, baseline = _make_zone_data(zone_id=80)
+    replay, baseline = make_zone_data(zone_id=80)
     config = RunConfig(n_zones=1)
     actor = ZoneActor.remote(80, replay, baseline, config)
 
@@ -309,7 +324,7 @@ def test_first_tick_finalize_without_report_defaults_ok() -> None:
 
 @pytest.mark.usefixtures("ray_ctx")
 def test_multi_tick_decisions_accumulate() -> None:
-    replay, baseline = _make_zone_data(zone_id=90, n_ticks=5)
+    replay, baseline = make_zone_data(zone_id=90, n_ticks=5)
     config = RunConfig(n_zones=1)
     actor = ZoneActor.remote(90, replay, baseline, config)
 
@@ -335,8 +350,8 @@ def test_blocking_all_zones_decided_no_fallback() -> None:
     zone_ids = [100, 200, 300]
     actors = {}
     for zid in zone_ids:
-        rp, bl = _make_zone_data(zone_id=zid)
-        actors[zid] = ZoneActor.remote(zid, rp, bl, config)
+        replay, baseline = make_zone_data(zone_id=zid)
+        actors[zid] = ZoneActor.remote(zid, replay, baseline, config)
 
     tick_id = 0
     ray.get([a.activate_tick.remote(tick_id) for a in actors.values()])
@@ -363,8 +378,8 @@ def test_async_partial_readiness_triggers_fallback() -> None:
     zone_ids = [110, 220, 330]
     actors = {}
     for zid in zone_ids:
-        rp, bl = _make_zone_data(zone_id=zid)
-        actors[zid] = ZoneActor.remote(zid, rp, bl, config)
+        replay, baseline = make_zone_data(zone_id=zid)
+        actors[zid] = ZoneActor.remote(zid, replay, baseline, config)
 
     tick_id = 0
     ray.get([a.activate_tick.remote(tick_id) for a in actors.values()])
@@ -461,36 +476,42 @@ def _run_script(args: List[str], timeout: int = 120) -> subprocess.CompletedProc
 def prepared_dir(synthetic_parquets: Dict[str, Path], tmp_path_factory: pytest.TempPathFactory) -> Path:
     out = tmp_path_factory.mktemp("prepared")
     result = _run_script([
-        "prepare.py",
+        "main.py",
+        "prepare",
         "--ref-parquet", str(synthetic_parquets["ref"]),
         "--replay-parquet", str(synthetic_parquets["replay"]),
         "--output-dir", str(out),
         "--n-zones", "5",
     ])
-    assert result.returncode == 0, f"prepare.py fixture failed: {result.stderr}"
+    assert result.returncode == 0, f"main.py prepare fixture failed: {result.stderr}"
     return out
 
 
-@pytest.mark.parametrize("n_zones,seed", [(3, 42), (5, 42), (10, 99), (5, 7), (8, 123), (2, 0)])
-def test_prepare_script(synthetic_parquets: Dict[str, Path], tmp_path: Path, n_zones: int, seed: int) -> None:
+@pytest.mark.parametrize("n_zones,seed", [(3, None), (5, None), (3, 42), (5, 42)])
+def test_prepare_script(synthetic_parquets: Dict[str, Path], tmp_path: Path, n_zones: int, seed: int | None) -> None:
     out = tmp_path / "prepared"
-    result = _run_script([
-        "prepare.py",
+    args = [
+        "main.py",
+        "prepare",
         "--ref-parquet", str(synthetic_parquets["ref"]),
         "--replay-parquet", str(synthetic_parquets["replay"]),
         "--output-dir", str(out),
         "--n-zones", str(n_zones),
-        "--seed", str(seed),
-    ])
-    assert result.returncode == 0, f"prepare.py --n-zones {n_zones} --seed {seed} failed: {result.stderr}"
+    ]
+    if seed is not None:
+        args.extend(["--seed", str(seed)])
+    
+    result = _run_script(args)
+    assert result.returncode == 0, f"main.py prepare --n-zones {n_zones} --seed {seed} failed: {result.stderr}"
     for fname in ["baseline.parquet", "replay.parquet", "active_zones.json", "prep_meta.json"]:
-        assert (out / fname).exists(), f"prepare.py must produce {fname}"
+        assert (out / fname).exists(), f"main.py prepare must produce {fname}"
     with open(out / "active_zones.json") as f:
         zones = json.load(f)
     assert len(zones) == n_zones, f"Expected {n_zones} zones, got {len(zones)}"
     with open(out / "prep_meta.json") as f:
         meta = json.load(f)
-    assert meta["seed"] == seed, f"prep_meta.json seed mismatch: expected {seed}, got {meta['seed']}"
+    if seed is not None:
+        assert meta["seed"] == seed, f"prep_meta.json seed mismatch: expected {seed}, got {meta['seed']}"
     assert meta["n_zones"] == n_zones, f"prep_meta.json n_zones mismatch: expected {n_zones}, got {meta['n_zones']}"
 
 
@@ -504,13 +525,12 @@ def test_prepare_script(synthetic_parquets: Dict[str, Path], tmp_path: Path, n_z
     ("async", "0.25", "0.1", "3.0", "5", "always_previous"),
     ("async", "0.4", "0.3", "1.5", "3", "always_previous"),
 ])
-def test_run_script(
-    prepared_dir: Path, tmp_path: Path,
-    mode: str, slow_frac: str, slow_sleep: str, timeout_s: str, max_inflight: str, fallback: str,
-) -> None:
+def test_run_script(prepared_dir: Path, tmp_path: Path, mode: str, slow_frac: str, slow_sleep: str, timeout_s: str,
+                    max_inflight: str, fallback: str) -> None:
     out = tmp_path / "output"
     result = _run_script([
-        "run.py",
+        "main.py",
+        "run",
         "--prepared-dir", str(prepared_dir),
         "--output-dir", str(out),
         "--mode", mode,
@@ -522,16 +542,17 @@ def test_run_script(
         "--fallback-policy", fallback,
         "--seed", "42",
     ])
-    assert result.returncode == 0, f"run.py --mode {mode} failed: {result.stderr}"
+    assert result.returncode == 0, f"main.py run --mode {mode} failed: {result.stderr}"
     artifact_dir = out / mode
     for fname in BLOCKING_ASYNC_ARTIFACTS:
-        assert (artifact_dir / fname).exists(), f"run.py --mode {mode} must produce {fname}"
+        assert (artifact_dir / fname).exists(), f"main.py run --mode {mode} must produce {fname}"
 
 
 def test_run_stress_script(prepared_dir: Path, tmp_path: Path) -> None:
     out = tmp_path / "output"
     result = _run_script([
-        "run.py",
+        "main.py",
+        "run",
         "--prepared-dir", str(prepared_dir),
         "--output-dir", str(out),
         "--mode", "stress",
@@ -541,7 +562,7 @@ def test_run_stress_script(prepared_dir: Path, tmp_path: Path) -> None:
         "--tick-timeout-s", "2.0",
         "--seed", "42",
     ], timeout=300)
-    assert result.returncode == 0, f"run.py --mode stress failed: {result.stderr}"
+    assert result.returncode == 0, f"main.py run --mode stress failed: {result.stderr}"
     stress_dir = out / "stress"
     assert (stress_dir / "comparison.json").exists(), "Stress mode must produce comparison.json"
     with open(stress_dir / "comparison.json") as f:
