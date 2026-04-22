@@ -149,7 +149,6 @@ echo ""
 if [ "$KEEP_ARTIFACTS" = false ]; then
     echo "Cleaning up generated artifacts"
     rm -rf "$PREPARED_DIR" "$OUTPUT_DIR"
-    echo "Removed $PREPARED_DIR and $OUTPUT_DIR"
 else
     echo "Keeping artifacts:"
     find "$OUTPUT_DIR" -type f | sort

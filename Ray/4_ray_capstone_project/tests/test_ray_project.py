@@ -7,7 +7,7 @@ Tests cover:
 - Actor behavior: ZoneActor state management, idempotent writes, counters
 - Replay mechanics: Blocking vs async execution patterns
 
-Run with: pytest tests/test_ray_capstone_project.py -v
+Run with: pytest tests/test_ray_project.py -v
 """
 
 import json
@@ -499,7 +499,7 @@ def test_prepare_script(synthetic_parquets: Dict[str, Path], tmp_path: Path, n_z
     ]
     if seed is not None:
         args.extend(["--seed", str(seed)])
-    
+
     result = _run_script(args)
     assert result.returncode == 0, f"main.py prepare --n-zones {n_zones} --seed {seed} failed: {result.stderr}"
     for fname in ["baseline.parquet", "replay.parquet", "active_zones.json", "prep_meta.json"]:

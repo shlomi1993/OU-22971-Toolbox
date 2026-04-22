@@ -27,18 +27,32 @@ conda env create -f environment.yml
 conda activate 22971-ray-capstone
 ```
 
+**Note for Windows users**: This project includes both bash scripts (`.sh`) and PowerShell scripts (`.ps1`). Use the PowerShell versions. If you want to use the command wrappers (`prepare` and `run`), you'll need Git Bash or WSL bash in your PATH.
+
 Download two adjacent monthly Green Taxi parquet files from [TLC](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page):
 
+**Linux/macOS:**
 ```bash
 bash scripts/download_data.sh
+```
+
+**Windows PowerShell:**
+```powershell
+powershell -File scripts/download_data.ps1
 ```
 
 This downloads `green_tripdata_2023-01.parquet` (reference) and `green_tripdata_2023-02.parquet` (replay) into `data/`.
 
 To reset all generated artifacts and stop Ray:
 
+**Linux/macOS:**
 ```bash
 bash scripts/reset_ray.sh
+```
+
+**Windows PowerShell:**
+```powershell
+powershell -File scripts/reset_ray.ps1
 ```
 
 ---
@@ -56,17 +70,17 @@ The system follows this control loop:
                      │  prepare | run │
                      └───┬────────┬───┘
                          │        │
-         ┌───────────────┘        └──────────────┐
-         ▼                                       ▼
+         ┌───────────────┘        └───────────────────────┐
+         ▼                                                ▼
 ┌─────────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│ src/prepare.py  │────▶│  prepared assets │────▶│   src/run.py     │
-│                 │     │  baseline.parquet│     │                  │
+│  src/prepare.py │────▶│ prepared assets  │────▶│    src/run.py    │
+│                 │     │ baseline.parquet │     │                  │
 │ prepare_assets()│     │  replay.parquet  │     │   run_replay()   │
 │                 │     │ active_zones.json│     │                  │
-└─────────────────┘     └──────────────────┘     └───────┬──────────┘
-                                                         │
-                            ┌────────────────────────────┤
-                            ▼                            ▼
+└─────────────────┘     └──────────────────┘     └────────┬─────────┘
+                                                          │
+                            ┌─────────────────────────────┤
+                            ▼                             ▼
                      ┌─────────────┐          ┌──────────────────┐
                      │  ZoneActor  │ ×N       │   score_zone()   │
                      │  (per zone) │◀─────────│   remote tasks   │
@@ -187,12 +201,26 @@ Called via `python main.py run` or the `run` wrapper command. active zones
 
 For convenience, you can install command wrappers that allow you to run `prepare` and `run` directly instead of `python main.py prepare/run`:
 
+**Linux/macOS:**
 ```bash
 # Activate your conda environment
 conda activate 22971-ray-capstone
 
 # Install command wrappers
 bash scripts/install.sh
+
+# Now you can use shortened commands
+prepare --ref-parquet data/2023-01.parquet --replay-parquet data/2023-02.parquet --output-dir prepared/
+run --prepared-dir prepared/ --output-dir output/ --mode async
+```
+
+**Windows PowerShell:**
+```powershell
+# Activate your conda environment
+conda activate 22971-ray-capstone
+
+# Install command wrappers (requires Git Bash or WSL bash in PATH)
+powershell -File scripts/install.ps1
 
 # Now you can use shortened commands
 prepare --ref-parquet data/2023-01.parquet --replay-parquet data/2023-02.parquet --output-dir prepared/
@@ -239,11 +267,17 @@ python main.py run --prepared-dir prepared --output-dir output --mode stress \
 
 ### Full system test (all 3 runs)
 
+**Linux/macOS:**
 ```bash
 bash tests/test_ray_flow.sh
 ```
 
-Add `--keep-artifacts` to retain output after the test completes.
+**Windows PowerShell:**
+```powershell
+powershell -File tests/test_ray_flow.ps1
+```
+
+Add `--keep-artifacts` (bash) or `-KeepArtifacts` (PowerShell) to retain output after the test completes.
 
 ### Unit tests
 
@@ -259,10 +293,18 @@ The demo consists of three separate runs on the same replay data, followed by ar
 
 ### Before recording
 
+**Linux/macOS:**
 ```bash
 conda activate 22971-ray-capstone
 bash scripts/reset_ray.sh
 bash scripts/download_data.sh
+```
+
+**Windows PowerShell:**
+```powershell
+conda activate 22971-ray-capstone
+powershell -File scripts/reset_ray.ps1
+powershell -File scripts/download_data.ps1
 ```
 
 Have two terminals: one for running commands, one for inspecting artifacts.
@@ -392,12 +434,20 @@ Each run mode writes artifacts into its own subdirectory under `output/`:
 | `main.py` | **Main entry point**: CLI with `prepare` and `run` subcommands |
 | `src/tlc.py` | Shared constants, dataclasses, data loading, scoring logic, artifact writers |
 | `src/zone_actor.py` | `ZoneActor` Ray actor, `ZoneSnapshot`, `ZoneDecision`, fallback logic |
-| `prepare.py` | Preparation module: load parquets, validate, build baseline and replay tables |
-| `run.py` | Runtime module: `score_zone` task, blocking/async/stress drivers, artifact writing |
+| `src/prepare.py` | Preparation module: load parquets, validate, build baseline and replay tables |
+| `src/run.py` | Runtime module: `score_zone` task, blocking/async/stress drivers, artifact writing |
+| `bin/prepare`, `bin/run` | Command wrapper scripts (installed to conda environment) |
 | `tests/test_ray_capstone_project.py` | Pytest unit tests for all modules |
-| `tests/test_ray_flow.sh` | End-to-end system test (runs all 3 demo modes, verifies artifacts) |
-| `scripts/download_data.sh` | Download TLC parquet data into `data/` |
-| `scripts/reset_ray.sh` | Stop Ray, remove `prepared/` and `output/` directories |
+| `tests/test_ray_flow.sh` | End-to-end system test for Linux/macOS (runs all 3 demo modes, verifies artifacts) |
+| `tests/test_ray_flow.ps1` | End-to-end system test for Windows PowerShell |
+| `scripts/download_data.sh` | Download TLC parquet data into `data/` (Linux/macOS) |
+| `scripts/download_data.ps1` | Download TLC parquet data into `data/` (Windows) |
+| `scripts/reset_ray.sh` | Stop Ray, remove `prepared/` and `output/` directories (Linux/macOS) |
+| `scripts/reset_ray.ps1` | Stop Ray, remove `prepared/` and `output/` directories (Windows) |
+| `scripts/install.sh` | Install command wrappers into conda environment (Linux/macOS) |
+| `scripts/install.ps1` | Install command wrappers into conda environment (Windows) |
+| `scripts/uninstall.sh` | Remove command wrappers from conda environment (Linux/macOS) |
+| `scripts/uninstall.ps1` | Remove command wrappers from conda environment (Windows) |
 | `environment.yml` | Conda environment specification |
 
 ---
