@@ -2,7 +2,7 @@
 
 Replay-based recommendation system using NYC Green Taxi data. The system walks through historical taxi pickups in 15-minute windows and, for each active zone, decides whether demand looks elevated (`NEED`) or normal (`OK`). The project compares blocking and asynchronous execution strategies under simulated zone-level skew, focusing on actor-owned state, idempotent writes, bounded concurrency, and deterministic fallback behavior.
 
-<img width="1024" height="572" alt="image" src="https://github.com/user-attachments/assets/e2413a87-45d6-458b-bcf9-c70f5f6dcf80" />
+<img width="2752" height="1536" alt="Gemini_Generated_Image_s6abwhs6abwhs6ab" src="https://github.com/user-attachments/assets/9c07bfad-660d-46d5-944b-000ff7af8ec5" />
 
 ---
 
