@@ -22,7 +22,6 @@ error_handler() {
     local line_num=$1
     echo ""
     echo -e "${RED}ERROR: Test failed at line $line_num${NC}"
-    echo -e "${RED}Unexpected failure occurred${NC}"
     exit 1
 }
 
@@ -114,7 +113,7 @@ echo "Async run complete. Artifacts in $OUTPUT_DIR/async/"
 
 # --- Run 3: Stress test ---
 echo ""
-echo -e "${CYAN}Step 5: Run stress test (harsher skew)${NC}"
+echo -e "${CYAN}Step 5: Run skew stress test${NC}"
 log_and_run run \
     --prepared-dir "$PREPARED_DIR" \
     --output-dir "$OUTPUT_DIR" \
@@ -152,10 +151,6 @@ if [ "$KEEP_ARTIFACTS" = false ]; then
     rm -rf "$PREPARED_DIR" "$OUTPUT_DIR"
     echo "Removed $PREPARED_DIR and $OUTPUT_DIR"
 else
-    echo "Keeping artifacts"
+    echo "Keeping artifacts:"
+    find "$OUTPUT_DIR" -type f | sort
 fi
-
-# --- List output artifacts ---
-echo ""
-echo "Output artifacts:"
-find "$OUTPUT_DIR" -type f | sort

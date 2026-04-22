@@ -50,21 +50,31 @@ The system follows this control loop:
 **reference-month prep → actor initialization → tick replay → per-zone scoring → tick finalization under partial readiness → metrics and artifacts**
 
 ```
-┌──────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  prepare.py  │────▶│  prepared assets  │────▶│     run.py      │
-│  (Step A+B)  │     │  baseline.parquet │     │  (Steps C–H)    │
-│              │     │  replay.parquet   │     │                 │
-│              │     │  active_zones.json│     │                 │
-└──────────────┘     └──────────────────┘     └────────┬────────┘
-                                                       │
-                          ┌────────────────────────────┤
-                          ▼                            ▼
-                   ┌─────────────┐          ┌──────────────────┐
-                   │  ZoneActor  │ ×N       │   score_zone()   │
-                   │  (per zone) │◀─────────│   remote tasks   │
-                   │  owns state │          │   (per zone)     │
-                   └─────────────┘          └──────────────────┘
+                     ┌────────────────┐
+                     │    main.py     │  (CLI entry point)
+                     │                │
+                     │  prepare | run │
+                     └───┬────────┬───┘
+                         │        │
+         ┌───────────────┘        └──────────────┐
+         ▼                                       ▼
+┌─────────────────┐     ┌──────────────────┐     ┌──────────────────┐
+│ src/prepare.py  │────▶│  prepared assets │────▶│   src/run.py     │
+│                 │     │  baseline.parquet│     │                  │
+│ prepare_assets()│     │  replay.parquet  │     │   run_replay()   │
+│                 │     │ active_zones.json│     │                  │
+└─────────────────┘     └──────────────────┘     └───────┬──────────┘
+                                                         │
+                            ┌────────────────────────────┤
+                            ▼                            ▼
+                     ┌─────────────┐          ┌──────────────────┐
+                     │  ZoneActor  │ ×N       │   score_zone()   │
+                     │  (per zone) │◀─────────│   remote tasks   │
+                     │  owns state │          │   (per zone)     │
+                     └─────────────┘          └──────────────────┘
 ```
+
+**Note**: Convenience wrappers `prepare` and `run` are available in the conda environment via `bin/` scripts.
 
 ### Key components
 
@@ -77,11 +87,24 @@ The system follows this control loop:
 
 ## Code walkthrough
 
-### `main.py` — main entry point with CLI
+### `main.py` — CLI entry point
 
-- **CLI structure**: Two subcommands — `prepare` and `run`
-- **`prepare` subcommand**: calls `prepare_assets()` from prepare module
-- **`run` subcommand**: initializes Ray, creates `RunConfig`, calls the appropriate driver (`run_blocking`, `run_async`, or `run_stress`) from run module
+Main entry point with two subcommands:
+
+- **`prepare` subcommand**: Parses CLI arguments, calls `src.prepare.prepare_assets()`
+- **`run` subcommand**: Parses CLI arguments, initializes Ray, creates `RunConfig`, calls `src.run.run_replay()`
+
+**Usage**:
+```bash
+python main.py prepare --ref-parquet data/2023-01.parquet --replay-parquet data/2023-02.parquet
+python main.py run --prepared-dir prepared/ --mode async
+```
+
+Or use the convenience wrappers (installed in conda environment):
+```bash
+prepare --ref-parquet data/2023-01.parquet --replay-parquet data/2023-02.parquet
+run --prepared-dir prepared/ --mode async
+```
 
 ### `src/tlc.py` — shared constants, data functions, artifact writers
 
@@ -97,16 +120,20 @@ The system follows this control loop:
 ### `src/zone_actor.py` — per-zone actor and decision types
 
 - **`ZoneSnapshot`**: minimal snapshot passed to scoring tasks. Contains `zone_id`, `tick_id`, `recent_demand`, `baseline_mean`, `baseline_std`. The `compute_decision()` method implements the threshold rule.
-- **`ZoneDecision`**: scoring result with `zone_id`, `tick_id`, `decision`, `task_latency_s`
-- **`apply_fallback()`**: implements `always_previous` policy — returns the last accepted decision, or `OK` if no history
-- **`ZoneCounters`**: per-zone counters for `n_duplicates`, `n_late`, `n_fallbacks`
-- **`ZoneActor`** (Ray actor):
-  - `activate_tick(tick_id)` — marks tick as active, clears reported decision
-  - `get_snapshot(tick_id)` — returns `ZoneSnapshot` with recent demand window and baseline lookup
-  - `report_decision(tick_id, decision, latency)` — async mode: task reports decision; returns `ACCEPTED`, `DUPLICATE`, or `LATE`
-  - `has_decision_for_tick(tick_id)` — polls whether actor has a decision for this tick
-  - `write_decision(tick_id, decision)` — blocking mode: controller writes accepted decision; returns `WRITTEN` or `DUPLICATE`
-  - `finalize_tick(tick_id, fallback_policy)` — async mode: accepts reported decision or applies fallback; idempotent
+- **`src/prepare.py` — data preparation
+
+**`prepare_assets()` function:**
+
+1. Loads reference and replay parquets
+2. Validates adjacent months
+3. Selects active zones (deterministic with seed)
+4. Aggregates both months into 15-minute ticks
+5. Builds baseline table from reference month
+6. Builds replay table filtered to active zones
+7. Runs pandas cross-check
+8. Writes prepared assets: `baseline.parquet`, `replay.parquet`, `active_zones.json`, `prep_meta.json`
+
+Called via `python main.py prepare` or the `prepare` wrapper command.ack; idempotent
   - `get_accepted_decisions()` — returns full `{tick_id: decision}` history
   - `get_counters()` — returns `ZoneCounters` for observability
 
@@ -117,7 +144,12 @@ The system follows this control loop:
 3. Selects active zones (deterministic with seed)
 4. Aggregates both months into 15-minute ticks
 5. Builds baseline table from reference month
-6. Builds replay table filtered to active zones
+6. Busrc/run.py` — runtime execution
+
+**`run_replay()` function:**
+Entry point that initializes Ray context, loads prepared assets, creates actors, delegates to the appropriate driver (`run_blocking`, `run_async`, or `run_stress`), then writes artifacts and metrics.
+
+Called via `python main.py run` or the `run` wrapper command. active zones
 7. Runs pandas cross-check
 8. Writes prepared assets: `baseline.parquet`, `replay.parquet`, `active_zones.json`, `prep_meta.json`
 
