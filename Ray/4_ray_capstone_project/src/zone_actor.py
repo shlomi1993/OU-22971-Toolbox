@@ -19,10 +19,18 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Tuple
 
-from src.tlc import FALLBACK_POLICY_PREVIOUS, Decision, RoundedDataclass, RunConfig
+from src.tlc import FALLBACK_POLICY_PREVIOUS, RoundedDataclass, RunConfig
 
 
 Baseline = Dict[Tuple[int, int], Tuple[float, float]]
+
+
+class Recommendation(str, Enum):
+    """
+    Scoring outcome for a zone at a given tick.
+    """
+    NEED = "NEED"
+    OK = "OK"
 
 
 class WriteStatus(str, Enum):
@@ -36,13 +44,13 @@ class WriteStatus(str, Enum):
 
 
 @dataclass
-class ZoneDecision(RoundedDataclass):
+class ZoneRecommendation(RoundedDataclass):
     """
     Result from a scoring task.
     """
     zone_id: int
     tick_id: int
-    decision: Decision
+    decision: Recommendation
     task_latency_s: float = 0.0
 
 
@@ -59,7 +67,7 @@ class ZoneSnapshot(RoundedDataclass):
     is_slow_zone: bool = False
     slow_sleep_s: float = 0.0
 
-    def compute_decision(self) -> Decision:
+    def compute_decision(self) -> Recommendation:
         """
         Simple threshold scoring rule.
 
@@ -67,11 +75,11 @@ class ZoneSnapshot(RoundedDataclass):
             Decision: "NEED" if recent demand exceeds baseline mean + 1 std, else "OK".
         """
         if not self.recent_demand:
-            return Decision.OK
+            return Recommendation.OK
 
         recent_avg = np.mean(self.recent_demand)
         threshold = self.baseline_mean + max(self.baseline_std, 1.0)
-        return Decision.NEED if recent_avg > threshold else Decision.OK
+        return Recommendation.NEED if recent_avg > threshold else Recommendation.OK
 
 
 def apply_fallback(policy: str, last_decision: Optional[str]) -> str:
@@ -86,10 +94,10 @@ def apply_fallback(policy: str, last_decision: Optional[str]) -> str:
         str: The fallback decision to apply.
     """
     if policy != FALLBACK_POLICY_PREVIOUS:
-        return Decision.OK
+        return Recommendation.OK
     if last_decision is not None:
         return last_decision
-    return Decision.OK
+    return Recommendation.OK
 
 
 @dataclass
@@ -138,7 +146,7 @@ class ZoneActor:
         # Mutable state
         self.recent_demand: List[float] = []
         self.active_tick_id: Optional[int] = None
-        self.reported_decision: Optional[ZoneDecision] = None
+        self.reported_decision: Optional[ZoneRecommendation] = None
         self.accepted_decisions: Dict[int, str] = {}  # tick_id -> decision
         self.last_accepted_decision: Optional[str] = None
 
@@ -210,7 +218,7 @@ class ZoneActor:
             return WriteStatus.DUPLICATE
 
         # Accept: store the reported decision (not yet finalized)
-        self.reported_decision = ZoneDecision(self.zone_id, tick_id, decision, latency)
+        self.reported_decision = ZoneRecommendation(self.zone_id, tick_id, decision, latency)
         return WriteStatus.ACCEPTED
 
     def has_decision_for_tick(self, tick_id: int) -> bool:

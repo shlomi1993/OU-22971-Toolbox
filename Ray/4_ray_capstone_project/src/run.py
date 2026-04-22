@@ -34,7 +34,7 @@ from src.tlc import (
     write_metrics_csv,
     write_tick_summary,
 )
-from src.zone_actor import ZoneActor, ZoneDecision, ZoneSnapshot
+from src.zone_actor import ZoneActor, ZoneRecommendation, ZoneSnapshot
 
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 @ray.remote
 def score_zone(snapshot: ZoneSnapshot, slow_sleep_s: float = 0.0, actor_handle: ActorHandle = None,
-               mode: RunMode = RunMode.BLOCKING) -> ZoneDecision:
+               mode: RunMode = RunMode.BLOCKING) -> ZoneRecommendation:
     """
     Per-zone scoring task. Deterministic from snapshot input.
     In blocking mode, returns the decision payload to the controller.
@@ -56,7 +56,7 @@ def score_zone(snapshot: ZoneSnapshot, slow_sleep_s: float = 0.0, actor_handle: 
         mode (RunMode, optional): BLOCKING or ASYNC. Defaults to RunMode.BLOCKING.
 
     Returns:
-        ZoneDecision: Decision payload with zone_id, tick_id, decision, task_latency_s.
+        ZoneRecommendation: Decision payload with zone_id, tick_id, decision, task_latency_s.
     """
     start = time.time()
 
@@ -70,7 +70,7 @@ def score_zone(snapshot: ZoneSnapshot, slow_sleep_s: float = 0.0, actor_handle: 
     if mode == RunMode.ASYNC and actor_handle is not None:
         ray.get(actor_handle.report_decision.remote(snapshot.tick_id, decision, latency))
 
-    return ZoneDecision(snapshot.zone_id, snapshot.tick_id, decision, latency)
+    return ZoneRecommendation(snapshot.zone_id, snapshot.tick_id, decision, latency)
 
 
 def create_actors(replay: pd.DataFrame, baseline: pd.DataFrame, active_zones: List[int], config: RunConfig) -> Dict[int, ActorHandle]:
