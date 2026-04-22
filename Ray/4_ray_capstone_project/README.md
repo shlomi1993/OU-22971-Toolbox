@@ -478,5 +478,5 @@ Replace `--mode blocking` with `async` or `stress` for the other run modes.
 | `completion_fraction` | Fraction of zones needed before considering finalization | 0.75 |
 | `slow_zone_fraction` | Fraction of zones receiving artificial delay | 0.25 |
 | `slow_zone_sleep_s` | Artificial delay in seconds for slow zones | 1.0 |
-| `fallback_policy` | Policy for zones without a decision at tick finalization | `always_previous` |
+| `fallback_policy` | Policy for zones without a decision at tick finalization | `"always_previous"` |
 | `seed` | Random seed for deterministic zone selection and skew | 42 |
