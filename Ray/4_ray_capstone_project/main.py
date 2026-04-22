@@ -1,106 +1,114 @@
-# Ray capstone scaffold starter: TLC-backed per-zone recommendations under skew.
+# Ray capstone main entry: TLC-backed per-zone recommendations under skew.
 # Runs: prepare TLC replay assets -> initialize per-zone actors -> compare blocking and async execution.
 
-from __future__ import annotations
+"""
+CLI entry point for the Ray capstone project.
+
+Provides two subcommands:
+- `prepare`: Validate TLC parquet data, select active zones, build baseline and replay tables.
+- `run`: Execute blocking, async, or stress mode with Ray distributed actors.
+
+Example usage:
+    python main.py prepare --ref-parquet data/2023-01.parquet --replay-parquet data/2023-02.parquet --output-dir prepared/
+    python main.py run --prepared-dir prepared/ --output-dir output/ --mode async
+"""
 
 import argparse
 from pathlib import Path
 
-import ray
-
-
-@ray.remote
-class ZoneActor:
-    def __init__(self, zone_id: int, zone_data_path: str):
-        self.zone_id = zone_id
-        self.zone_data_path = zone_data_path
-        self.last_tick_id = None
-        self.last_decision = None
-
-    def next_snapshot(self, tick_id: int):
-        # TODO: Advance actor-owned replay state and return the minimal snapshot
-        # needed by the scoring task for this zone and tick.
-        pass
-
-    def write_decision(self, tick_id: int, decision: str, used_fallback: bool = False):
-        # TODO: Make this write idempotent by (zone_id, tick_id).
-        pass
-
-
-@ray.remote
-def score_zone(snapshot: dict) -> dict:
-    # TODO: Return a pure per-zone decision like:
-    # {"zone_id": ..., "tick_id": ..., "decision": "NEED" | "OK", "task_latency_s": ...}
-    pass
-
-
-def prepare_assets(reference_parquet: Path, replay_parquet: Path, output_dir: Path) -> None:
-    # TODO: Validate adjacent months, select active zones, aggregate replay ticks,
-    # build reference baselines, and write prepared assets.
-    pass
-
-
-def run_blocking(prepared_dir: Path, output_dir: Path, args: argparse.Namespace) -> None:
-    # TODO: Collect all zone snapshots for a tick, launch all scoring tasks,
-    # wait for every result, and write final artifacts.
-    pass
-
-
-def run_async(prepared_dir: Path, output_dir: Path, args: argparse.Namespace) -> None:
-    # TODO: Keep zone work bounded in flight, use ray.wait() inside the driver loop,
-    # finalize ticks under a partial-readiness policy, and write final artifacts.
-    pass
-
-
-def run_stress(prepared_dir: Path, output_dir: Path, args: argparse.Namespace) -> None:
-    # TODO: Reuse the async path with harsher skew settings.
-    pass
+from src.prepare import prepare_assets
+from src.run import run_replay
+from src.tlc import (
+    DEFAULT_N_ZONES,
+    DEFAULT_SEED,
+    DEFAULT_MAX_INFLIGHT_ZONES,
+    DEFAULT_TICK_TIMEOUT_S,
+    DEFAULT_COMPLETION_FRACTION,
+    DEFAULT_SLOW_ZONE_FRACTION,
+    DEFAULT_SLOW_ZONE_SLEEP_S,
+    FALLBACK_POLICY_PREVIOUS,
+    RunMode,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """
+    Build main parser with prepare and run subcommands.
+
+    Returns:
+        argparse.ArgumentParser: Main parser with subcommands for prepare and run.
+    """
     parser = argparse.ArgumentParser(
-        description="Capstone starter for TLC-backed per-zone recommendations"
+        description="TLC-backed per-zone recommendations under skew",
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    prepare = subparsers.add_parser("prepare")
-    prepare.add_argument("--reference-parquet", type=Path, required=True)
-    prepare.add_argument("--replay-parquet", type=Path, required=True)
-    prepare.add_argument("--output-dir", type=Path, required=True)
-    prepare.set_defaults(handler=handle_prepare)
+    # Add prepare subcommand
+    prepare_subparser = subparsers.add_parser("prepare", help="Prepare replay assets from TLC parquet files"
+                                              )
+    prepare_subparser.add_argument("--ref-parquet", type=Path, required=True, help="Path to reference month parquet file (e.g., green_tripdata_2023-01.parquet)")
+    prepare_subparser.add_argument("--replay-parquet", type=Path, required=True, help="Path to replay month parquet file (e.g., green_tripdata_2023-02.parquet)")
+    prepare_subparser.add_argument("--output-dir", type=Path, required=True, help="Directory to write prepared assets (baseline.parquet, replay.parquet, active_zones.json)")
+    prepare_subparser.add_argument("--n-zones", type=int, default=DEFAULT_N_ZONES, help=f"Number of active zones to select (default: {DEFAULT_N_ZONES})")
+    prepare_subparser.add_argument("--seed", type=int, default=DEFAULT_SEED, help=f"Random seed for zone selection reproducibility (default: {DEFAULT_SEED})")
+    prepare_subparser.set_defaults(handler=handle_prepare)
 
-    run = subparsers.add_parser("run")
-    run.add_argument("--prepared-dir", type=Path, required=True)
-    run.add_argument("--output-dir", type=Path, required=True)
-    run.add_argument("--mode", choices=("blocking", "async", "stress"), required=True)
-    run.add_argument("--max-inflight-zones", type=int, default=4)
-    run.add_argument("--tick-timeout-s", type=float, default=2.0)
-    run.add_argument("--completion-fraction", type=float, default=0.75)
-    run.add_argument("--slow-zone-fraction", type=float, default=0.25)
-    run.add_argument("--slow-zone-sleep-s", type=float, default=1.0)
-    run.add_argument("--fallback-policy", default="previous_else_ok")
-    run.add_argument("--ray-address", default=None)
-    run.set_defaults(handler=handle_run)
+    # Add run subcommand
+    run_subparser = subparsers.add_parser("run", help="Run replay in blocking/async/stress mode")
+    run_subparser.add_argument("--prepared-dir", type=Path, required=True, help="Directory with prepared assets from prepare command")
+    run_subparser.add_argument("--output-dir", type=Path, required=True, help="Root output directory for run artifacts")
+    run_subparser.add_argument("--mode", choices=[m.value for m in RunMode], required=True, help="Execution mode: blocking (wait for all), async (bounded concurrency + timeout), or stress (harsh skew test)")
+    run_subparser.add_argument("--n-zones", type=int, default=DEFAULT_N_ZONES, help=f"Number of active zones to use (default: {DEFAULT_N_ZONES})")
+    run_subparser.add_argument("--max-inflight-zones", type=int, default=DEFAULT_MAX_INFLIGHT_ZONES, help=f"Max concurrent scoring tasks in async mode (default: {DEFAULT_MAX_INFLIGHT_ZONES})")
+    run_subparser.add_argument("--tick-timeout-s", type=float, default=DEFAULT_TICK_TIMEOUT_S, help=f"Tick timeout in seconds for async mode (default: {DEFAULT_TICK_TIMEOUT_S})")
+    run_subparser.add_argument("--completion-fraction", type=float, default=DEFAULT_COMPLETION_FRACTION, help=f"Minimum fraction of zones required for finalization (default: {DEFAULT_COMPLETION_FRACTION})")
+    run_subparser.add_argument("--slow-zone-fraction", type=float, default=DEFAULT_SLOW_ZONE_FRACTION, help=f"Fraction of zones to simulate as slow (default: {DEFAULT_SLOW_ZONE_FRACTION})")
+    run_subparser.add_argument("--slow-zone-sleep-s", type=float, default=DEFAULT_SLOW_ZONE_SLEEP_S, help=f"Artificial delay in seconds for slow zones (default: {DEFAULT_SLOW_ZONE_SLEEP_S})")
+    run_subparser.add_argument("--fallback-policy", default=FALLBACK_POLICY_PREVIOUS, help=f"Fallback policy for late zones (default: {FALLBACK_POLICY_PREVIOUS})")
+    run_subparser.add_argument("--seed", type=int, default=DEFAULT_SEED, help=f"Random seed for reproducibility (default: {DEFAULT_SEED})")
+    run_subparser.add_argument("--ray-address", default=None, help="Ray cluster address (default: None for local mode)")
+    run_subparser.set_defaults(handler=handle_run)
 
     return parser
 
 
 def handle_prepare(args: argparse.Namespace) -> None:
-    prepare_assets(args.reference_parquet, args.replay_parquet, args.output_dir)
+    """
+    Handle prepare subcommand: prepare TLC replay assets.
+
+    Args:
+        args (argparse.Namespace): Parsed command-line arguments.
+    """
+    prepare_assets(
+        ref_parquet=args.ref_parquet,
+        replay_parquet=args.replay_parquet,
+        output_dir=args.output_dir,
+        n_zones=args.n_zones,
+        seed=args.seed
+    )
 
 
 def handle_run(args: argparse.Namespace) -> None:
-    if args.ray_address:
-        ray.init(address=args.ray_address)
-    else:
-        ray.init()
+    """Handle run subcommand: run replay with specified mode and configuration.
 
-    if args.mode == "blocking":
-        run_blocking(args.prepared_dir, args.output_dir, args)
-    elif args.mode == "async":
-        run_async(args.prepared_dir, args.output_dir, args)
-    else:
-        run_stress(args.prepared_dir, args.output_dir, args)
+    Args:
+        args (argparse.Namespace): Parsed command-line arguments.
+    """
+    run_replay(
+        prepared_dir=args.prepared_dir,
+        output_dir=args.output_dir,
+        mode=args.mode,
+        n_zones=args.n_zones,
+        max_inflight_zones=args.max_inflight_zones,
+        tick_timeout_s=args.tick_timeout_s,
+        completion_fraction=args.completion_fraction,
+        slow_zone_fraction=args.slow_zone_fraction,
+        slow_zone_sleep_s=args.slow_zone_sleep_s,
+        fallback_policy=args.fallback_policy,
+        seed=args.seed,
+        ray_address=args.ray_address,
+    )
 
 
 def main() -> int:

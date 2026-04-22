@@ -1,3 +1,16 @@
+"""
+Ray actor implementation for per-zone state management.
+
+ZoneActor owns mutable replay state and accepted decisions for a single zone.
+Supports both blocking mode and async mode. In blocking mode, the driver writes decisions directly.
+In async mode, scoring tasks report to the actor and the driver finalizes ticks with partial-readiness policy.
+
+Key features:
+- Idempotent writes keyed by (zone_id, tick_id)
+- Fallback policy for incomplete ticks (always_previous)
+- Observability counters for late/duplicate reports and fallback usage
+"""
+
 import numpy as np
 import pandas as pd
 import ray
