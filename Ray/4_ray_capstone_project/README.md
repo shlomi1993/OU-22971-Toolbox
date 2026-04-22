@@ -431,24 +431,24 @@ Each run mode writes artifacts into its own subdirectory under `output/`:
 
 | File | Purpose |
 |---|---|
-| `main.py` | **Main entry point**: CLI with `prepare` and `run` subcommands |
-| `src/tlc.py` | Shared constants, dataclasses, data loading, scoring logic, artifact writers |
-| `src/zone_actor.py` | `ZoneActor` Ray actor, `ZoneSnapshot`, `ZoneDecision`, fallback logic |
-| `src/prepare.py` | Preparation module: load parquets, validate, build baseline and replay tables |
-| `src/run.py` | Runtime module: `score_zone` task, blocking/async/stress drivers, artifact writing |
-| `bin/prepare`, `bin/run` | Command wrapper scripts (installed to conda environment) |
-| `tests/test_ray_capstone_project.py` | Pytest unit tests for all modules |
-| `tests/test_ray_flow.sh` | End-to-end system test for Linux/macOS (runs all 3 demo modes, verifies artifacts) |
-| `tests/test_ray_flow.ps1` | End-to-end system test for Windows PowerShell |
-| `scripts/bash/download_data.sh` | Download TLC parquet data into `data/` (Linux/macOS) |
-| `scripts/powershell/download_data.ps1` | Download TLC parquet data into `data/` (Windows) |
-| `scripts/bash/reset_ray.sh` | Stop Ray, remove `prepared/` and `output/` directories (Linux/macOS) |
-| `scripts/powershell/reset_ray.ps1` | Stop Ray, remove `prepared/` and `output/` directories (Windows) |
-| `scripts/bash/install.sh` | Install command wrappers into conda environment (Linux/macOS) |
-| `scripts/powershell/install.ps1` | Install command wrappers into conda environment (Windows) |
-| `scripts/bash/uninstall.sh` | Remove command wrappers from conda environment (Linux/macOS) |
-| `scripts/powershell/uninstall.ps1` | Remove command wrappers from conda environment (Windows) |
-| `environment.yml` | Conda environment specification |
+| [main.py](main.py) | **Main entry point**: CLI with `prepare` and `run` subcommands |
+| [src/tlc.py](src/tlc.py) | Shared constants, dataclasses, data loading, scoring logic, artifact writers |
+| [src/zone_actor.py](src/zone_actor.py) | `ZoneActor` Ray actor, `ZoneSnapshot`, `ZoneDecision`, fallback logic |
+| [src/prepare.py](src/prepare.py) | Preparation module: load parquets, validate, build baseline and replay tables |
+| [src/run.py](src/run.py) | Runtime module: `score_zone` task, blocking/async/stress drivers, artifact writing |
+| [bin/prepare](bin/prepare), [bin/run](bin/run) | Command wrapper scripts (installed to conda environment) |
+| [tests/test_ray_capstone_project.py](tests/test_ray_capstone_project.py) | Pytest unit tests for all modules |
+| [tests/test_ray_flow.sh](tests/test_ray_flow.sh) | End-to-end system test for Linux/macOS (runs all 3 demo modes, verifies artifacts) |
+| [tests/test_ray_flow.ps1](tests/test_ray_flow.ps1) | End-to-end system test for Windows PowerShell |
+| [scripts/bash/download_data.sh](scripts/bash/download_data.sh) | Download TLC parquet data into `data/` (Linux/macOS) |
+| [scripts/powershell/download_data.ps1](scripts/powershell/download_data.ps1) | Download TLC parquet data into `data/` (Windows) |
+| [scripts/bash/reset_ray.sh](scripts/bash/reset_ray.sh) | Stop Ray, remove `prepared/` and `output/` directories (Linux/macOS) |
+| [scripts/powershell/reset_ray.ps1](scripts/powershell/reset_ray.ps1) | Stop Ray, remove `prepared/` and `output/` directories (Windows) |
+| [scripts/bash/install.sh](scripts/bash/install.sh) | Install command wrappers into conda environment (Linux/macOS) |
+| [scripts/powershell/install.ps1](scripts/powershell/install.ps1) | Install command wrappers into conda environment (Windows) |
+| [scripts/bash/uninstall.sh](scripts/bash/uninstall.sh) | Remove command wrappers from conda environment (Linux/macOS) |
+| [scripts/powershell/uninstall.ps1](scripts/powershell/uninstall.ps1) | Remove command wrappers from conda environment (Windows) |
+| [environment.yml](environment.yml) | Conda environment specification |
 
 ---
 
@@ -457,10 +457,10 @@ Each run mode writes artifacts into its own subdirectory under `output/`:
 Submit to a Ray cluster via `ray job submit`:
 
 ```bash
-ray job submit --address http://<head-node>:8265 \
+ray job submit \
+    --address http://<head-node>:8265 \
     --working-dir . \
-    -- python main.py run --prepared-dir prepared --output-dir output --mode blocking \
-       --ray-address auto
+    -- python main.py run --prepared-dir prepared --output-dir output --mode blocking --ray-address auto
 ```
 
 Replace `--mode blocking` with `async` or `stress` for the other run modes.
