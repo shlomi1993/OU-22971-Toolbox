@@ -34,7 +34,6 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 logger = logging.getLogger(__name__)
 
 
-
 def write_prepared_assets(output_dir: Path, baseline: pd.DataFrame, replay_table: pd.DataFrame, active_zones: list,
                           ref_label: str, replay_label: str, ref_df: pd.DataFrame, replay_df: pd.DataFrame, seed: int) -> None:
     """
@@ -69,8 +68,17 @@ def write_prepared_assets(output_dir: Path, baseline: pd.DataFrame, replay_table
 
 def prepare_assets(ref_parquet: Path, replay_parquet: Path, output_dir: Path, n_zones: int, seed: int = DEFAULT_SEED) -> None:
     """
-    Read reference and replay parquets, validate adjacent months, select active zones, build baseline and replay tables,
-    run cross-check, and write prepared assets.
+    Prepare assets for TLC replay experiments through two main steps.
+
+    Step A - Load the monthly datasets:
+        - Read the reference-month and replay-month parquet files into local Python dataframes
+
+    Step B - Build the prepared assets:
+        - Identify the busiest active pickup zones from the reference month
+        - Aggregate reference demand into 15-minute ticks
+        - Build the zone/time baseline table from the reference month
+        - Aggregate replay-month pickups into one row per (zone_id, tick)
+        - Write prepared assets for the runtime
 
     Args:
         ref_parquet (Path): Path to the reference month parquet.

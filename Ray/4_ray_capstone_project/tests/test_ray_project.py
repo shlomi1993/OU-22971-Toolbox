@@ -32,7 +32,7 @@ from src.tlc import (
     build_baseline_table,
     build_replay_table,
     cross_check_replay,
-    select_active_zones,
+    identify_busiest_zones,
     select_slow_zones,
     validate_adjacent_months,
     write_json,
@@ -40,7 +40,7 @@ from src.tlc import (
     write_metrics_csv,
     write_tick_summary,
 )
-from src.zone_actor import Recommendation, WriteStatus, ZoneActor, ZoneSnapshot, apply_fallback
+from src.zone_actor import Recommendation, WriteStatus, ZoneActor, ZoneSnapshot
 
 os.environ["RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO"] = "0"  # Ensure Ray doesn't override our environment variables during testing
 
@@ -117,8 +117,8 @@ def test_validate_adjacent_months_rejects_different_years() -> None:
 
 def test_active_zone_selection_deterministic_and_sorted() -> None:
     ref = make_trips(2023, 1, n_zones=30, base_count=50)
-    zones_a = select_active_zones(ref, 10)
-    zones_b = select_active_zones(ref, 10)
+    zones_a = identify_busiest_zones(ref, 10)
+    zones_b = identify_busiest_zones(ref, 10)
     assert zones_a == zones_b, "Active zone selection must be deterministic under fixed input"
     assert zones_a == sorted(zones_a), "Active zones must be returned sorted"
     assert len(zones_a) == 10, f"Expected 10 zones, got {len(zones_a)}"
@@ -174,9 +174,9 @@ def test_snapshot_decision_threshold() -> None:
 
 
 def test_fallback_always_previous_policy() -> None:
-    assert apply_fallback(FALLBACK_POLICY_PREVIOUS, "NEED") == "NEED", "Fallback should return previous decision when available"
-    assert apply_fallback(FALLBACK_POLICY_PREVIOUS, None) == Recommendation.OK, "Fallback should default to OK when no previous decision exists (first-use edge case)"
-    assert apply_fallback("unknown_policy", "NEED") == Recommendation.OK, "Unknown fallback policy should default to OK"
+    assert ZoneActor.apply_fallback(FALLBACK_POLICY_PREVIOUS, "NEED") == "NEED", "Fallback should return previous decision when available"
+    assert ZoneActor.apply_fallback(FALLBACK_POLICY_PREVIOUS, None) == Recommendation.OK, "Fallback should default to OK when no previous decision exists (first-use edge case)"
+    assert ZoneActor.apply_fallback("unknown_policy", "NEED") == Recommendation.OK, "Unknown fallback policy should default to OK"
 
 
 # ── ZoneActor fault-tolerance invariants ────────────────────────────────────
@@ -541,6 +541,7 @@ def test_run_script(prepared_dir: Path, tmp_path: Path, mode: str, slow_frac: st
         "--max-inflight-zones", max_inflight,
         "--fallback-policy", fallback,
         "--seed", "42",
+        "--max-ticks", "50",
     ])
     assert result.returncode == 0, f"main.py run --mode {mode} failed: {result.stderr}"
     artifact_dir = out / mode
@@ -561,6 +562,7 @@ def test_run_stress_script(prepared_dir: Path, tmp_path: Path) -> None:
         "--slow-zone-sleep-s", "0.3",
         "--tick-timeout-s", "2.0",
         "--seed", "42",
+        "--max-ticks", "50",
     ], timeout=300)
     assert result.returncode == 0, f"main.py run --mode stress failed: {result.stderr}"
     stress_dir = out / "stress"
