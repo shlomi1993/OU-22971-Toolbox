@@ -95,6 +95,22 @@ def create_actors(replay: pd.DataFrame, baseline: pd.DataFrame, active_zones: Li
     return actors
 
 
+def apply_tick_limit(tick_ids: List[int], config: RunConfig) -> tuple[List[int], int]:
+    """
+    Apply max_ticks limit from config if set.
+
+    Args:
+        tick_ids (List[int]): Full list of tick IDs from replay data.
+        config (RunConfig): Runtime configuration with optional max_ticks limit.
+
+    Returns:
+        tuple[List[int], int]: Limited tick_ids and the count (max_ticks value).
+    """
+    if config.max_ticks and config.max_ticks > 0:
+        tick_ids = tick_ids[:config.max_ticks]
+    return tick_ids, len(tick_ids)
+
+
 def write_artifacts(output_dir: Path, config: RunConfig, tick_metrics: List[TickMetrics],
                     all_decisions: Dict[int, Dict[int, str]], actors: Dict[int, ActorHandle]) -> None:
     """
@@ -139,10 +155,7 @@ def run_blocking(prepared_dir: Path, output_dir: Path, config: RunConfig) -> Lis
     actors = create_actors(replay, baseline, active_zones, config)
     slow_zones = select_slow_zones(active_zones, config)
     tick_ids = get_tick_ids(replay)
-
-    # Limit ticks for manageable demo
-    max_ticks = min(len(tick_ids), 50)
-    tick_ids = tick_ids[:max_ticks]
+    tick_ids, max_ticks = apply_tick_limit(tick_ids, config)
 
     all_metrics = []
     all_decisions = {}
@@ -210,12 +223,12 @@ def run_async(prepared_dir: Path, output_dir: Path, config: RunConfig) -> List[T
     actors = create_actors(replay, baseline, active_zones, config)
     slow_zones = select_slow_zones(active_zones, config)
     tick_ids = get_tick_ids(replay)
-
-    max_ticks = min(len(tick_ids), 50)
-    tick_ids = tick_ids[:max_ticks]
+    tick_ids, max_ticks = apply_tick_limit(tick_ids, config)
 
     all_metrics = []
     all_decisions = {}
+    prev_late_count = 0
+    prev_dup_count = 0
 
     for tick_id in tick_ids:
         tick_start = time.time()
@@ -283,19 +296,28 @@ def run_async(prepared_dir: Path, output_dir: Path, config: RunConfig) -> List[T
         all_decisions[tick_id] = tick_decisions
         tick_elapsed = time.time() - tick_start
 
-        # Collect counters for late/dup metrics
-        counter_refs = {zone_id: actor.get_counters.remote() for zone_id, actor in actors.items()}
-        counters = {zone_id: ray.get(ref) for zone_id, ref in counter_refs.items()}
-        n_late = sum(c.n_late for c in counters.values())
-        n_dup = sum(c.n_duplicates for c in counters.values())
+        # Collect counters only every N ticks to reduce overhead - collect on first, last, and every 10th tick
+        if tick_id == 0 or tick_id == max_ticks - 1 or tick_id % 10 == 0:
+            counter_refs = {zone_id: actor.get_counters.remote() for zone_id, actor in actors.items()}
+            counters = {zone_id: ray.get(ref) for zone_id, ref in counter_refs.items()}
+            current_late = sum(c.n_late for c in counters.values())
+            current_dup = sum(c.n_duplicates for c in counters.values())
+            n_late_delta = current_late - prev_late_count
+            n_dup_delta = current_dup - prev_dup_count
+            prev_late_count = current_late
+            prev_dup_count = current_dup
+        else:
+            # Use zeros for intermediate ticks - counters will be accurate on collection ticks
+            n_late_delta = 0
+            n_dup_delta = 0
 
         metrics = TickMetrics(
             tick_id=tick_id,
             mode=RunMode.ASYNC,
             n_zones_completed=n_ready,
             n_zones_fallback=n_fallback,
-            n_late_reports=n_late,
-            n_duplicate_reports=n_dup,
+            n_late_reports=n_late_delta,
+            n_duplicate_reports=n_dup_delta,
             mean_zone_latency_s=0.0,
             max_zone_latency_s=0.0,
             total_tick_latency_s=tick_elapsed,
@@ -327,6 +349,7 @@ def run_stress(prepared_dir: Path, output_dir: Path, config: RunConfig) -> List[
         completion_fraction=config.completion_fraction,
         slow_zone_fraction=0.6,  # 60% of zones are slow
         slow_zone_sleep_s=3.0,  # 3 seconds sleep
+        max_ticks=config.max_ticks,
         fallback_policy=config.fallback_policy,
         seed=config.seed,
     )
@@ -358,7 +381,7 @@ def run_stress(prepared_dir: Path, output_dir: Path, config: RunConfig) -> List[
 
 def run_replay(prepared_dir: Path, output_dir: Path, mode: str, n_zones: int, max_inflight_zones: int,
                tick_timeout_s: float, completion_fraction: float, slow_zone_fraction: float, slow_zone_sleep_s: float,
-               fallback_policy: str, seed: int = DEFAULT_SEED, ray_address: str = None) -> None:
+               max_ticks: int, fallback_policy: str, seed: int = DEFAULT_SEED, ray_address: str = None) -> None:
     """
     Run the replay in the specified mode with the given configuration.
 
@@ -372,6 +395,7 @@ def run_replay(prepared_dir: Path, output_dir: Path, mode: str, n_zones: int, ma
         completion_fraction (float): Completion fraction for finalization.
         slow_zone_fraction (float): Fraction of zones to slow down.
         slow_zone_sleep_s (float): Sleep duration for slow zones.
+        max_ticks (int): Maximum number of ticks to process (0 = no limit).
         fallback_policy (str): Fallback policy for late zones.
         seed (int, optional): Random seed for reproducibility. Defaults to DEFAULT_SEED.
         ray_address (str, optional): Ray cluster address. None for local. Defaults to None.
@@ -384,6 +408,7 @@ def run_replay(prepared_dir: Path, output_dir: Path, mode: str, n_zones: int, ma
             completion_fraction=completion_fraction,
             slow_zone_fraction=slow_zone_fraction,
             slow_zone_sleep_s=slow_zone_sleep_s,
+            max_ticks=max_ticks,
             fallback_policy=fallback_policy,
             seed=seed,
         )
