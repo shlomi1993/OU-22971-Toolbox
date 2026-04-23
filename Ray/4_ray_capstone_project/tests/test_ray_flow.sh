@@ -80,7 +80,7 @@ log_and_run prepare \
     --ref-parquet "$REF_FILE" \
     --replay-parquet "$REPLAY_FILE" \
     --output-dir "$PREPARED_DIR" \
-    --n-zones 20 \
+    --n-zones 20
 echo "Prepared assets written to $PREPARED_DIR"
 
 # --- Run 1: Blocking baseline ---
