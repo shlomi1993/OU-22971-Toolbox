@@ -83,24 +83,6 @@ class ZoneSnapshot(RoundedDataclass):
         return Recommendation.NEED if recent_avg > threshold else Recommendation.OK
 
 
-def apply_fallback(policy: str, last_decision: Optional[str]) -> str:
-    """
-    Apply the specified fallback policy to determine a decision when no scoring result is available.
-
-    Args:
-        policy (str): The name of the fallback policy to apply.
-        last_decision (Optional[str]): The last accepted decision for this zone, if any.
-
-    Returns:
-        str: The fallback decision to apply.
-    """
-    if policy != FALLBACK_POLICY_PREVIOUS:
-        return Recommendation.OK
-    if last_decision is not None:
-        return last_decision
-    return Recommendation.OK
-
-
 @dataclass
 class ZoneCounters(RoundedDataclass):
     """
@@ -120,27 +102,26 @@ class ZoneActor:
     and the driver finalizes ticks under a partial-readiness policy.
     """
 
-    def __init__(self, zone_id: int, replay_partition: pd.DataFrame, baseline_partition: pd.DataFrame,
-                 config: RunConfig) -> None:
+    def __init__(self, zone_id: int, replay_part: pd.DataFrame, baseline_part: pd.DataFrame, config: RunConfig) -> None:
         """
         Initialize the ZoneActor with its zone_id, replay data partition, baseline partition, and runtime config.
 
         Args:
             zone_id (int): The ID of the zone this actor is responsible for.
-            replay_partition (pd.DataFrame): The partition of the replay data for this zone.
-            baseline_partition (pd.DataFrame): The partition of the baseline data for this zone.
+            replay_part (pd.DataFrame): The partition of the replay data for this zone.
+            baseline_part (pd.DataFrame): The partition of the baseline data for this zone.
             config (RunConfig): Runtime configuration parameters.
         """
         self.zone_id = zone_id
         self.config = config
 
         # Replay data: {tick_start -> demand}
-        self.replay = dict(zip(replay_partition["tick_start"], replay_partition["demand"]))
+        self.replay = dict(zip(replay_part["tick_start"], replay_part["demand"]))
         self.tick_order = sorted(self.replay.keys())
 
         # Baseline: {(hour_of_day, day_of_week) -> (mean_demand, std_demand)}
         self.baseline: Baseline = {}
-        for _, row in baseline_partition.iterrows():
+        for _, row in baseline_part.iterrows():
             key = (int(row["hour_of_day"]), int(row["day_of_week"]))
             self.baseline[key] = (float(row["mean_demand"]), float(row["std_demand"]))
 
@@ -265,6 +246,24 @@ class ZoneActor:
         # Write accepted decision
         return WriteStatus.WRITTEN
 
+    @staticmethod
+    def apply_fallback(policy: str, last_decision: Optional[str]) -> str:
+        """
+        Apply the specified fallback policy to determine a decision when no scoring result is available.
+
+        Args:
+            policy (str): The name of the fallback policy to apply.
+            last_decision (Optional[str]): The last accepted decision for this zone, if any.
+
+        Returns:
+            str: The fallback decision to apply.
+        """
+        if policy != FALLBACK_POLICY_PREVIOUS:
+            return Recommendation.OK
+        if last_decision is not None:
+            return last_decision
+        return Recommendation.OK
+
     def finalize_tick(self, tick_id: int, fallback_policy: str) -> str:
         """
         Async mode: finalize the tick using the reported decision or the fallback policy.
@@ -285,7 +284,7 @@ class ZoneActor:
             decision = self.reported_decision.decision
             used_fallback = False
         else:
-            decision = apply_fallback(fallback_policy, self.last_accepted_decision)
+            decision = self.apply_fallback(fallback_policy, self.last_accepted_decision)
             used_fallback = True
 
         return self.write_decision(tick_id, decision, used_fallback)
