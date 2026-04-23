@@ -24,15 +24,18 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 logger = logging.getLogger(__name__)
 
 
-TICK_MINUTES = 15
-DEFAULT_N_ZONES = 20
-DEFAULT_SEED = 42
-DEFAULT_MAX_INFLIGHT_ZONES = 4
-DEFAULT_TICK_TIMEOUT_S = 2.0
-DEFAULT_COMPLETION_FRACTION = 0.75
-DEFAULT_SLOW_ZONE_FRACTION = 0.25
-DEFAULT_SLOW_ZONE_SLEEP_S = 1.0
-FALLBACK_POLICY_PREVIOUS = "always_previous"
+TICK_MINUTES = 15  # Duration of each tick in minutes
+DEFAULT_N_ZONES = 20  # Number of active zones to select for the experiment
+DEFAULT_SEED = 42  # Default random seed for reproducibility
+DEFAULT_MAX_INFLIGHT_ZONES = 4  # Max concurrent scoring tasks in async mode
+DEFAULT_TICK_TIMEOUT_S = 2.0  # Tick timeout in seconds for async mode
+DEFAULT_COMPLETION_FRACTION = 0.75  # Minimum fraction of zones required for finalization
+DEFAULT_SLOW_ZONE_FRACTION = 0.25  # Fraction of zones to simulate as slow in async mode
+DEFAULT_SLOW_ZONE_SLEEP_S = 1.0  # Artificial delay in seconds for slow zones in async mode
+DEFAULT_MAX_TICKS = 50  # Limit ticks for demos (0 = no limit)
+DEMAND_WINDOW_SIZE = 6  # Number of recent demand values to track for scoring
+FALLBACK_POLICY_PREVIOUS = "always_previous"  # Fallback policy: always use previous tick's demand for late zones
+CROSS_CHECK_N_TICKS = 4  # Number of ticks to sample for cross-check validation
 
 REQUIRED_PARQUET_COLS = [
     "lpep_pickup_datetime",
@@ -113,6 +116,7 @@ class RunConfig(RoundedDataclass):
     completion_fraction: float = DEFAULT_COMPLETION_FRACTION
     slow_zone_fraction: float = DEFAULT_SLOW_ZONE_FRACTION
     slow_zone_sleep_s: float = DEFAULT_SLOW_ZONE_SLEEP_S
+    max_ticks: int = DEFAULT_MAX_TICKS  # 0 = no limit
     fallback_policy: str = FALLBACK_POLICY_PREVIOUS
     seed: int = DEFAULT_SEED
 
@@ -166,22 +170,33 @@ def validate_adjacent_months(ref_df: pd.DataFrame, replay_df: pd.DataFrame) -> T
     return ref_label, replay_label
 
 
-def select_active_zones(ref_df: pd.DataFrame, n_zones: int) -> List[int]:
+def select_active_zones(ref_df: pd.DataFrame, n_zones: int, seed: int = DEFAULT_SEED) -> List[int]:
     """
     Select the n busiest pickup zones from the reference month deterministically.
 
     Args:
         ref_df (pd.DataFrame): Reference month data.
         n_zones (int): Number of active zones to select.
+        seed (int): Random seed for deterministic tie-breaking when zones have equal counts.
 
     Returns:
         List[int]: Sorted list of selected active zone IDs. Example: [138, 161, 238, ...]
     """
     counts = ref_df.groupby("PULocationID").size().sort_values(ascending=False)
 
-    # If there are ties at the cutoff, this will select a deterministic subset based on the seed.
+    # Deterministic tie-breaking when multiple zones have same count at boundary
+    rng = np.random.RandomState(seed)
     top = counts.head(n_zones * 2)
-    selected = top.index.tolist()[:n_zones] if len(top) <= n_zones else top.head(n_zones).index.tolist()
+
+    if len(top) > n_zones:
+        cutoff_value = top.iloc[n_zones - 1]
+        candidates = top[top >= cutoff_value].index.tolist()  # Get all zones at or above the cutoff
+        if len(candidates) > n_zones:
+            selected = rng.choice(candidates, n_zones, replace=False)  # Use seeded random selection if too many candidates
+        else:
+            selected = candidates[:n_zones]
+    else:
+        selected = top.index.tolist()
     selected.sort()
 
     logger.info(f"Selected {len(selected)} active zones: {selected}")
@@ -263,7 +278,7 @@ def cross_check_replay(raw_df: pd.DataFrame, replay_table: pd.DataFrame,
     Returns:
         bool: True if the cross-check passes, False otherwise.
     """
-    sample_ticks = sorted(replay_table["tick_start"].unique())[:4]
+    sample_ticks = sorted(replay_table["tick_start"].unique())[:CROSS_CHECK_N_TICKS]
     if len(sample_ticks) == 0:
         return True
 

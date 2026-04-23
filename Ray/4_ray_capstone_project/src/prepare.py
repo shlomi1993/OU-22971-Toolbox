@@ -57,7 +57,7 @@ def prepare_assets(ref_parquet: Path, replay_parquet: Path, output_dir: Path, n_
     ref_label, replay_label = validate_adjacent_months(ref_df, replay_df)
 
     # Step B - build prepared assets
-    active_zones = select_active_zones(ref_df, n_zones)
+    active_zones = select_active_zones(ref_df, n_zones, seed)
 
     # Aggregate into ticks
     ref_agg = aggregate_ticks(ref_df)

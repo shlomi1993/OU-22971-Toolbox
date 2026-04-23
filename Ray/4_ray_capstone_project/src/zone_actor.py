@@ -15,11 +15,12 @@ import numpy as np
 import pandas as pd
 import ray
 
+from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Deque
 
-from src.tlc import FALLBACK_POLICY_PREVIOUS, RoundedDataclass, RunConfig
+from src.tlc import FALLBACK_POLICY_PREVIOUS, DEMAND_WINDOW_SIZE, RoundedDataclass, RunConfig
 
 
 Baseline = Dict[Tuple[int, int], Tuple[float, float]]
@@ -144,7 +145,7 @@ class ZoneActor:
             self.baseline[key] = (float(row["mean_demand"]), float(row["std_demand"]))
 
         # Mutable state
-        self.recent_demand: List[float] = []
+        self.recent_demand: Deque[float] = deque(maxlen=DEMAND_WINDOW_SIZE)
         self.active_tick_id: Optional[int] = None
         self.reported_decision: Optional[ZoneRecommendation] = None
         self.accepted_decisions: Dict[int, str] = {}  # tick_id -> decision
@@ -190,8 +191,8 @@ class ZoneActor:
             hour, dow = 12, 0
         baseline_mean, baseline_std = self.baseline.get((hour, dow), (0.0, 0.0))
 
-        # Update recent demand for snapshot
-        demand_window = list(self.recent_demand[-5:]) + [current_demand]
+        # Update recent demand for snapshot using deque
+        demand_window = list(self.recent_demand) + [current_demand]
 
         return ZoneSnapshot(self.zone_id, tick_id, demand_window, baseline_mean, baseline_std)
 
