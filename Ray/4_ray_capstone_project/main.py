@@ -1,8 +1,8 @@
-# Ray capstone main entry: TLC-backed per-zone recommendations under skew.
-# Runs: prepare TLC replay assets -> initialize per-zone actors -> compare blocking and async execution.
-
 """
+Ray capstone main entry: TLC-backed per-zone recommendations under skew.
+
 CLI entry point for the Ray capstone project.
+Workflow: prepare TLC replay assets -> initialize per-zone actors -> compare blocking and async execution.
 
 Provides three subcommands:
 - `prepare`: Validate TLC parquet data, select active zones, build baseline and replay tables.
@@ -16,22 +16,23 @@ Example usage:
 """
 
 import argparse
-import platform
-import subprocess
 
 from pathlib import Path
 
 from src.prepare import prepare_assets
+from src.reset import reset_ray
 from src.run import run_replay
 from src.tlc import (
+    DEFAULT_COMPLETION_FRACTION,
+    DEFAULT_MAX_INFLIGHT_ZONES,
     DEFAULT_N_ZONES,
     DEFAULT_SEED,
-    DEFAULT_MAX_INFLIGHT_ZONES,
-    DEFAULT_TICK_TIMEOUT_S,
-    DEFAULT_COMPLETION_FRACTION,
     DEFAULT_SLOW_ZONE_FRACTION,
     DEFAULT_SLOW_ZONE_SLEEP_S,
+    DEFAULT_TICK_TIMEOUT_S,
     FALLBACK_POLICY_PREVIOUS,
+    TICK_MINUTES,
+    RunConfig,
     RunMode,
 )
 
@@ -71,7 +72,9 @@ def build_parser() -> argparse.ArgumentParser:
     run_subparser.add_argument("--prepared-dir", type=Path, required=True, help="Directory with prepared assets from prepare command")
     run_subparser.add_argument("--output-dir", type=Path, required=True, help="Root output directory for run artifacts")
     run_subparser.add_argument("--mode", choices=[m.value for m in RunMode], required=True, help="Execution mode: blocking waits for all zones, async uses bounded concurrency with timeout, stress tests harsh skew")
+    run_subparser.add_argument("--ray-address", default=None, help="Ray cluster address, None for local mode")
     run_subparser.add_argument("--n-zones", type=int, default=DEFAULT_N_ZONES, help="Number of active zones to use")
+    run_subparser.add_argument("--tick-minutes", type=int, default=TICK_MINUTES, help="Number of minutes per tick, that is the time window for each recommendation batch")
     run_subparser.add_argument("--max-inflight-zones", type=int, default=DEFAULT_MAX_INFLIGHT_ZONES, help="Max concurrent scoring tasks in async mode")
     run_subparser.add_argument("--tick-timeout-s", type=float, default=DEFAULT_TICK_TIMEOUT_S, help="Tick timeout in seconds for async mode")
     run_subparser.add_argument("--completion-fraction", type=float, default=DEFAULT_COMPLETION_FRACTION, help="Minimum fraction of zones required for finalization")
@@ -79,14 +82,13 @@ def build_parser() -> argparse.ArgumentParser:
     run_subparser.add_argument("--slow-zone-sleep-s", type=float, default=DEFAULT_SLOW_ZONE_SLEEP_S, help="Artificial delay in seconds for slow zones")
     run_subparser.add_argument("--fallback-policy", default=FALLBACK_POLICY_PREVIOUS, help="Fallback policy for late zones")
     run_subparser.add_argument("--seed", type=int, default=DEFAULT_SEED, help="Random seed for reproducibility")
-    run_subparser.add_argument("--ray-address", default=None, help="Ray cluster address, None for local mode")
     run_subparser.add_argument("--max-ticks", type=int, default=None, help="Limit the max number of ticks to run (for testing), default is all ticks in replay table")
     run_subparser.set_defaults(handler=handle_run)
 
     # Add reset subcommand
     reset_subparser = subparsers.add_parser(
         name="reset",
-        help="Stop Ray and remove generated artifacts, cross-platform",
+        help="Stop Ray and remove generated artifacts",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     reset_subparser.set_defaults(handler=handle_reset)
@@ -101,68 +103,39 @@ def handle_prepare(args: argparse.Namespace) -> None:
     Args:
         args (argparse.Namespace): Parsed command-line arguments.
     """
-    prepare_assets(
-        ref_parquet=args.ref_parquet,
-        replay_parquet=args.replay_parquet,
-        output_dir=args.output_dir,
-        n_zones=args.n_zones,
-        seed=args.seed
-    )
+    prepare_assets(args.ref_parquet, args.replay_parquet, args.output_dir, args.n_zones, args.seed)
 
 
 def handle_run(args: argparse.Namespace) -> None:
-    """Handle run subcommand: run replay with specified mode and configuration.
+    """
+    Handle run subcommand: run replay with specified mode and configuration.
 
     Args:
         args (argparse.Namespace): Parsed command-line arguments.
     """
-    run_replay(
-        prepared_dir=args.prepared_dir,
-        output_dir=args.output_dir,
-        mode=args.mode,
+    config = RunConfig(
+        mode=RunMode(args.mode),
         n_zones=args.n_zones,
         max_inflight_zones=args.max_inflight_zones,
         tick_timeout_s=args.tick_timeout_s,
         completion_fraction=args.completion_fraction,
         slow_zone_fraction=args.slow_zone_fraction,
         slow_zone_sleep_s=args.slow_zone_sleep_s,
-        max_ticks=args.max_ticks,
         fallback_policy=args.fallback_policy,
         seed=args.seed,
-        ray_address=args.ray_address,
+        max_ticks=args.max_ticks,
     )
+    run_replay(args.ray_address, args.prepared_dir, args.output_dir, config)
 
 
 def handle_reset(args: argparse.Namespace) -> None:
     """
     Handle reset subcommand: stop Ray and remove generated artifacts.
 
-    Detects the host OS and runs the appropriate (sh or ps1) reset script:
-
     Args:
-        args (argparse.Namespace): Parsed command-line arguments (not used, but required by argparse).
+        args (argparse.Namespace): Parsed command-line arguments.
     """
-    project_dir = Path(__file__).parent
-    os_type = platform.system()
-
-    if os_type == "Windows":
-        script_path = project_dir / "scripts" / "powershell" / "reset_ray.ps1"
-        cmd = ["powershell", "-File", str(script_path)]
-    else:  # Linux or macOS
-        script_path = project_dir / "scripts" / "bash" / "reset_ray.sh"
-        cmd = ["bash", str(script_path)]
-
-    if not script_path.exists():
-        print(f"ERROR: Reset script not found at {script_path}")
-        raise SystemExit(1)
-
-    print(f"Running reset script for {os_type}...")
-    try:
-        subprocess.run(cmd, check=True)
-        print("Reset completed successfully.")
-    except subprocess.CalledProcessError as e:
-        print(f"ERROR: Reset script failed with exit code {e.returncode}")
-        raise SystemExit(e.returncode)
+    reset_ray(project_dir=Path(__file__).parent)
 
 
 def main() -> int:

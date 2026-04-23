@@ -3,7 +3,8 @@ Shared utilities and data structures for TLC replay experiments.
 
 Provides:
 - Constants: Tick duration, default parameters, fallback policies
-- Dataclasses: RunConfig, TickMetrics, Decision enum, RunMode enum
+- Enums: RunMode
+- Dataclasses: RunConfig, TickMetrics, PreparedData
 - Data functions: Parquet loading, validation, aggregation, baseline building
 - Artifact writers: JSON, CSV, latency logs, tick summaries
 - Helper functions: Zone selection, slow zone sampling, prepared asset loading
@@ -24,23 +25,18 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 logger = logging.getLogger(__name__)
 
 
-TICK_MINUTES = 15  # Duration of each tick in minutes
+CROSS_CHECK_N_TICKS = 4  # Number of ticks to sample for cross-check validation
+DEFAULT_COMPLETION_FRACTION = 0.75  # Minimum fraction of zones required for finalization
+DEFAULT_MAX_INFLIGHT_ZONES = 4  # Max concurrent scoring tasks in async mode
 DEFAULT_N_ZONES = 20  # Number of active zones to select for the experiment
 DEFAULT_SEED = 42  # Default random seed for reproducibility
-DEFAULT_MAX_INFLIGHT_ZONES = 4  # Max concurrent scoring tasks in async mode
-DEFAULT_TICK_TIMEOUT_S = 2.0  # Tick timeout in seconds for async mode
-DEFAULT_COMPLETION_FRACTION = 0.75  # Minimum fraction of zones required for finalization
 DEFAULT_SLOW_ZONE_FRACTION = 0.25  # Fraction of zones to simulate as slow in async mode
 DEFAULT_SLOW_ZONE_SLEEP_S = 1.0  # Artificial delay in seconds for slow zones in async mode
+DEFAULT_TICK_TIMEOUT_S = 2.0  # Tick timeout in seconds for async mode
 DEMAND_WINDOW_SIZE = 6  # Number of recent demand values to track for scoring
 FALLBACK_POLICY_PREVIOUS = "always_previous"  # Fallback policy: always use previous tick's demand for late zones
-CROSS_CHECK_N_TICKS = 4  # Number of ticks to sample for cross-check validation
-
-REQUIRED_PARQUET_COLS = [
-    "lpep_pickup_datetime",
-    "lpep_dropoff_datetime",
-    "PULocationID",
-]
+REQUIRED_PARQUET_COLS = ["lpep_pickup_datetime", "lpep_dropoff_datetime", "PULocationID"]  # Required columns in input files
+TICK_MINUTES = 15  # Duration of each tick in minutes
 
 
 class RunMode(str, Enum):
@@ -108,6 +104,7 @@ class RunConfig(RoundedDataclass):
     """
     Runtime configuration for the replay loop.
     """
+    mode: RunMode = RunMode.BLOCKING
     n_zones: int = DEFAULT_N_ZONES
     tick_minutes: int = TICK_MINUTES
     max_inflight_zones: int = DEFAULT_MAX_INFLIGHT_ZONES
@@ -118,6 +115,16 @@ class RunConfig(RoundedDataclass):
     fallback_policy: str = FALLBACK_POLICY_PREVIOUS
     seed: int = DEFAULT_SEED
     max_ticks: int = None  # None = no limit
+
+
+@dataclass
+class PreparedData:
+    """
+    Prepared assets loaded from disk.
+    """
+    replay: pd.DataFrame
+    baseline: pd.DataFrame
+    active_zones: List[int]
 
 
 def load_parquet(path: Path) -> pd.DataFrame:
@@ -169,7 +176,7 @@ def validate_adjacent_months(ref_df: pd.DataFrame, replay_df: pd.DataFrame) -> T
     return ref_label, replay_label
 
 
-def select_active_zones(ref_df: pd.DataFrame, n_zones: int, seed: int = DEFAULT_SEED) -> List[int]:
+def identify_busiest_zones(ref_df: pd.DataFrame, n_zones: int, seed: int = DEFAULT_SEED) -> List[int]:
     """
     Select the n busiest pickup zones from the reference month deterministically.
 
@@ -369,7 +376,7 @@ def write_latency_log(tick_metrics: List[TickMetrics], path: Path) -> None:
     write_json(log_entries, path)
 
 
-def load_prepared(prepared_dir: Path) -> Tuple[pd.DataFrame, pd.DataFrame, List[int]]:
+def load_prepared(prepared_dir: Path) -> PreparedData:
     """
     Load prepared assets from disk.
 
@@ -377,13 +384,13 @@ def load_prepared(prepared_dir: Path) -> Tuple[pd.DataFrame, pd.DataFrame, List[
         prepared_dir (Path): Directory containing baseline.parquet, replay.parquet, active_zones.json.
 
     Returns:
-        Tuple[pd.DataFrame, pd.DataFrame, List[int]]: (replay_table, baseline_table, active_zones)
+        PreparedData: Dataclass containing replay table, baseline table, and active zones list.
     """
     replay = pd.read_parquet(prepared_dir / "replay.parquet")
     baseline = pd.read_parquet(prepared_dir / "baseline.parquet")
     with open(prepared_dir / "active_zones.json") as f:
         active_zones = json.load(f)
-    return replay, baseline, active_zones
+    return PreparedData(replay, baseline, active_zones)
 
 
 def select_slow_zones(active_zones: List[int], config: RunConfig) -> set:
