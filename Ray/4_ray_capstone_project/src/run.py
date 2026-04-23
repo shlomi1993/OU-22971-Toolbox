@@ -142,7 +142,7 @@ def initialize_runtime(prepared_dir: Path, config: RunConfig) -> InitializedRunt
     return InitializedRuntime(actors, slow_zones, tick_ids, max_ticks)
 
 
-def activate_tick_and_collect_snapshots(actors: Dict[int, ActorHandle], tick_id: int) -> Dict[int, ZoneSnapshot]:
+def advance_replay_tick(actors: Dict[int, ActorHandle], tick_id: int) -> Dict[int, ZoneSnapshot]:
     """
     Step D - Advance one replay tick:
         - Tell each actor that this tick is now active
@@ -214,7 +214,7 @@ def run_blocking(prepared_dir: Path, output_dir: Path, config: RunConfig) -> Lis
         logger.info(f"[blocking] tick {tick_id}/{runtime.max_ticks - 1}")
 
         # Step D - activate tick and collect snapshots
-        snapshots = activate_tick_and_collect_snapshots(runtime.actors, tick_id)
+        snapshots = advance_replay_tick(runtime.actors, tick_id)
 
         # Step E - launch scoring tasks and wait for all
         task_refs = {}
@@ -281,7 +281,7 @@ def run_async(prepared_dir: Path, output_dir: Path, config: RunConfig) -> List[T
         logger.info(f"[async] tick {tick_id}/{runtime.max_ticks - 1}")
 
         # Step D - activate tick and collect snapshots
-        snapshots = activate_tick_and_collect_snapshots(runtime.actors, tick_id)
+        snapshots = advance_replay_tick(runtime.actors, tick_id)
 
         # Step E - launch scoring tasks with bounded concurrency
         pending = {}
