@@ -32,7 +32,6 @@ DEFAULT_TICK_TIMEOUT_S = 2.0  # Tick timeout in seconds for async mode
 DEFAULT_COMPLETION_FRACTION = 0.75  # Minimum fraction of zones required for finalization
 DEFAULT_SLOW_ZONE_FRACTION = 0.25  # Fraction of zones to simulate as slow in async mode
 DEFAULT_SLOW_ZONE_SLEEP_S = 1.0  # Artificial delay in seconds for slow zones in async mode
-DEFAULT_MAX_TICKS = 50  # Limit ticks for demos (0 = no limit)
 DEMAND_WINDOW_SIZE = 6  # Number of recent demand values to track for scoring
 FALLBACK_POLICY_PREVIOUS = "always_previous"  # Fallback policy: always use previous tick's demand for late zones
 CROSS_CHECK_N_TICKS = 4  # Number of ticks to sample for cross-check validation
@@ -116,9 +115,9 @@ class RunConfig(RoundedDataclass):
     completion_fraction: float = DEFAULT_COMPLETION_FRACTION
     slow_zone_fraction: float = DEFAULT_SLOW_ZONE_FRACTION
     slow_zone_sleep_s: float = DEFAULT_SLOW_ZONE_SLEEP_S
-    max_ticks: int = DEFAULT_MAX_TICKS  # 0 = no limit
     fallback_policy: str = FALLBACK_POLICY_PREVIOUS
     seed: int = DEFAULT_SEED
+    max_ticks: int = None  # None = no limit
 
 
 def load_parquet(path: Path) -> pd.DataFrame:
