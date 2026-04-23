@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Tuple, Deque
 
-from src.tlc import FALLBACK_POLICY_PREVIOUS, DEMAND_WINDOW_SIZE, RoundedDataclass, RunConfig
+from src.tlc import DEMAND_WINDOW_SIZE, FALLBACK_POLICY_PREVIOUS, RoundedDataclass, RunConfig
 
 
 Baseline = Dict[Tuple[int, int], Tuple[float, float]]

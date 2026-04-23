@@ -18,7 +18,7 @@ import pandas as pd
 from pathlib import Path
 from typing import List, Tuple
 
-from src.tlc import DEFAULT_SEED, TICK_MINUTES, load_parquet, write_json
+from src.tlc import TICK_MINUTES, DEFAULT_SEED, load_parquet, write_json
 
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
