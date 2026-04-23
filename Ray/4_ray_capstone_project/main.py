@@ -31,7 +31,6 @@ from src.tlc import (
     DEFAULT_COMPLETION_FRACTION,
     DEFAULT_SLOW_ZONE_FRACTION,
     DEFAULT_SLOW_ZONE_SLEEP_S,
-    DEFAULT_MAX_TICKS,
     FALLBACK_POLICY_PREVIOUS,
     RunMode,
 )
@@ -78,10 +77,10 @@ def build_parser() -> argparse.ArgumentParser:
     run_subparser.add_argument("--completion-fraction", type=float, default=DEFAULT_COMPLETION_FRACTION, help="Minimum fraction of zones required for finalization")
     run_subparser.add_argument("--slow-zone-fraction", type=float, default=DEFAULT_SLOW_ZONE_FRACTION, help="Fraction of zones to simulate as slow")
     run_subparser.add_argument("--slow-zone-sleep-s", type=float, default=DEFAULT_SLOW_ZONE_SLEEP_S, help="Artificial delay in seconds for slow zones")
-    run_subparser.add_argument("--max-ticks", type=int, default=DEFAULT_MAX_TICKS, help="Maximum number of ticks to process, 0 means no limit")
     run_subparser.add_argument("--fallback-policy", default=FALLBACK_POLICY_PREVIOUS, help="Fallback policy for late zones")
     run_subparser.add_argument("--seed", type=int, default=DEFAULT_SEED, help="Random seed for reproducibility")
     run_subparser.add_argument("--ray-address", default=None, help="Ray cluster address, None for local mode")
+    run_subparser.add_argument("--max-ticks", type=int, default=None, help="Limit the max number of ticks to run (for testing), default is all ticks in replay table")
     run_subparser.set_defaults(handler=handle_run)
 
     # Add reset subcommand

@@ -349,9 +349,9 @@ def run_stress(prepared_dir: Path, output_dir: Path, config: RunConfig) -> List[
         completion_fraction=config.completion_fraction,
         slow_zone_fraction=0.6,  # 60% of zones are slow
         slow_zone_sleep_s=3.0,  # 3 seconds sleep
-        max_ticks=config.max_ticks,
         fallback_policy=config.fallback_policy,
         seed=config.seed,
+        max_ticks=config.max_ticks,
     )
 
     logger.info("=== STRESS: blocking baseline ===")
@@ -408,9 +408,9 @@ def run_replay(prepared_dir: Path, output_dir: Path, mode: str, n_zones: int, ma
             completion_fraction=completion_fraction,
             slow_zone_fraction=slow_zone_fraction,
             slow_zone_sleep_s=slow_zone_sleep_s,
-            max_ticks=max_ticks,
             fallback_policy=fallback_policy,
             seed=seed,
+            max_ticks=max_ticks,
         )
 
         mode_enum = RunMode(mode)

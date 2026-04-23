@@ -420,8 +420,9 @@ def test_slow_zone_selection_deterministic() -> None:
 
 def test_artifact_files_written(tmp_path: Path) -> None:
     config = RunConfig(n_zones=2)
-    metrics = [TickMetrics(tick_id=0, mode="blocking", n_zones_completed=2, total_tick_latency_s=0.5,
-                           per_zone_latency={1: 0.1, 2: 0.2})]
+    metrics = [
+        TickMetrics(tick_id=0, mode="blocking", n_zones_completed=2, total_tick_latency_s=0.5, per_zone_latency={1: 0.1, 2: 0.2})
+    ]
     decisions = {0: {1: "OK", 2: "NEED"}}
 
     out = tmp_path / "artifacts"

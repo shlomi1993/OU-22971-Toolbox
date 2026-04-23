@@ -3,10 +3,10 @@
 #
 # This file executes:
 #   1. bash scripts/bash/download_data.sh
-#   2. prepare --ref-parquet data/green_tripdata_2023-01.parquet --replay-parquet data/green_tripdata_2023-02.parquet --output-dir prepared --n-zones 20 --seed 42
-#   3. run --prepared-dir prepared --output-dir output --mode blocking --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0 --seed 42
-#   4. run --prepared-dir prepared --output-dir output --mode async --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0 --tick-timeout-s 2.0 --completion-fraction 0.75 --max-inflight-zones 4 --seed 42
-#   5. run --prepared-dir prepared --output-dir output --mode stress --slow-zone-fraction 0.6 --slow-zone-sleep-s 3.0 --tick-timeout-s 2.0 --seed 42
+#   2. prepare --ref-parquet data/green_tripdata_2023-01.parquet --replay-parquet data/green_tripdata_2023-02.parquet --output-dir prepared --n-zones 20
+#   3. run --prepared-dir prepared --output-dir output --mode blocking --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0
+#   4. run --prepared-dir prepared --output-dir output --mode async --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0 --tick-timeout-s 2.0 --completion-fraction 0.75 --max-inflight-zones 4
+#   5. run --prepared-dir prepared --output-dir output --mode stress --slow-zone-fraction 0.6 --slow-zone-sleep-s 3.0 --tick-timeout-s 2.0
 #   6. Verify all output artifacts exist (run_config.json, metrics.csv, latency_log.json, tick_summary.json, actor_counters.json, comparison.json)
 
 set -euo pipefail
@@ -81,7 +81,6 @@ log_and_run prepare \
     --replay-parquet "$REPLAY_FILE" \
     --output-dir "$PREPARED_DIR" \
     --n-zones 20 \
-    --seed 42
 echo "Prepared assets written to $PREPARED_DIR"
 
 # --- Run 1: Blocking baseline ---
@@ -93,7 +92,7 @@ log_and_run run \
     --mode blocking \
     --slow-zone-fraction 0.25 \
     --slow-zone-sleep-s 1.0 \
-    --seed 42
+    --max-ticks 50
 echo "Blocking run complete. Artifacts in $OUTPUT_DIR/blocking/"
 
 # --- Run 2: Async controller ---
@@ -108,7 +107,7 @@ log_and_run run \
     --tick-timeout-s 2.0 \
     --completion-fraction 0.75 \
     --max-inflight-zones 4 \
-    --seed 42
+    --max-ticks 50
 echo "Async run complete. Artifacts in $OUTPUT_DIR/async/"
 
 # --- Run 3: Stress test ---
@@ -121,7 +120,7 @@ log_and_run run \
     --slow-zone-fraction 0.6 \
     --slow-zone-sleep-s 3.0 \
     --tick-timeout-s 2.0 \
-    --seed 42
+    --max-ticks 50
 echo "Stress run complete. Artifacts in $OUTPUT_DIR/stress/"
 
 # --- Verify artifacts ---

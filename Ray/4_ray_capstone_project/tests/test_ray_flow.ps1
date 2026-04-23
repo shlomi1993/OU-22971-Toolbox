@@ -2,10 +2,10 @@
 #
 # This file executes:
 #   1. scripts/powershell/download_data.ps1
-#   2. prepare --ref-parquet data/green_tripdata_2023-01.parquet --replay-parquet data/green_tripdata_2023-02.parquet --output-dir prepared --n-zones 20 --seed 42
-#   3. run --prepared-dir prepared --output-dir output --mode blocking --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0 --seed 42
-#   4. run --prepared-dir prepared --output-dir output --mode async --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0 --tick-timeout-s 2.0 --completion-fraction 0.75 --max-inflight-zones 4 --seed 42
-#   5. run --prepared-dir prepared --output-dir output --mode stress --slow-zone-fraction 0.6 --slow-zone-sleep-s 3.0 --tick-timeout-s 2.0 --seed 42
+#   2. prepare --ref-parquet data/green_tripdata_2023-01.parquet --replay-parquet data/green_tripdata_2023-02.parquet --output-dir prepared --n-zones 20
+#   3. run --prepared-dir prepared --output-dir output --mode blocking --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0 --max-ticks 50
+#   4. run --prepared-dir prepared --output-dir output --mode async --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0 --tick-timeout-s 2.0 --completion-fraction 0.75 --max-inflight-zones 4 --max-ticks 50
+#   5. run --prepared-dir prepared --output-dir output --mode stress --slow-zone-fraction 0.6 --slow-zone-sleep-s 3.0 --tick-timeout-s 2.0 --max-ticks 50
 #   6. Verify all output artifacts exist (run_config.json, metrics.csv, latency_log.json, tick_summary.json, actor_counters.json, comparison.json)
 
 param(
@@ -56,25 +56,25 @@ Log-And-Run "powershell -File `"$ProjectDir\scripts\powershell\download_data.ps1
 # --- Prepare assets ---
 Write-Host ""
 Write-Cyan "Step 2: Prepare replay assets"
-Log-And-Run "prepare --ref-parquet `"$RefFile`" --replay-parquet `"$ReplayFile`" --output-dir `"$PreparedDir`" --n-zones 20 --seed 42"
+Log-And-Run "prepare --ref-parquet `"$RefFile`" --replay-parquet `"$ReplayFile`" --output-dir `"$PreparedDir`" --n-zones 20"
 Write-Host "Prepared assets written to $PreparedDir"
 
 # --- Run 1: Blocking baseline ---
 Write-Host ""
 Write-Cyan "Step 3: Run blocking baseline"
-Log-And-Run "run --prepared-dir `"$PreparedDir`" --output-dir `"$OutputDir`" --mode blocking --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0 --seed 42"
+Log-And-Run "run --prepared-dir `"$PreparedDir`" --output-dir `"$OutputDir`" --mode blocking --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0 --max-ticks 50"
 Write-Host "Blocking run complete. Artifacts in $OutputDir\blocking\"
 
 # --- Run 2: Async controller ---
 Write-Host ""
 Write-Cyan "Step 4: Run async controller"
-Log-And-Run "run --prepared-dir `"$PreparedDir`" --output-dir `"$OutputDir`" --mode async --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0 --tick-timeout-s 2.0 --completion-fraction 0.75 --max-inflight-zones 4 --seed 42"
+Log-And-Run "run --prepared-dir `"$PreparedDir`" --output-dir `"$OutputDir`" --mode async --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0 --tick-timeout-s 2.0 --completion-fraction 0.75 --max-inflight-zones 4 --max-ticks 50"
 Write-Host "Async run complete. Artifacts in $OutputDir\async\"
 
 # --- Run 3: Stress test ---
 Write-Host ""
 Write-Cyan "Step 5: Run skew stress test"
-Log-And-Run "run --prepared-dir `"$PreparedDir`" --output-dir `"$OutputDir`" --mode stress --slow-zone-fraction 0.6 --slow-zone-sleep-s 3.0 --tick-timeout-s 2.0 --seed 42"
+Log-And-Run "run --prepared-dir `"$PreparedDir`" --output-dir `"$OutputDir`" --mode stress --slow-zone-fraction 0.6 --slow-zone-sleep-s 3.0 --tick-timeout-s 2.0 --max-ticks 50"
 Write-Host "Stress run complete. Artifacts in $OutputDir\stress\"
 
 # --- Verify artifacts ---
