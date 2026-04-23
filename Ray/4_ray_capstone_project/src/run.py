@@ -14,7 +14,6 @@ import json
 import logging
 import time
 import numpy as np
-import pandas as pd
 import ray
 
 from dataclasses import dataclass
@@ -123,7 +122,10 @@ def apply_tick_limit(tick_ids: List[int], config: RunConfig) -> tuple[List[int],
 
 def initialize_runtime(prepared_dir: Path, config: RunConfig) -> InitializedRuntime:
     """
-    Step C: Initialize runtime by loading prepared assets, creating actors, selecting slow zones, and applying tick limits.
+    Step C - Initialize the runtime:
+        - Create one ZoneActor per active zone
+        - Give each actor ownership of its own prepared replay partition
+        - Initialize any global run configuration and output locations
 
     Args:
         prepared_dir (Path): Directory with prepared assets from prepare.py.
@@ -138,6 +140,25 @@ def initialize_runtime(prepared_dir: Path, config: RunConfig) -> InitializedRunt
     tick_ids = get_tick_ids(prepared.replay)
     tick_ids, max_ticks = apply_tick_limit(tick_ids, config)
     return InitializedRuntime(actors, slow_zones, tick_ids, max_ticks)
+
+
+def activate_tick_and_collect_snapshots(actors: Dict[int, ActorHandle], tick_id: int) -> Dict[int, ZoneSnapshot]:
+    """
+    Step D - Advance one replay tick:
+        - Tell each actor that this tick is now active
+        - Ask each actor for the snapshot needed for the next recommendation
+        - Keep the snapshot minimal and derived from actor-owned state
+
+    Args:
+        actors (Dict[int, ActorHandle]): Mapping of zone_id to Ray actor handle.
+        tick_id (int): Current tick ID.
+
+    Returns:
+        Dict[int, ZoneSnapshot]: Mapping of zone_id to snapshot.
+    """
+    ray.get([actor.activate_tick.remote(tick_id) for actor in actors.values()])
+    snapshot_refs = {zone_id: actor.get_snapshot.remote(tick_id) for zone_id, actor in actors.items()}
+    return {zone_id: ray.get(ref) for zone_id, ref in snapshot_refs.items()}
 
 
 def write_artifacts(output_dir: Path, config: RunConfig, tick_metrics: List[TickMetrics],
@@ -186,14 +207,14 @@ def run_blocking(prepared_dir: Path, output_dir: Path, config: RunConfig) -> Lis
     all_metrics = []
     all_decisions = {}
 
+    logger.info("")
+    logger.info("Blocking Replay")
     for tick_id in runtime.tick_ids:
         tick_start = time.time()
         logger.info(f"[blocking] tick {tick_id}/{runtime.max_ticks - 1}")
 
         # Step D - activate tick and collect snapshots
-        ray.get([actor.activate_tick.remote(tick_id) for actor in runtime.actors.values()])
-        snapshot_refs = {zone_id: actor.get_snapshot.remote(tick_id) for zone_id, actor in runtime.actors.items()}
-        snapshots = {zone_id: ray.get(ref) for zone_id, ref in snapshot_refs.items()}
+        snapshots = activate_tick_and_collect_snapshots(runtime.actors, tick_id)
 
         # Step E - launch scoring tasks and wait for all
         task_refs = {}
@@ -253,14 +274,14 @@ def run_async(prepared_dir: Path, output_dir: Path, config: RunConfig) -> List[T
     prev_late_count = 0
     prev_dup_count = 0
 
+    logger.info("")
+    logger.info("Async Replay")
     for tick_id in runtime.tick_ids:
         tick_start = time.time()
         logger.info(f"[async] tick {tick_id}/{runtime.max_ticks - 1}")
 
         # Step D - activate tick and collect snapshots
-        ray.get([actor.activate_tick.remote(tick_id) for actor in runtime.actors.values()])
-        snapshot_refs = {zone_id: actor.get_snapshot.remote(tick_id) for zone_id, actor in runtime.actors.items()}
-        snapshots = {zone_id: ray.get(ref) for zone_id, ref in snapshot_refs.items()}
+        snapshots = activate_tick_and_collect_snapshots(runtime.actors, tick_id)
 
         # Step E - launch scoring tasks with bounded concurrency
         pending = {}
@@ -375,10 +396,9 @@ def run_stress(prepared_dir: Path, output_dir: Path, config: RunConfig) -> List[
         max_ticks=config.max_ticks,
     )
 
-    logger.info("=== STRESS: blocking baseline ===")
+    logger.info("")
+    logger.info("Stress Mode")
     blocking_metrics = run_blocking(prepared_dir, output_dir / "stress", stress_config)
-
-    logger.info("=== STRESS: async controller ===")
     async_metrics = run_async(prepared_dir, output_dir / "stress", stress_config)
 
     # Write comparison summary
