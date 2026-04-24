@@ -27,11 +27,11 @@ def score_zone_blocking(snapshot: ZoneSnapshot, slow_sleep_s: float = 0.0) -> Zo
     Deterministic from snapshot input. Returns the decision payload to the controller.
 
     Args:
-        snapshot: Snapshot object from ZoneActor.get_snapshot()
-        slow_sleep_s: Artificial delay in seconds to simulate skew
+        snapshot (ZoneSnapshot): Snapshot object from ZoneActor.get_snapshot()
+        slow_sleep_s (float): Artificial delay in seconds to simulate skew
 
     Returns:
-        Decision payload with zone_id, tick_id, decision, task_latency_s
+        ZoneRecommendation: Decision payload with zone_id, tick_id, decision, task_latency_s
     """
     start = time.time()
 
@@ -61,9 +61,9 @@ class BlockingReplay(Replay):
         Initialize blocking replay.
 
         Args:
-            prepared_dir: Directory containing prepared assets from prepare.py
-            output_dir: Root output directory for artifacts
-            config: Runtime configuration for the replay
+            prepared_dir (Path): Directory containing prepared assets from prepare.py
+            output_dir (Path): Root output directory for artifacts
+            config (RunConfig): Runtime configuration for the replay
         """
         super().__init__(*args, **kwargs)
         self.current_tick_results = {}
@@ -74,7 +74,7 @@ class BlockingReplay(Replay):
         Get the display name for blocking mode.
 
         Returns:
-            "Blocking"
+            str: "Blocking"
         """
         return "Blocking"
 
@@ -86,8 +86,8 @@ class BlockingReplay(Replay):
         - Collect all task returns in the controller for the current tick
 
         Args:
-            tick_id: Current tick ID
-            snapshots: Mapping of zone_id to snapshot
+            tick_id (int): Current tick ID
+            snapshots (Dict[int, ZoneSnapshot]): Mapping of zone_id to snapshot
         """
         task_refs = {}
         for zone_id, snap in snapshots.items():
@@ -107,10 +107,10 @@ class BlockingReplay(Replay):
         All zones are ready by definition in blocking mode since we wait for all tasks.
 
         Args:
-            tick_id: Current tick ID
+            tick_id (int): Current tick ID
 
         Returns:
-            Mapping of zone_id to True (all zones are ready in blocking mode)
+            Dict[int, bool]: Mapping of zone_id to True (all zones are ready in blocking mode)
         """
         # In blocking mode, all zones are ready by definition
         return {zone_id: True for zone_id in self.runtime.actors.keys()}
@@ -126,8 +126,8 @@ class BlockingReplay(Replay):
         - Update actor state needed for the next tick
 
         Args:
-            tick_id: Current tick ID
-            readiness: Mapping of zone_id to readiness status (all True in blocking mode)
+            tick_id (int): Current tick ID
+            readiness (Dict[int, bool]): Mapping of zone_id to readiness status (all True in blocking mode)
         """
         tick_decisions = {}
         for zone_id, res in self.current_tick_results.items():
@@ -143,12 +143,12 @@ class BlockingReplay(Replay):
         Collect metrics for the completed tick in blocking mode.
 
         Args:
-            tick_id: Current tick ID
-            readiness: Mapping of zone_id to readiness status (all True in blocking mode)
-            tick_elapsed: Total time elapsed for this tick in seconds
+            tick_id (int): Current tick ID
+            readiness (Dict[int, bool]): Mapping of zone_id to readiness status (all True in blocking mode)
+            tick_elapsed (float): Total time elapsed for this tick in seconds
 
         Returns:
-            TickMetrics object for this tick
+            TickMetrics: TickMetrics object for this tick
         """
         latencies = {zone_id: res.task_latency_s for zone_id, res in self.current_tick_results.items()}
         lat_values = list(latencies.values())
