@@ -26,18 +26,29 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 logger = logging.getLogger(__name__)
 
 
-CROSS_CHECK_N_TICKS = 4  # Number of ticks to sample for cross-check validation
-DEFAULT_COMPLETION_FRACTION = 0.75  # Minimum fraction of zones required for finalization
-DEFAULT_MAX_INFLIGHT_ZONES = 4  # Max concurrent scoring tasks in async mode
+# Tick constants
+TICK_MINUTES = 15  # Duration of each tick in minutes
+DEMAND_WINDOW_SIZE = 6  # Number of recent demand values to track for scoring
+
+# Default directories
+DEFAULT_PREPARED_DIR = "prepared"  # Default directory for prepared assets
+DEFAULT_OUTPUT_DIR = "output"  # Default output directory for run artifacts
+
+# Default configuration parameters
 DEFAULT_N_ZONES = 20  # Number of active zones to select for the experiment
 DEFAULT_SEED = 42  # Default random seed for reproducibility
+DEFAULT_COMPLETION_FRACTION = 0.75  # Minimum fraction of zones required for finalization
+DEFAULT_MAX_INFLIGHT_ZONES = 4  # Max concurrent scoring tasks in async mode
+DEFAULT_TICK_TIMEOUT_S = 2.0  # Tick timeout in seconds for async mode
 DEFAULT_SLOW_ZONE_FRACTION = 0.25  # Fraction of zones to simulate as slow in async mode
 DEFAULT_SLOW_ZONE_SLEEP_S = 1.0  # Artificial delay in seconds for slow zones in async mode
-DEFAULT_TICK_TIMEOUT_S = 2.0  # Tick timeout in seconds for async mode
-DEMAND_WINDOW_SIZE = 6  # Number of recent demand values to track for scoring
+
+# Fallback policies
 FALLBACK_POLICY_PREVIOUS = "always_previous"  # Fallback policy: always use previous tick's demand for late zones
+
+# Validation constants
+CROSS_CHECK_N_TICKS = 4  # Number of ticks to sample for cross-check validation
 REQUIRED_PARQUET_COLS = ["lpep_pickup_datetime", "lpep_dropoff_datetime", "PULocationID"]  # Required columns in input files
-TICK_MINUTES = 15  # Duration of each tick in minutes
 
 
 @dataclass
