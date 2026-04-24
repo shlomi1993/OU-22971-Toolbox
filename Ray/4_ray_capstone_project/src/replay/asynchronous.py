@@ -11,8 +11,8 @@ import ray
 
 from typing import Dict
 from ray.actor import ActorHandle
+from src.core import TickMetrics
 from src.replay.base import Replay
-from src.replay.core import TickMetrics
 from src.zone_actor import ZoneRecommendation, ZoneSnapshot
 
 

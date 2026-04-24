@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Tuple, Deque
 
-from src.replay.core import DEMAND_WINDOW_SIZE, FALLBACK_POLICY_PREVIOUS, RoundedDataclass, ReplayConfig
+from src.core import DEMAND_WINDOW_SIZE, FALLBACK_POLICY_PREVIOUS, RoundedDataclass, ReplayConfig
 
 
 Baseline = Dict[Tuple[int, int], Tuple[float, float]]
@@ -73,7 +73,7 @@ class ZoneSnapshot(RoundedDataclass):
         Simple threshold scoring rule.
 
         Returns:
-            Decision: "NEED" if recent demand exceeds baseline mean + 1 std, else "OK".
+            Recommendation: "NEED" if recent demand exceeds baseline mean + 1 std, else "OK".
         """
         if not self.recent_demand:
             return Recommendation.OK

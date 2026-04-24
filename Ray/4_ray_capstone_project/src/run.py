@@ -18,7 +18,7 @@ import ray
 from pathlib import Path
 from typing import List
 
-from src.replay.core import ReplayConfig, ReplayMode, TickMetrics, write_json
+from src.core import ReplayConfig, ReplayMode, TickMetrics, write_json
 from src.replay.blocking import BlockingReplay
 from src.replay.asynchronous import AsyncReplay
 
