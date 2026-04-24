@@ -29,9 +29,6 @@ from src.tlc import (
 from src.zone_actor import ZoneActor, ZoneSnapshot
 
 
-logger = logging.getLogger(__name__)
-
-
 class Replay(ABC):
     """
     Abstract base class defining the template method for replay execution.
@@ -52,6 +49,7 @@ class Replay(ABC):
         self.prepared_dir = prepared_dir
         self.output_dir = output_dir
         self.config = config
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.all_metrics = []
         self.all_decisions = {}
         self.actors = None
@@ -85,7 +83,7 @@ class Replay(ABC):
             zone_replay = prepared.replay[prepared.replay["zone_id"] == zone_id].reset_index(drop=True)
             zone_baseline = prepared.baseline[prepared.baseline["zone_id"] == zone_id].reset_index(drop=True)
             actors[zone_id] = ZoneActor.remote(zone_id, zone_replay, zone_baseline, self.config)
-        logger.info(f"Created {len(actors)} ZoneActors")
+        self.logger.info(f"Created {len(actors)} ZoneActors")
         return actors
 
     def _select_slow_zones(self, active_zones: List[int]) -> set[int]:
@@ -101,7 +99,7 @@ class Replay(ABC):
         rng = np.random.RandomState(self.config.seed)
         n_slow = max(1, int(len(active_zones) * self.config.slow_zone_fraction))
         slow = set(rng.choice(active_zones, size=n_slow, replace=False))
-        logger.info(f"Slow zones ({len(slow)}): {sorted(slow)}")
+        self.logger.info(f"Slow zones ({len(slow)}): {sorted(slow)}")
         return slow
 
     @staticmethod
@@ -245,7 +243,7 @@ class Replay(ABC):
         counters = {zone_id: ray.get(ref) for zone_id, ref in counter_refs.items()}
         write_json([c.to_dict() for c in counters.values()], mode_dir / "actor_counters.json")
 
-        logger.info(f"Artifacts written to {mode_dir}")
+        self.logger.info(f"Artifacts written to {mode_dir}")
 
     def run(self) -> List[TickMetrics]:
         """
@@ -267,12 +265,12 @@ class Replay(ABC):
         # Step C - Initialize the runtime
         self._initialize_runtime()
 
-        logger.info(f"\n{self.mode_name} Replay")
+        self.logger.info(f"\n{self.mode_name} Replay")
 
         # Steps D-G - Run each tick
         for tick_id in self.tick_ids:
             tick_start = time.time()
-            logger.info(f"[{self.mode_name.lower()}] tick {tick_id}/{self.max_ticks - 1}")
+            self.logger.info(f"[{self.mode_name.lower()}] tick {tick_id}/{self.max_ticks - 1}")
 
             # Step D - Advance one replay tick
             snapshots = self._advance_replay_tick(tick_id)

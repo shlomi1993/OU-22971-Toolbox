@@ -17,9 +17,6 @@ from src.tlc import RunMode, TickMetrics
 from src.zone_actor import ZoneRecommendation, ZoneSnapshot
 
 
-logger = logging.getLogger(__name__)
-
-
 @ray.remote
 def score_zone_blocking(snapshot: ZoneSnapshot, slow_sleep_s: float = 0.0) -> ZoneRecommendation:
     """
