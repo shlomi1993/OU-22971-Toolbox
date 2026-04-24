@@ -1,8 +1,8 @@
 """
 Abstract base class for TLC zone recommendation replay execution.
 
-Defines the template method pattern for running distributed replays using Ray actors and tasks.
-Subclasses should implement mode-specific behavior.
+Defines the template method pattern for running distributed replays using Ray actors and tasks. Subclasses should
+implement the abstract methods to define specific execution modes.
 """
 
 import logging
@@ -12,7 +12,6 @@ import pandas as pd
 import ray
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List
 from ray.actor import ActorHandle
@@ -31,17 +30,6 @@ from src.zone_actor import ZoneActor, ZoneSnapshot
 
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class InitializedRuntime:
-    """
-    Result of initialization containing actors, skew configuration, and tick parameters.
-    """
-    actors: Dict[int, ActorHandle]
-    slow_zones: set[int]
-    tick_ids: List[int]
-    max_ticks: int
 
 
 class Replay(ABC):
@@ -64,9 +52,12 @@ class Replay(ABC):
         self.prepared_dir = prepared_dir
         self.output_dir = output_dir
         self.config = config
-        self.runtime = None  # Will hold InitializedRuntime after initialization
-        self.all_metrics: List[TickMetrics] = []
-        self.all_decisions: Dict[int, Dict[int, str]] = {}
+        self.all_metrics = []
+        self.all_decisions = {}
+        self.actors = None
+        self.slow_zones = None
+        self.tick_ids = None
+        self.max_ticks = None
 
     @property
     @abstractmethod
@@ -141,23 +132,23 @@ class Replay(ABC):
             tick_ids = tick_ids[:self.config.max_ticks]
         return tick_ids, len(tick_ids)
 
-    def _initialize_runtime(self) -> InitializedRuntime:
+    def _initialize_runtime(self) -> None:
         """
         Step C - Initialize the runtime.
 
         - Create one ZoneActor per active zone
         - Give each actor ownership of its own prepared replay partition
         - Initialize any global run configuration and output locations
-
-        Returns:
-            InitializedRuntime: Initialized actors and execution parameters
         """
+        self.all_metrics = []
+        self.all_decisions = {}
+
+        # Load prepared data and initialize runtime
         prepared = load_prepared(self.prepared_dir)
-        actors = self._create_actors(prepared)
-        slow_zones = self._select_slow_zones(prepared.active_zones)
-        tick_ids = self._get_tick_ids(prepared.replay)
-        tick_ids, max_ticks = self._apply_tick_limit(tick_ids)
-        return InitializedRuntime(actors, slow_zones, tick_ids, max_ticks)
+        self.actors = self._create_actors(prepared)
+        self.slow_zones = self._select_slow_zones(prepared.active_zones)
+        self.tick_ids = self._get_tick_ids(prepared.replay)
+        self.tick_ids, self.max_ticks = self._apply_tick_limit(self.tick_ids)
 
     def _advance_replay_tick(self, tick_id: int) -> Dict[int, ZoneSnapshot]:
         """
@@ -174,8 +165,8 @@ class Replay(ABC):
         Returns:
             Dict[int, ZoneSnapshot]: Mapping of zone_id to snapshot for this tick
         """
-        ray.get([actor.activate_tick.remote(tick_id) for actor in self.runtime.actors.values()])
-        snapshot_refs = {zone_id: actor.get_snapshot.remote(tick_id) for zone_id, actor in self.runtime.actors.items()}
+        ray.get([actor.activate_tick.remote(tick_id) for actor in self.actors.values()])
+        snapshot_refs = {zone_id: actor.get_snapshot.remote(tick_id) for zone_id, actor in self.actors.items()}
         return {zone_id: ray.get(ref) for zone_id, ref in snapshot_refs.items()}
 
     @abstractmethod
@@ -250,7 +241,7 @@ class Replay(ABC):
         write_tick_summary(self.all_metrics, self.all_decisions, mode_dir / "tick_summary.json")
 
         # Collect actor counters
-        counter_refs = {zone_id: actor.get_counters.remote() for zone_id, actor in self.runtime.actors.items()}
+        counter_refs = {zone_id: actor.get_counters.remote() for zone_id, actor in self.actors.items()}
         counters = {zone_id: ray.get(ref) for zone_id, ref in counter_refs.items()}
         write_json([c.to_dict() for c in counters.values()], mode_dir / "actor_counters.json")
 
@@ -274,14 +265,14 @@ class Replay(ABC):
             List[TickMetrics]: Per-tick metrics for the replay run
         """
         # Step C - Initialize the runtime
-        self.runtime = self._initialize_runtime()
+        self._initialize_runtime()
 
         logger.info(f"\n{self.mode_name} Replay")
 
         # Steps D-G - Run each tick
-        for tick_id in self.runtime.tick_ids:
+        for tick_id in self.tick_ids:
             tick_start = time.time()
-            logger.info(f"[{self.mode_name.lower()}] tick {tick_id}/{self.runtime.max_ticks - 1}")
+            logger.info(f"[{self.mode_name.lower()}] tick {tick_id}/{self.max_ticks - 1}")
 
             # Step D - Advance one replay tick
             snapshots = self._advance_replay_tick(tick_id)
