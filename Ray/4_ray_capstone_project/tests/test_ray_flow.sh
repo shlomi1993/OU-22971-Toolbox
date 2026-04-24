@@ -9,7 +9,7 @@
 #   --max-ticks N           Number of ticks to run (default: 50)
 #
 # This file executes:
-#   1. bash scripts/bash/download_data.sh
+#   1. bash scripts/download_data.sh
 #   2. prepare --ref-parquet data/green_tripdata_2023-01.parquet --replay-parquet data/green_tripdata_2023-02.parquet --output-dir prepared --n-zones 20
 #   3. run --prepared-dir prepared --output-dir output --mode blocking --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0
 #   4. run --prepared-dir prepared --output-dir output --mode async --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0 --tick-timeout-s 2.0 --completion-fraction 0.75 --max-inflight-zones 4
@@ -89,7 +89,7 @@ echo -e "${CYAN}=============================${NC}"
 # --- Download data ---
 echo ""
 echo -e "${CYAN}Step 1: Download TLC data${NC}"
-log_and_run bash "$PROJECT_DIR/scripts/bash/download_data.sh"
+log_and_run bash "$PROJECT_DIR/scripts/download_data.sh"
 
 # --- Prepare assets ---
 echo ""
