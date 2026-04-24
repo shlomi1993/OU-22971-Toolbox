@@ -269,8 +269,8 @@ def build_replay_table(replay_agg: pd.DataFrame, active_zones: List[int]) -> pd.
     return replay
 
 
-def cross_check_replay(raw_df: pd.DataFrame, replay_table: pd.DataFrame,
-                       active_zones: List[int], tick_minutes: int = TICK_MINUTES) -> bool:
+def cross_check_replay(raw_df: pd.DataFrame, replay_table: pd.DataFrame, active_zones: List[int],
+                       tick_minutes: int = TICK_MINUTES) -> bool:
     """
     Pandas cross-check: confirm prepared replay counts match a direct grouped calculation on a sample window.
 

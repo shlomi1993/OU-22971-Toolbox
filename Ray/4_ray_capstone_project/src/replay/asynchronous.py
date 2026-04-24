@@ -1,7 +1,9 @@
 """
 Asynchronous replay implementation.
 
-In async mode, scoring tasks report decisions to ZoneActors, and the driver polls actor readiness before finalizing each tick.
+In async mode, scoring tasks report decisions to ZoneActors, and the driver polls actor readiness before finalizing each
+tick. This allows for partial tick completion and more flexible policies for handling late zones, but requires more
+complex coordination and state management.
 """
 
 import logging
@@ -72,6 +74,14 @@ class AsyncReplay(Replay):
         self.prev_late_count = 0
         self.prev_dup_count = 0
 
+    def _initialize_runtime(self) -> None:
+        """
+        Initialize runtime and reset async-specific counters.
+        """
+        super()._initialize_runtime()
+        self.prev_late_count = 0
+        self.prev_dup_count = 0
+
     @property
     def mode_name(self) -> str:
         """
@@ -102,11 +112,11 @@ class AsyncReplay(Replay):
             # Launch up to max_inflight zones
             while zone_queue and len(pending) < self.config.max_inflight_zones:
                 zone_id = zone_queue.pop(0)
-                sleep_s = self.config.slow_zone_sleep_s if zone_id in self.runtime.slow_zones else 0.0
+                sleep_s = self.config.slow_zone_sleep_s if zone_id in self.slow_zones else 0.0
                 ref = score_zone_async.remote(
                     snapshots[zone_id],
                     slow_sleep_s=sleep_s,
-                    actor_handle=self.runtime.actors[zone_id]
+                    actor_handle=self.actors[zone_id]
                 )
                 pending[ref] = zone_id
 
@@ -150,7 +160,7 @@ class AsyncReplay(Replay):
             Dict[int, bool]: Mapping of zone_id to readiness status (True if zone has a decision, False otherwise)
         """
         readiness = {}
-        for zone_id, actor in self.runtime.actors.items():
+        for zone_id, actor in self.actors.items():
             readiness[zone_id] = ray.get(actor.has_decision_for_tick.remote(tick_id))
 
         n_ready = sum(readiness.values())
@@ -176,14 +186,14 @@ class AsyncReplay(Replay):
         """
         # Finalize each actor for this tick
         n_fallback = 0
-        for zone_id, actor in self.runtime.actors.items():
+        for zone_id, actor in self.actors.items():
             ray.get(actor.finalize_tick.remote(tick_id, self.config.fallback_policy))
             if not readiness[zone_id]:
                 n_fallback += 1
 
         # Collect accepted decisions from actors
         tick_decisions = {}
-        for zone_id, actor in self.runtime.actors.items():
+        for zone_id, actor in self.actors.items():
             decisions = ray.get(actor.get_accepted_decisions.remote())
             if tick_id in decisions:
                 tick_decisions[zone_id] = decisions[tick_id]
@@ -215,9 +225,9 @@ class AsyncReplay(Replay):
 
         # Collect counters periodically to reduce overhead
         # Collect on first, last, and every 10th tick
-        if tick_id == 0 or tick_id == self.runtime.max_ticks - 1 or tick_id % 10 == 0:
+        if tick_id == 0 or tick_id == self.max_ticks - 1 or tick_id % 10 == 0:
             counter_refs = {zone_id: actor.get_counters.remote()
-                          for zone_id, actor in self.runtime.actors.items()}
+                          for zone_id, actor in self.actors.items()}
             counters = {zone_id: ray.get(ref) for zone_id, ref in counter_refs.items()}
             current_late = sum(c.n_late for c in counters.values())
             current_dup = sum(c.n_duplicates for c in counters.values())
@@ -231,7 +241,7 @@ class AsyncReplay(Replay):
             n_dup_delta = 0
 
         # Latency tracked in actor for async mode
-        latencies = {zone_id: 0.0 for zone_id in self.runtime.actors.keys()}
+        latencies = {zone_id: 0.0 for zone_id in self.actors.keys()}
 
         return TickMetrics(
             tick_id=tick_id,

@@ -2,7 +2,8 @@
 Blocking replay implementation.
 
 In blocking mode, scoring tasks return their decisions to the controller, and the controller waits for all zones before
-advancing each tick.
+advancing each tick. This is the simplest execution mode with straightforward coordination and state management, but is
+sensitive to skew since the tick cannot advance until all zones have reported in.
 """
 
 import logging
@@ -91,7 +92,7 @@ class BlockingReplay(Replay):
         """
         task_refs = {}
         for zone_id, snap in snapshots.items():
-            sleep_s = self.config.slow_zone_sleep_s if zone_id in self.runtime.slow_zones else 0.0
+            sleep_s = self.config.slow_zone_sleep_s if zone_id in self.slow_zones else 0.0
             task_refs[zone_id] = score_zone_blocking.remote(snap, slow_sleep_s=sleep_s)
 
         # Wait for all results
@@ -113,7 +114,7 @@ class BlockingReplay(Replay):
             Dict[int, bool]: Mapping of zone_id to True (all zones are ready in blocking mode)
         """
         # In blocking mode, all zones are ready by definition
-        return {zone_id: True for zone_id in self.runtime.actors.keys()}
+        return {zone_id: True for zone_id in self.actors.keys()}
 
     def _close_tick(self, tick_id: int, readiness: Dict[int, bool]) -> None:
         """
@@ -132,7 +133,7 @@ class BlockingReplay(Replay):
         tick_decisions = {}
         for zone_id, res in self.current_tick_results.items():
             # Write decision to actor
-            ray.get(self.runtime.actors[zone_id].write_decision.remote(tick_id, res.decision))
+            ray.get(self.actors[zone_id].write_decision.remote(tick_id, res.decision))
             tick_decisions[zone_id] = res.decision
 
         self.all_decisions[tick_id] = tick_decisions
