@@ -1,0 +1,6 @@
+#!/Users/shlomibenshushan/miniconda3/envs/22971-ray-capstone/bin/python3.12
+import sys
+from src.prepare import main
+if __name__ == '__main__':
+    sys.argv[0] = sys.argv[0].removesuffix('.exe')
+    sys.exit(main())

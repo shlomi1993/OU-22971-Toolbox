@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# test_flow.sh — System test: downloads data, prepares assets, runs all 3 demo modes.
+# test_ray_flow.sh — Full flow test: downloads data, prepares assets, runs all 3 demo modes.
 #
 # Usage:
 #   ./test_ray_flow.sh [--keep-artifacts|-k] [--max-ticks N]

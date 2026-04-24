@@ -72,7 +72,11 @@ def build_reset_parser() -> argparse.ArgumentParser:
     return parser
 
 
-if __name__ == "__main__":
+def main():
     standalone_parser = argparse.ArgumentParser(parents=[build_reset_parser()])
     args = standalone_parser.parse_args()
     reset_ray(args.prepared_dir, args.output_dir)
+
+
+if __name__ == "__main__":
+    main()
