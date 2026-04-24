@@ -389,35 +389,3 @@ def load_prepared(prepared_dir: Path) -> PreparedData:
     with open(prepared_dir / "active_zones.json") as f:
         active_zones = json.load(f)
     return PreparedData(replay, baseline, active_zones)
-
-
-def select_slow_zones(active_zones: List[int], config: RunConfig) -> set:
-    """
-    Deterministically select slow zones based on config.
-
-    Args:
-        active_zones (List[int]): List of active zone IDs.
-        config (RunConfig): Runtime configuration (uses seed and slow_zone_fraction).
-
-    Returns:
-        set: Zone IDs that will receive artificial delay.
-    """
-    rng = np.random.RandomState(config.seed)
-    n_slow = max(1, int(len(active_zones) * config.slow_zone_fraction))
-    slow = set(rng.choice(active_zones, size=n_slow, replace=False))
-    logger.info(f"Slow zones ({len(slow)}): {sorted(slow)}")
-    return slow
-
-
-def get_tick_ids(replay: pd.DataFrame) -> List[int]:
-    """
-    Return list of tick indices.
-
-    Args:
-        replay (pd.DataFrame): Replay table with tick_start column.
-
-    Returns:
-        List[int]: Sequential tick indices [0, 1, ..., n_ticks - 1].
-    """
-    n_ticks = replay["tick_start"].nunique()
-    return list(range(n_ticks))

@@ -33,7 +33,6 @@ from src.tlc import (
     build_replay_table,
     cross_check_replay,
     identify_busiest_zones,
-    select_slow_zones,
     validate_adjacent_months,
     write_json,
     write_latency_log,
@@ -400,19 +399,6 @@ def test_async_partial_readiness_triggers_fallback() -> None:
     for zid in [220, 330]:
         counters = ray.get(actors[zid].get_counters.remote())
         assert counters.n_fallbacks >= 1, f"Zone {zid} must have used fallback"
-
-
-# ── Skew model ──────────────────────────────────────────────────────────────
-
-
-def test_slow_zone_selection_deterministic() -> None:
-    zones = list(range(1, 21))
-    config = RunConfig(seed=RNG_SEED, slow_zone_fraction=0.25)
-    slow_a = select_slow_zones(zones, config)
-    slow_b = select_slow_zones(zones, config)
-    assert slow_a == slow_b, "Slow zone selection must be deterministic with fixed seed"
-    expected_count = max(1, int(len(zones) * config.slow_zone_fraction))
-    assert len(slow_a) == expected_count, f"Expected {expected_count} slow zones, got {len(slow_a)}"
 
 
 # ── Step 6: Artifact file verification ──────────────────────────────────────
