@@ -64,7 +64,7 @@ class Replay(ABC):
         Get the display name for this execution mode.
 
         Returns:
-            str: Mode name (e.g., "Blocking", "Async")
+            str: Implemented Replay mode display name
         """
         raise NotImplementedError()
 

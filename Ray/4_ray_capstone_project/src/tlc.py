@@ -39,12 +39,6 @@ REQUIRED_PARQUET_COLS = ["lpep_pickup_datetime", "lpep_dropoff_datetime", "PULoc
 TICK_MINUTES = 15  # Duration of each tick in minutes
 
 
-class RunMode(str, Enum):
-    BLOCKING = "blocking"
-    ASYNC = "async"
-    STRESS = "stress"
-
-
 @dataclass
 class RoundedDataclass:
     """
@@ -80,6 +74,28 @@ class RoundedDataclass:
         """
         return self._round_floats(asdict(self))
 
+class RunMode(str, Enum):
+    BLOCKING = "blocking"
+    ASYNC = "async"
+    STRESS = "stress"
+
+
+@dataclass
+class RunConfig(RoundedDataclass):
+    """
+    Runtime configuration for the replay loop.
+    """
+    n_zones: int = DEFAULT_N_ZONES
+    tick_minutes: int = TICK_MINUTES
+    max_inflight_zones: int = DEFAULT_MAX_INFLIGHT_ZONES
+    tick_timeout_s: float = DEFAULT_TICK_TIMEOUT_S
+    completion_fraction: float = DEFAULT_COMPLETION_FRACTION
+    slow_zone_fraction: float = DEFAULT_SLOW_ZONE_FRACTION
+    slow_zone_sleep_s: float = DEFAULT_SLOW_ZONE_SLEEP_S
+    fallback_policy: str = FALLBACK_POLICY_PREVIOUS
+    seed: int = DEFAULT_SEED
+    max_ticks: int = None  # None = no limit
+
 
 @dataclass
 class TickMetrics(RoundedDataclass):
@@ -97,24 +113,6 @@ class TickMetrics(RoundedDataclass):
     max_mean_ratio: float = 0.0
     total_tick_latency_s: float = 0.0
     per_zone_latency: Dict[int, float] = field(default_factory=dict)
-
-
-@dataclass
-class RunConfig(RoundedDataclass):
-    """
-    Runtime configuration for the replay loop.
-    """
-    mode: RunMode = RunMode.BLOCKING
-    n_zones: int = DEFAULT_N_ZONES
-    tick_minutes: int = TICK_MINUTES
-    max_inflight_zones: int = DEFAULT_MAX_INFLIGHT_ZONES
-    tick_timeout_s: float = DEFAULT_TICK_TIMEOUT_S
-    completion_fraction: float = DEFAULT_COMPLETION_FRACTION
-    slow_zone_fraction: float = DEFAULT_SLOW_ZONE_FRACTION
-    slow_zone_sleep_s: float = DEFAULT_SLOW_ZONE_SLEEP_S
-    fallback_policy: str = FALLBACK_POLICY_PREVIOUS
-    seed: int = DEFAULT_SEED
-    max_ticks: int = None  # None = no limit
 
 
 @dataclass
