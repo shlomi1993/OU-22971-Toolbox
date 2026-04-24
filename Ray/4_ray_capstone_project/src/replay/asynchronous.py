@@ -6,14 +6,13 @@ tick. This allows for partial tick completion and more flexible policies for han
 complex coordination and state management.
 """
 
-import logging
 import time
 import ray
 
 from typing import Dict
 from ray.actor import ActorHandle
 from src.replay.base import Replay
-from src.tlc import RunMode, TickMetrics
+from src.tlc import TickMetrics
 from src.zone_actor import ZoneRecommendation, ZoneSnapshot
 
 
@@ -237,7 +236,7 @@ class AsyncReplay(Replay):
 
         return TickMetrics(
             tick_id=tick_id,
-            mode=RunMode.ASYNC,
+            mode=self.mode_name.lower(),
             n_zones_completed=n_ready,
             n_zones_fallback=n_fallback,
             n_late_reports=n_late_delta,

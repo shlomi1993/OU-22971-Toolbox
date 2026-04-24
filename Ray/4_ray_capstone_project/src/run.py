@@ -109,7 +109,7 @@ def run_stress(prepared_dir: Path, output_dir: Path, config: RunConfig) -> List[
     return async_metrics
 
 
-def run_replay(ray_address: str, prepared_dir: Path, output_dir: Path, config: RunConfig) -> None:
+def run_replay(ray_address: str, prepared_dir: Path, output_dir: Path, mode: RunMode, config: RunConfig) -> None:
     """
     Run the replay in the specified mode with the given configuration.
 
@@ -117,13 +117,13 @@ def run_replay(ray_address: str, prepared_dir: Path, output_dir: Path, config: R
         ray_address (str): Ray cluster address. None for local
         prepared_dir (Path): Directory with prepared assets from prepare.py
         output_dir (Path): Root output directory for artifacts
+        mode (RunMode): Execution mode (blocking, async, or stress)
         config (RunConfig): Runtime configuration for the replay
     """
     with ray.init(address=ray_address):
-        mode_enum = RunMode(config.mode)
-        if mode_enum == RunMode.BLOCKING:
+        if mode == RunMode.BLOCKING:
             run_blocking(prepared_dir, output_dir, config)
-        elif mode_enum == RunMode.ASYNC:
+        elif mode == RunMode.ASYNC:
             run_async(prepared_dir, output_dir, config)
         else:
             run_stress(prepared_dir, output_dir, config)

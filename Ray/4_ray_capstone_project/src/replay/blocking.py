@@ -6,14 +6,13 @@ advancing each tick. This is the simplest execution mode with straightforward co
 sensitive to skew since the tick cannot advance until all zones have reported in.
 """
 
-import logging
 import time
 import numpy as np
 import ray
 
 from typing import Dict
 from src.replay.base import Replay
-from src.tlc import RunMode, TickMetrics
+from src.tlc import TickMetrics
 from src.zone_actor import ZoneRecommendation, ZoneSnapshot
 
 
@@ -153,7 +152,7 @@ class BlockingReplay(Replay):
 
         return TickMetrics(
             tick_id=tick_id,
-            mode=RunMode.BLOCKING,
+            mode=self.mode_name.lower(),
             n_zones_completed=len(self.current_tick_results),
             n_zones_fallback=0,  # No fallbacks in blocking mode
             mean_zone_latency_s=float(np.mean(lat_values)) if lat_values else 0.0,

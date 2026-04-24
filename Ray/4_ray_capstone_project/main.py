@@ -71,8 +71,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run_subparser.add_argument("--prepared-dir", type=Path, required=True, help="Directory with prepared assets from prepare command")
     run_subparser.add_argument("--output-dir", type=Path, required=True, help="Root output directory for run artifacts")
-    run_subparser.add_argument("--mode", choices=[m.value for m in RunMode], required=True, help="Execution mode: blocking waits for all zones, async uses bounded concurrency with timeout, stress tests harsh skew")
     run_subparser.add_argument("--ray-address", default=None, help="Ray cluster address, None for local mode")
+    run_subparser.add_argument("--mode", choices=[m.value for m in RunMode], required=True, help="Execution mode: blocking waits for all zones, async uses bounded concurrency with timeout, stress tests harsh skew")
     run_subparser.add_argument("--n-zones", type=int, default=DEFAULT_N_ZONES, help="Number of active zones to use")
     run_subparser.add_argument("--tick-minutes", type=int, default=TICK_MINUTES, help="Number of minutes per tick, that is the time window for each recommendation batch")
     run_subparser.add_argument("--max-inflight-zones", type=int, default=DEFAULT_MAX_INFLIGHT_ZONES, help="Max concurrent scoring tasks in async mode")
@@ -113,8 +113,8 @@ def handle_run(args: argparse.Namespace) -> None:
     Args:
         args (argparse.Namespace): Parsed command-line arguments.
     """
+    mode = RunMode(args.mode)
     config = RunConfig(
-        mode=RunMode(args.mode),
         n_zones=args.n_zones,
         max_inflight_zones=args.max_inflight_zones,
         tick_timeout_s=args.tick_timeout_s,
@@ -125,7 +125,7 @@ def handle_run(args: argparse.Namespace) -> None:
         seed=args.seed,
         max_ticks=args.max_ticks,
     )
-    run_replay(args.ray_address, args.prepared_dir, args.output_dir, config)
+    run_replay(args.ray_address, args.prepared_dir, args.output_dir, mode, config)
 
 
 def handle_reset(args: argparse.Namespace) -> None:
