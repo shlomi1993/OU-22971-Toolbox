@@ -23,6 +23,7 @@ from src.core import (
     DEFAULT_COMPLETION_FRACTION,
     DEFAULT_MAX_INFLIGHT_ZONES,
     DEFAULT_N_ZONES,
+    DEFAULT_OUTPUT_DIR,
     DEFAULT_SEED,
     DEFAULT_SLOW_ZONE_FRACTION,
     DEFAULT_SLOW_ZONE_SLEEP_S,
@@ -158,7 +159,7 @@ def build_run_parser() -> argparse.ArgumentParser:
         add_help=False  # Disable help when used as parent parser
     )
     parser.add_argument("--prepared-dir", type=Path, required=True, help="Directory with prepared assets from prepare command")
-    parser.add_argument("--output-dir", type=Path, default=Path("output"), help="Root output directory for run artifacts")
+    parser.add_argument("--output-dir", type=Path, default=Path(DEFAULT_OUTPUT_DIR), help="Root output directory for run artifacts")
     parser.add_argument("--ray-address", default=None, help="Ray cluster address, None for local mode")
     parser.add_argument("--mode", choices=[m.value for m in ReplayMode], required=True, help="Execution mode: blocking waits for all zones, async uses bounded concurrency with timeout, stress tests harsh skew")
     parser.add_argument("--n-zones", type=int, default=DEFAULT_N_ZONES, help="Number of active zones to use")
