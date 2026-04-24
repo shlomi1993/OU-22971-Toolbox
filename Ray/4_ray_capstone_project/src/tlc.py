@@ -74,6 +74,7 @@ class RoundedDataclass:
         """
         return self._round_floats(asdict(self))
 
+
 class RunMode(str, Enum):
     BLOCKING = "blocking"
     ASYNC = "async"
