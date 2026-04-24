@@ -72,7 +72,8 @@ class AsyncReplay(Replay):
         self.prev_late_count = 0
         self.prev_dup_count = 0
 
-    def _get_mode_name(self) -> str:
+    @property
+    def mode_name(self) -> str:
         """
         Get the display name for async mode.
 

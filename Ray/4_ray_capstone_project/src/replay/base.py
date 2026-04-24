@@ -48,8 +48,8 @@ class Replay(ABC):
     """
     Abstract base class defining the template method for replay execution.
 
-    Template method pattern: the run() method orchestrates the common flow while delegating
-    mode-specific behavior to abstract methods implemented by subclasses.
+    Template method pattern: the run() method orchestrates the common flow while delegating mode-specific behavior to
+    abstract methods implemented by subclasses.
     """
 
     def __init__(self, prepared_dir: Path, output_dir: Path, config: RunConfig) -> None:
@@ -137,8 +137,9 @@ class Replay(ABC):
         snapshot_refs = {zone_id: actor.get_snapshot.remote(tick_id) for zone_id, actor in self.runtime.actors.items()}
         return {zone_id: ray.get(ref) for zone_id, ref in snapshot_refs.items()}
 
+    @property
     @abstractmethod
-    def _get_mode_name(self) -> str:
+    def mode_name(self) -> str:
         """
         Get the display name for this execution mode.
 
@@ -234,7 +235,7 @@ class Replay(ABC):
         - Aggregate latency, tick-level metrics, and actor-accepted decisions
         - Compare blocking and asynchronous runs on the same replay window and configuration
         """
-        mode_dir = self.output_dir / self._get_mode_name().lower()
+        mode_dir = self.output_dir / self.mode_name.lower()
         mode_dir.mkdir(parents=True, exist_ok=True)
 
         write_json(self.config.to_dict(), mode_dir / "run_config.json")
@@ -270,12 +271,12 @@ class Replay(ABC):
         # Step C - Initialize the runtime
         self.runtime = self._initialize_runtime()
 
-        logger.info(f"\n{self._get_mode_name()} Replay")
+        logger.info(f"\n{self.mode_name} Replay")
 
         # Steps D-G - Run each tick
         for tick_id in self.runtime.tick_ids:
             tick_start = time.time()
-            logger.info(f"[{self._get_mode_name().lower()}] tick {tick_id}/{self.runtime.max_ticks - 1}")
+            logger.info(f"[{self.mode_name.lower()}] tick {tick_id}/{self.runtime.max_ticks - 1}")
 
             # Step D - Advance one replay tick
             snapshots = self._advance_replay_tick(tick_id)

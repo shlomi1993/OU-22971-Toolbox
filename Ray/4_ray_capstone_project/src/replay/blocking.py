@@ -68,7 +68,8 @@ class BlockingReplay(Replay):
         super().__init__(*args, **kwargs)
         self.current_tick_results = {}
 
-    def _get_mode_name(self) -> str:
+    @property
+    def mode_name(self) -> str:
         """
         Get the display name for blocking mode.
 
