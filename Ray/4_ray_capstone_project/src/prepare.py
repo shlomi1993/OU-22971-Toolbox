@@ -19,6 +19,7 @@ from pathlib import Path
 
 from src.core import (
     DEFAULT_N_ZONES,
+    DEFAULT_PREPARED_DIR,
     DEFAULT_SEED,
     TICK_MINUTES,
     aggregate_ticks,
@@ -124,7 +125,7 @@ def build_prepare_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--ref-parquet", type=Path, required=True, help="Path to reference month parquet file")
     parser.add_argument("--replay-parquet", type=Path, required=True, help="Path to replay month parquet file")
-    parser.add_argument("--output-dir", type=Path, default=Path("prepared"), help="Directory to write prepared assets")
+    parser.add_argument("--output-dir", type=Path, default=Path(DEFAULT_PREPARED_DIR), help="Directory to write prepared assets")
     parser.add_argument("--n-zones", type=int, default=DEFAULT_N_ZONES, help="Number of active zones to select")
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED, help="Random seed for zone selection reproducibility")
     return parser

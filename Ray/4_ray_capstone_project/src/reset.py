@@ -11,17 +11,20 @@ import subprocess
 
 from pathlib import Path
 
+from src.core import DEFAULT_OUTPUT_DIR, DEFAULT_PREPARED_DIR
+
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 logger = logging.getLogger(__name__)
 
 
-def reset_ray(project_dir: Path) -> None:
+def reset_ray(prepared_dir: Path, output_dir: Path) -> None:
     """
     Stop Ray and remove generated artifacts.
 
     Args:
-        project_dir (Path): Project root directory.
+        prepared_dir (Path): Directory containing prepared assets.
+        output_dir (Path): Directory containing output artifacts.
     """
     # Stop Ray
     logger.info("Stopping Ray...")
@@ -36,18 +39,16 @@ def reset_ray(project_dir: Path) -> None:
         logger.warning(f"Failed to stop Ray: {e}, continuing with cleanup...")
 
     # Remove prepared assets
-    prepared_dir = project_dir / "prepared"
     if prepared_dir.exists():
         shutil.rmtree(prepared_dir)
-        logger.info("Prepared assets removed")
+        logger.info(f"Prepared assets removed: {prepared_dir}")
     else:
         logger.info("No prepared assets to remove")
 
     # Remove output artifacts
-    output_dir = project_dir / "output"
     if output_dir.exists():
         shutil.rmtree(output_dir)
-        logger.info("Output artifacts removed")
+        logger.info(f"Output artifacts removed: {output_dir}")
     else:
         logger.info("No output artifacts to remove")
 
@@ -66,11 +67,12 @@ def build_reset_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         add_help=False  # Disable help when used as parent parser
     )
-    parser.add_argument("--project-dir", type=Path, default=Path(__file__).parent.parent, help="Project root directory")
+    parser.add_argument("--prepared-dir", type=Path, default=Path(DEFAULT_PREPARED_DIR), help="Directory with prepared assets")
+    parser.add_argument("--output-dir", type=Path, default=Path(DEFAULT_OUTPUT_DIR), help="Directory with output artifacts")
     return parser
 
 
 if __name__ == "__main__":
     standalone_parser = argparse.ArgumentParser(parents=[build_reset_parser()])
     args = standalone_parser.parse_args()
-    reset_ray(args.project_dir)
+    reset_ray(args.prepared_dir, args.output_dir)
