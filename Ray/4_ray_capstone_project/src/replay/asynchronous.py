@@ -90,11 +90,9 @@ class AsyncReplay(Replay):
 
     def _run_scoring(self, tick_id: int, snapshots: Dict[int, ZoneSnapshot]) -> None:
         """
-        Step E - Run per-zone scoring (async mode).
-
+        Step E - Run per-zone scoring (async mode):
         - Submit each zone snapshot to a scoring task
         - Have each scoring task report its result to that zone's actor for the current tick
-        - Use bounded concurrency (max_inflight_zones)
 
         Args:
             tick_id (int): Current tick ID
@@ -130,19 +128,9 @@ class AsyncReplay(Replay):
 
     def _finalize_tick(self, tick_id: int) -> Dict[int, bool]:
         """
-        Step F - Finalize the tick under partial readiness (async mode).
-
-        - Check which actors have already received a report for the current tick by asking
-          actors for their current tick status
+        Step F - Finalize the tick under partial readiness (async mode):
+        - Check which actors have already received a report for the current tick by asking actors for their current tick status
         - Decide whether the policy says to keep waiting or to close the tick
-
-        You must define and log a deterministic policy for late zones.
-
-        Policy requirements:
-        - must be explicit in config
-        - fallback_policy should default to always_previous
-        - must be visible in logs and artifacts
-        - must behave the same way on repeated runs with the same inputs and seed
 
         Args:
             tick_id (int): Current tick ID
@@ -161,14 +149,10 @@ class AsyncReplay(Replay):
 
     def _close_tick(self, tick_id: int, readiness: Dict[int, bool]) -> None:
         """
-        Step G - Close the tick in each actor (async mode).
-
-        - Ask each actor to finalize the current tick using either its reported decision
-          or the fallback policy
+        Step G - Close the tick in each actor (async mode):
+        - Ask each actor to finalize the current tick using either its reported decision or the fallback policy
         - Ensure duplicate reports for the same zone and tick are safe to replay
         - Late results that arrive after finalization should be logged and ignored by the actor
-
-        In async mode:
         - Update actor state needed for the next tick
 
         Args:

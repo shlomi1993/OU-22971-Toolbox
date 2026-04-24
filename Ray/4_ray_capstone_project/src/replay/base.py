@@ -98,9 +98,9 @@ class Replay(ABC):
         """
         rng = np.random.RandomState(self.config.seed)
         n_slow = max(1, int(len(active_zones) * self.config.slow_zone_fraction))
-        slow = set(rng.choice(active_zones, size=n_slow, replace=False))
-        self.logger.info(f"Slow zones ({len(slow)}): {sorted(slow)}")
-        return slow
+        slow_zones = set(rng.choice(active_zones, size=n_slow, replace=False))
+        self.logger.info(f"Slow zones ({len(slow_zones)}): {sorted(slow_zones)}")
+        return slow_zones
 
     @staticmethod
     def _get_tick_ids(replay_df: pd.DataFrame) -> List[int]:
@@ -132,11 +132,10 @@ class Replay(ABC):
 
     def _initialize_runtime(self) -> None:
         """
-        Step C - Initialize the runtime.
-
-        - Create one ZoneActor per active zone
-        - Give each actor ownership of its own prepared replay partition
-        - Initialize any global run configuration and output locations
+        Step C - Initialize the runtime:
+            - Create one ZoneActor per active zone
+            - Give each actor ownership of its own prepared replay partition
+            - Initialize any global run configuration and output locations
         """
         self.all_metrics = []
         self.all_decisions = {}
@@ -150,18 +149,16 @@ class Replay(ABC):
 
     def _advance_replay_tick(self, tick_id: int) -> Dict[int, ZoneSnapshot]:
         """
-        Step D - Advance one replay tick.
-
-        At the start of each tick:
-        - Tell each actor that this tick is now active
-        - Ask each actor for the snapshot needed for the next recommendation
-        - Keep the snapshot minimal and derived from actor-owned state
+        Step D - Advance one replay tick:
+            - Tell each actor that this tick is now active
+            - Ask each actor for the snapshot needed for the next recommendation
+            - Keep the snapshot minimal and derived from actor-owned state
 
         Args:
             tick_id (int): Current tick ID
 
         Returns:
-            Dict[int, ZoneSnapshot]: Mapping of zone_id to snapshot for this tick
+            Dict[int, ZoneSnapshot]: Mapping of zone ID to snapshot for this tick
         """
         ray.get([actor.activate_tick.remote(tick_id) for actor in self.actors.values()])
         snapshot_refs = {zone_id: actor.get_snapshot.remote(tick_id) for zone_id, actor in self.actors.items()}
@@ -170,52 +167,51 @@ class Replay(ABC):
     @abstractmethod
     def _run_scoring(self, tick_id: int, snapshots: Dict[int, ZoneSnapshot]) -> None:
         """
-        Step E - Run per-zone scoring.
-
-        Submit zone snapshots to scoring tasks and handle result collection or reporting.
+        Step E - Run per-zone scoring:
+            - Submit zone snapshots to scoring tasks
+            - Handle result collection
 
         Args:
             tick_id (int): Current tick ID
-            snapshots (Dict[int, ZoneSnapshot]): Mapping of zone_id to snapshot
+            snapshots (Dict[int, ZoneSnapshot]): Mapping of zone ID to snapshot
         """
         raise NotImplementedError()
 
     @abstractmethod
     def _finalize_tick(self, tick_id: int) -> Dict[int, bool]:
         """
-        Step F - Finalize the tick under partial readiness.
-
-        Determine which zones are ready and decide when to proceed to tick closure.
+        Step F - Finalize the tick under partial readiness:
+            - Determine which zones are ready
+            - Decide when to proceed to tick closure
 
         Args:
             tick_id (int): Current tick ID
 
         Returns:
-            Dict[int, bool]: Mapping of zone_id to readiness status (True if zone has a decision, False otherwise)
+            Dict[int, bool]: Mapping of zone ID to readiness status (True if zone has a decision, False otherwise)
         """
         raise NotImplementedError()
 
     @abstractmethod
     def _close_tick(self, tick_id: int, readiness: Dict[int, bool]) -> None:
         """
-        Step G - Close the tick in each actor.
-
-        Finalize decisions for the tick and update actor state. Ensures idempotent writes.
+        Step G - Close the tick in each actor:
+            - Finalize decisions for the tick and update actor state.
+            - Ensures idempotent writes.
 
         Args:
             tick_id (int): Current tick ID
-            readiness (Dict[int, bool]): Mapping of zone_id to readiness status from _finalize_tick
+            readiness (Dict[int, bool]): Mapping of zone ID to readiness status from _finalize_tick
         """
         raise NotImplementedError()
 
     @abstractmethod
     def _collect_tick_metrics(self, tick_id: int, readiness: Dict[int, bool], tick_elapsed: float) -> TickMetrics:
         """
-        Collect metrics for the completed tick.
 
         Args:
             tick_id (int): Current tick ID
-            readiness (Dict[int, bool]): Mapping of zone_id to readiness status from _finalize_tick
+            readiness (Dict[int, bool]): Mapping of zone ID to readiness status from _finalize_tick
             tick_elapsed (float): Total time elapsed for this tick in seconds
 
         Returns:

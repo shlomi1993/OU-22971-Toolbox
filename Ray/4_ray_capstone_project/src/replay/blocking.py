@@ -78,8 +78,7 @@ class BlockingReplay(Replay):
 
     def _run_scoring(self, tick_id: int, snapshots: Dict[int, ZoneSnapshot]) -> None:
         """
-        Step E - Run per-zone scoring (blocking mode).
-
+        Step E - Run per-zone scoring (blocking mode):
         - Submit each zone snapshot to a scoring task
         - Collect all task returns in the controller for the current tick
 
@@ -97,8 +96,7 @@ class BlockingReplay(Replay):
 
     def _finalize_tick(self, tick_id: int) -> Dict[int, bool]:
         """
-        Step F - Finalize the tick under partial readiness (blocking mode).
-
+        Step F - Finalize the tick under partial readiness (blocking mode):
         - Wait until all task results for the current tick have been returned to the controller
         - Close the tick only after the controller has a complete result set
 
@@ -115,12 +113,9 @@ class BlockingReplay(Replay):
 
     def _close_tick(self, tick_id: int, readiness: Dict[int, bool]) -> None:
         """
-        Step G - Close the tick in each actor (blocking mode).
-
+        Step G - Close the tick in each actor (blocking mode):
         - Have the controller write the accepted decision for each zone into its actor
         - Ensure duplicate accepted writes for the same zone and tick are safe to replay
-
-        In blocking mode:
         - Update actor state needed for the next tick
 
         Args:
@@ -158,8 +153,7 @@ class BlockingReplay(Replay):
             n_zones_fallback=0,  # No fallbacks in blocking mode
             mean_zone_latency_s=float(np.mean(lat_values)) if lat_values else 0.0,
             max_zone_latency_s=float(np.max(lat_values)) if lat_values else 0.0,
-            max_mean_ratio=(float(np.max(lat_values)) / float(np.mean(lat_values)))
-                          if lat_values and np.mean(lat_values) > 0 else 0.0,
+            max_mean_ratio=(float(np.max(lat_values)) / float(np.mean(lat_values))) if lat_values and np.mean(lat_values) > 0 else 0.0,
             total_tick_latency_s=tick_elapsed,
             per_zone_latency=latencies,
         )
