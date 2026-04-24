@@ -7,6 +7,8 @@ Subclasses should implement mode-specific behavior.
 
 import logging
 import time
+import numpy as np
+import pandas as pd
 import ray
 
 from abc import ABC, abstractmethod
@@ -19,9 +21,7 @@ from src.tlc import (
     PreparedData,
     RunConfig,
     TickMetrics,
-    get_tick_ids,
     load_prepared,
-    select_slow_zones,
     write_json,
     write_latency_log,
     write_metrics_csv,
@@ -64,9 +64,20 @@ class Replay(ABC):
         self.prepared_dir = prepared_dir
         self.output_dir = output_dir
         self.config = config
-        self.runtime = None
+        self.runtime = None  # Will hold InitializedRuntime after initialization
         self.all_metrics: List[TickMetrics] = []
         self.all_decisions: Dict[int, Dict[int, str]] = {}
+
+    @property
+    @abstractmethod
+    def mode_name(self) -> str:
+        """
+        Get the display name for this execution mode.
+
+        Returns:
+            str: Mode name (e.g., "Blocking", "Async")
+        """
+        raise NotImplementedError()
 
     def _create_actors(self, prepared: PreparedData) -> Dict[int, ActorHandle]:
         """
@@ -85,6 +96,36 @@ class Replay(ABC):
             actors[zone_id] = ZoneActor.remote(zone_id, zone_replay, zone_baseline, self.config)
         logger.info(f"Created {len(actors)} ZoneActors")
         return actors
+
+    def _select_slow_zones(self, active_zones: List[int]) -> set[int]:
+        """
+        Deterministically select slow zones based on config.
+
+        Args:
+            active_zones (List[int]): List of active zone IDs
+
+        Returns:
+            set[int]: Zone IDs that will receive artificial delay
+        """
+        rng = np.random.RandomState(self.config.seed)
+        n_slow = max(1, int(len(active_zones) * self.config.slow_zone_fraction))
+        slow = set(rng.choice(active_zones, size=n_slow, replace=False))
+        logger.info(f"Slow zones ({len(slow)}): {sorted(slow)}")
+        return slow
+
+    @staticmethod
+    def _get_tick_ids(replay_df: pd.DataFrame) -> List[int]:
+        """
+        Return list of tick indices from replay DataFrame.
+
+        Args:
+            replay_df (pd.DataFrame): Replay DataFrame with tick_start column
+
+        Returns:
+            List[int]: Sequential tick indices [0, 1, ..., n_ticks - 1]
+        """
+        n_ticks = replay_df["tick_start"].nunique()
+        return list(range(n_ticks))
 
     def _apply_tick_limit(self, tick_ids: List[int]) -> tuple[List[int], int]:
         """
@@ -109,12 +150,12 @@ class Replay(ABC):
         - Initialize any global run configuration and output locations
 
         Returns:
-            InitializedRuntime containing actors and execution parameters
+            InitializedRuntime: Initialized actors and execution parameters
         """
         prepared = load_prepared(self.prepared_dir)
         actors = self._create_actors(prepared)
-        slow_zones = select_slow_zones(prepared.active_zones, self.config)
-        tick_ids = get_tick_ids(prepared.replay)
+        slow_zones = self._select_slow_zones(prepared.active_zones)
+        tick_ids = self._get_tick_ids(prepared.replay)
         tick_ids, max_ticks = self._apply_tick_limit(tick_ids)
         return InitializedRuntime(actors, slow_zones, tick_ids, max_ticks)
 
@@ -136,17 +177,6 @@ class Replay(ABC):
         ray.get([actor.activate_tick.remote(tick_id) for actor in self.runtime.actors.values()])
         snapshot_refs = {zone_id: actor.get_snapshot.remote(tick_id) for zone_id, actor in self.runtime.actors.items()}
         return {zone_id: ray.get(ref) for zone_id, ref in snapshot_refs.items()}
-
-    @property
-    @abstractmethod
-    def mode_name(self) -> str:
-        """
-        Get the display name for this execution mode.
-
-        Returns:
-            str: Mode name (e.g., "Blocking", "Async")
-        """
-        raise NotImplementedError()
 
     @abstractmethod
     def _run_scoring(self, tick_id: int, snapshots: Dict[int, ZoneSnapshot]) -> None:
@@ -244,8 +274,7 @@ class Replay(ABC):
         write_tick_summary(self.all_metrics, self.all_decisions, mode_dir / "tick_summary.json")
 
         # Collect actor counters
-        counter_refs = {zone_id: actor.get_counters.remote()
-                       for zone_id, actor in self.runtime.actors.items()}
+        counter_refs = {zone_id: actor.get_counters.remote() for zone_id, actor in self.runtime.actors.items()}
         counters = {zone_id: ray.get(ref) for zone_id, ref in counter_refs.items()}
         write_json([c.to_dict() for c in counters.values()], mode_dir / "actor_counters.json")
 
@@ -266,7 +295,7 @@ class Replay(ABC):
         3. Finalize artifacts (step H)
 
         Returns:
-            List of per-tick metrics for the replay run
+            List[TickMetrics]: Per-tick metrics for the replay run
         """
         # Step C - Initialize the runtime
         self.runtime = self._initialize_runtime()

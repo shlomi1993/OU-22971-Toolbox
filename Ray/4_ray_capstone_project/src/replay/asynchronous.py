@@ -26,12 +26,12 @@ def score_zone_async(snapshot: ZoneSnapshot, slow_sleep_s: float, actor_handle: 
     Deterministic from snapshot input. Reports the decision to the ZoneActor before returning.
 
     Args:
-        snapshot: Snapshot object from ZoneActor.get_snapshot()
-        slow_sleep_s: Artificial delay in seconds to simulate skew
-        actor_handle: Ray actor handle for async reporting to the zone's actor
+        snapshot (ZoneSnapshot): Snapshot object from ZoneActor.get_snapshot()
+        slow_sleep_s (float): Artificial delay in seconds to simulate skew
+        actor_handle (ActorHandle): Ray actor handle for async reporting to the zone's actor
 
     Returns:
-        Decision payload with zone_id, tick_id, decision, task_latency_s
+        ZoneRecommendation: Decision payload with zone_id, tick_id, decision, task_latency_s
     """
     start = time.time()
 
@@ -64,9 +64,9 @@ class AsyncReplay(Replay):
         Initialize async replay.
 
         Args:
-            prepared_dir: Directory containing prepared assets from prepare.py
-            output_dir: Root output directory for artifacts
-            config: Runtime configuration for the replay
+            prepared_dir (Path): Directory containing prepared assets from prepare.py
+            output_dir (Path): Root output directory for artifacts
+            config (RunConfig): Runtime configuration for the replay
         """
         super().__init__(*args, **kwargs)
         self.prev_late_count = 0
@@ -78,7 +78,7 @@ class AsyncReplay(Replay):
         Get the display name for async mode.
 
         Returns:
-            "Async"
+            str: "Async"
         """
         return "Async"
 
@@ -91,8 +91,8 @@ class AsyncReplay(Replay):
         - Use bounded concurrency (max_inflight_zones)
 
         Args:
-            tick_id: Current tick ID
-            snapshots: Mapping of zone_id to snapshot
+            tick_id (int): Current tick ID
+            snapshots (Dict[int, ZoneSnapshot]): Mapping of zone_id to snapshot
         """
         pending = {}
         zone_queue = list(snapshots.keys())
@@ -144,10 +144,10 @@ class AsyncReplay(Replay):
         - must behave the same way on repeated runs with the same inputs and seed
 
         Args:
-            tick_id: Current tick ID
+            tick_id (int): Current tick ID
 
         Returns:
-            Mapping of zone_id to readiness status (True if zone has a decision, False otherwise)
+            Dict[int, bool]: Mapping of zone_id to readiness status (True if zone has a decision, False otherwise)
         """
         readiness = {}
         for zone_id, actor in self.runtime.actors.items():
@@ -171,8 +171,8 @@ class AsyncReplay(Replay):
         - Update actor state needed for the next tick
 
         Args:
-            tick_id: Current tick ID
-            readiness: Mapping of zone_id to readiness status from _finalize_tick
+            tick_id (int): Current tick ID
+            readiness (Dict[int, bool]): Mapping of zone_id to readiness status from _finalize_tick
         """
         # Finalize each actor for this tick
         n_fallback = 0
@@ -203,12 +203,12 @@ class AsyncReplay(Replay):
         - number of duplicate task reports ignored
 
         Args:
-            tick_id: Current tick ID
-            readiness: Mapping of zone_id to readiness status
-            tick_elapsed: Total time elapsed for this tick in seconds
+            tick_id (int): Current tick ID
+            readiness (Dict[int, bool]): Mapping of zone_id to readiness status
+            tick_elapsed (float): Total time elapsed for this tick in seconds
 
         Returns:
-            TickMetrics object for this tick
+            TickMetrics: TickMetrics object for this tick
         """
         n_ready = sum(readiness.values())
         n_fallback = sum(1 for ready in readiness.values() if not ready)
