@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Dict, List
 from ray.actor import ActorHandle
 
-from src.tlc import (
+from src.replay.core import (
     PreparedData,
     ReplayConfig,
     TickMetrics,

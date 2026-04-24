@@ -99,7 +99,7 @@ prepare --ref-parquet data/2023-01.parquet --replay-parquet data/2023-02.parquet
 run --prepared-dir prepared/ --mode async
 ```
 
-### `src/tlc.py` — shared constants, data functions, artifact writers
+### `src/replay/core.py` — shared constants, data functions, artifact writers
 
 - **Constants**: `TICK_MINUTES=15`, `DEFAULT_N_ZONES=20`, `DEFAULT_SEED=42`
 - **Enums**: `Decision` (`NEED`/`OK`), `ReplayMode` (`blocking`/`async`/`stress`)
@@ -293,7 +293,7 @@ Have two terminals: one for running commands, one for inspecting artifacts.
 Walk through the project files in order:
 
 - **`main.py`**: main entry point with `prepare` and `run` subcommands; imports implementation from prepare and run modules
-- **`src/tlc.py`**: constants, dataclasses (`ReplayConfig`, `TickMetrics`), data loading and validation, zone selection, baseline building, scoring rule, fallback policy, artifact writers
+- **`src/replay/core.py`**: constants, dataclasses (`ReplayConfig`, `TickMetrics`), data loading and validation, zone selection, baseline building, scoring rule, fallback policy, artifact writers
 - **`src/zone_actor.py`**: `ZoneSnapshot.compute_decision()` threshold logic, `ZoneActor` with `activate_tick` / `get_snapshot` / `report_decision` / `write_decision` / `finalize_tick`, idempotent writes by `(zone_id, tick_id)`, duplicate/late counters
 - **`prepare.py`**: loads 2 adjacent parquets → validates months → selects zones → aggregates ticks → builds baseline → writes prepared assets; includes pandas cross-check
 - **`run.py`**: `score_zone` remote task (blocking returns to controller, async reports to actor), `run_blocking` (waits for all), `run_async` (bounded concurrency + timeout + polling + fallback), `run_stress` (both with 60% slow zones / 3s sleep)
@@ -411,7 +411,7 @@ Each run mode writes artifacts into its own subdirectory under `output/`:
 | File | Purpose |
 |---|---|
 | [main.py](main.py) | **Main entry point**: CLI with `prepare` and `run` subcommands |
-| [src/tlc.py](src/tlc.py) | Shared constants, dataclasses, data loading, scoring logic, artifact writers |
+| [src/replay/core.py](src/replay/core.py) | Shared constants, dataclasses, data loading, scoring logic, artifact writers |
 | [src/zone_actor.py](src/zone_actor.py) | `ZoneActor` Ray actor, `ZoneSnapshot`, `ZoneDecision`, fallback logic |
 | [src/prepare.py](src/prepare.py) | Preparation module: load parquets, validate, build baseline and replay tables |
 | [src/run.py](src/run.py) | Runtime module: `score_zone` task, blocking/async/stress drivers, artifact writing |
