@@ -14,12 +14,7 @@ Example usage:
     python main.py run --prepared-dir prepared/ --mode async --output-dir output/
     python main.py reset
 
-After running scripts/bash/install.sh or scripts/powershell/install.ps1, you can simply execute:
-    prepare --ref-parquet data/2023-01.parquet --replay-parquet data/2023-02.parquet --output-dir prepared/
-    run --prepared-dir prepared/ --mode async --output-dir output/
-    reset
-
-In addition, each script can also be executed as standalone.
+Each subcommand can also be executed as a standalone script (e.g., python src/prepare.py).
 """
 
 import argparse
