@@ -15,7 +15,7 @@ Covers:
 import pytest
 import ray
 
-from src.tlc import FALLBACK_POLICY_PREVIOUS, ReplayConfig
+from src.replay.core import FALLBACK_POLICY_PREVIOUS, ReplayConfig
 from src.zone_actor import Recommendation, WriteStatus, ZoneActor
 from tests.helpers import make_zone_data, RNG_SEED
 

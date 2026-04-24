@@ -42,7 +42,9 @@ BLOCKING_ASYNC_ARTIFACTS = [
     pytest.param(5, 42, marks=pytest.mark.full),
 ])
 def test_prepare_script(synthetic_parquets: Dict[str, Path], tmp_path: Path, n_zones: int, seed: int | None) -> None:
-    """Test prepare script with various zone counts and seeds (reduced in quick mode)."""
+    """
+    Test prepare script with various zone counts and seeds (reduced in quick mode).
+    """
     out = tmp_path / "prepared"
     args = [
         "main.py",
@@ -87,15 +89,12 @@ def test_prepare_script(synthetic_parquets: Dict[str, Path], tmp_path: Path, n_z
 def test_run_script(synthetic_parquets: Dict[str, Path], tmp_path: Path, max_ticks: int, 
                     mode: str, slow_frac: str, slow_sleep: str,
                     timeout_s: str, max_inflight: str, fallback: str) -> None:
-    """Test run script with various modes and parameters (reduced in quick mode)."""
+    """
+    Test run script with various modes and parameters (reduced in quick mode).
+    """
     # Prepare data first
     prepared_dir = tmp_path / "prepared"
-    result = run_prepare_script(
-        synthetic_parquets["ref"],
-        synthetic_parquets["replay"],
-        prepared_dir,
-        n_zones=5
-    )
+    result = run_prepare_script(synthetic_parquets["ref"], synthetic_parquets["replay"], prepared_dir, n_zones=5)
     assert result.returncode == 0, "Prepare step failed"
 
     # Run the script
@@ -122,15 +121,12 @@ def test_run_script(synthetic_parquets: Dict[str, Path], tmp_path: Path, max_tic
 
 
 def test_run_stress_script(synthetic_parquets: Dict[str, Path], tmp_path: Path, max_ticks: int) -> None:
-    """Test stress mode script (uses max_ticks from mode)."""
+    """
+    Test stress mode script (uses max_ticks from mode).
+    """
     # Prepare data first
     prepared_dir = tmp_path / "prepared"
-    result = run_prepare_script(
-        synthetic_parquets["ref"],
-        synthetic_parquets["replay"],
-        prepared_dir,
-        n_zones=5
-    )
+    result = run_prepare_script(synthetic_parquets["ref"], synthetic_parquets["replay"], prepared_dir, n_zones=5)
     assert result.returncode == 0, "Prepare step failed"
 
     # Run stress mode
@@ -169,15 +165,12 @@ def test_run_stress_script(synthetic_parquets: Dict[str, Path], tmp_path: Path, 
 
 
 def test_blocking_workflow(synthetic_parquets: Dict[str, Path], tmp_path: Path, max_ticks: int) -> None:
-    """Test full blocking workflow: prepare → run → verify."""
+    """
+    Test full blocking workflow: prepare → run → verify.
+    """
     # Prepare with 20 zones
     prepared_dir = tmp_path / "prepared"
-    result = run_prepare_script(
-        synthetic_parquets["ref"],
-        synthetic_parquets["replay"],
-        prepared_dir,
-        n_zones=20
-    )
+    result = run_prepare_script(synthetic_parquets["ref"], synthetic_parquets["replay"], prepared_dir, n_zones=20)
     assert result.returncode == 0, "Prepare step failed"
 
     # Run blocking mode
@@ -201,15 +194,12 @@ def test_blocking_workflow(synthetic_parquets: Dict[str, Path], tmp_path: Path, 
 
 
 def test_async_workflow(synthetic_parquets: Dict[str, Path], tmp_path: Path, max_ticks: int) -> None:
-    """Test full async workflow: prepare → run → verify."""
+    """
+    Test full async workflow: prepare → run → verify.
+    """
     # Prepare with 20 zones
     prepared_dir = tmp_path / "prepared"
-    result = run_prepare_script(
-        synthetic_parquets["ref"],
-        synthetic_parquets["replay"],
-        prepared_dir,
-        n_zones=20
-    )
+    result = run_prepare_script(synthetic_parquets["ref"], synthetic_parquets["replay"], prepared_dir, n_zones=20)
     assert result.returncode == 0, "Prepare step failed"
 
     # Run async mode
@@ -236,15 +226,12 @@ def test_async_workflow(synthetic_parquets: Dict[str, Path], tmp_path: Path, max
 
 
 def test_stress_workflow(synthetic_parquets: Dict[str, Path], tmp_path: Path, max_ticks: int) -> None:
-    """Test full stress workflow: prepare → run → verify comparison."""
+    """
+    Test full stress workflow: prepare → run → verify comparison.
+    """
     # Prepare with 20 zones
     prepared_dir = tmp_path / "prepared"
-    result = run_prepare_script(
-        synthetic_parquets["ref"],
-        synthetic_parquets["replay"],
-        prepared_dir,
-        n_zones=20
-    )
+    result = run_prepare_script(synthetic_parquets["ref"], synthetic_parquets["replay"], prepared_dir, n_zones=20)
     assert result.returncode == 0, "Prepare step failed"
 
     # Run stress mode

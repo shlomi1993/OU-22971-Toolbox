@@ -12,7 +12,7 @@ import ray
 
 from typing import Dict
 from src.replay.base import Replay
-from src.tlc import TickMetrics
+from src.replay.core import TickMetrics
 from src.zone_actor import ZoneRecommendation, ZoneSnapshot
 
 

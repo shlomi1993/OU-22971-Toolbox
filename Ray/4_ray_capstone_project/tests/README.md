@@ -96,12 +96,12 @@ pytest -m full --full
 
 ```
 tests/
-├── test_data_validation.py  # Data validation, scoring logic, artifact tests
-├── test_zone_actor.py        # ZoneActor state management and fault tolerance
-├── test_integration.py       # Script-level integration and e2e workflows
-├── helpers.py                # Synthetic data generation, subprocess runner
-├── conftest.py               # Pytest configuration, shared fixtures
-└── README.md                 # This file
+├── test_core_logic.py  # Data validation, scoring logic, artifact tests
+├── test_zone_actor.py  # ZoneActor state management and fault tolerance
+├── test_workflows.py   # Script-level integration and e2e workflows
+├── helpers.py          # Synthetic data generation, subprocess runner
+├── conftest.py         # Pytest configuration, shared fixtures
+└── README.md           # This file
 ```
 
 ## Tips

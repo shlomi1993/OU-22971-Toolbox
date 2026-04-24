@@ -22,7 +22,7 @@ from pathlib import Path
 from src.prepare import prepare_assets
 from src.reset import reset_ray
 from src.run import run_replay
-from src.tlc import (
+from src.replay.core import (
     DEFAULT_COMPLETION_FRACTION,
     DEFAULT_MAX_INFLIGHT_ZONES,
     DEFAULT_N_ZONES,
