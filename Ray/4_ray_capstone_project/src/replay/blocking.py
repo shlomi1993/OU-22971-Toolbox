@@ -1,8 +1,8 @@
 """
 Blocking replay implementation.
 
-In blocking mode, scoring tasks return their decisions to the controller,
-and the controller waits for all zones before advancing each tick.
+In blocking mode, scoring tasks return their decisions to the controller, and the controller waits for all zones before
+advancing each tick.
 """
 
 import logging
