@@ -3,9 +3,10 @@ Shared pytest configuration and fixtures for Ray capstone project tests.
 """
 
 import os
-import warnings
 import pytest
 import ray
+import shutil
+import warnings
 
 from pathlib import Path
 from typing import Dict, Generator
@@ -44,6 +45,14 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
 
     # Remove full-mode tests from collection instead of skipping them
     items[:] = [item for item in items if "full" not in item.keywords]
+
+
+def pytest_runtest_logfinish(nodeid: str) -> None:
+    """
+    Print a separator after each test to improve visual distinction.
+    """
+    terminal_width = shutil.get_terminal_size((80, 20)).columns
+    print(f"\n{'─' * terminal_width}")
 
 
 @pytest.fixture(scope="session")
