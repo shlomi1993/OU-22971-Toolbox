@@ -12,9 +12,9 @@ Covers:
 """
 
 import json
-from pathlib import Path
-
 import pytest
+
+from pathlib import Path
 
 from src.core import (
     FALLBACK_POLICY_PREVIOUS,
