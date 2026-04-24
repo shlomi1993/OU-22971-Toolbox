@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Dict, List
 from ray.actor import ActorHandle
 
-from src.replay.core import (
+from src.core import (
     PreparedData,
     ReplayConfig,
     TickMetrics,
@@ -64,7 +64,7 @@ class Replay(ABC):
         Get the display name for this execution mode.
 
         Returns:
-            str: Implemented Replay mode display name
+            str: Replay mode display name
         """
         raise NotImplementedError()
 

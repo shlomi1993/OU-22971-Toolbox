@@ -16,7 +16,7 @@ import pandas as pd
 
 from pathlib import Path
 
-from src.replay.core import (
+from src.core import (
     DEFAULT_SEED,
     TICK_MINUTES,
     aggregate_ticks,

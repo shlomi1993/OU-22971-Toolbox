@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from src.replay.core import (
+from src.core import (
     FALLBACK_POLICY_PREVIOUS,
     TICK_MINUTES,
     ReplayConfig,
