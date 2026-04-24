@@ -86,9 +86,8 @@ def test_prepare_script(synthetic_parquets: Dict[str, Path], tmp_path: Path, n_z
     pytest.param("async", "0.25", "0.1", "3.0", "5", "always_previous", marks=pytest.mark.full),
     pytest.param("async", "0.4", "0.3", "1.5", "3", "always_previous", marks=pytest.mark.full),
 ])
-def test_run_script(synthetic_parquets: Dict[str, Path], tmp_path: Path, max_ticks: int, 
-                    mode: str, slow_frac: str, slow_sleep: str,
-                    timeout_s: str, max_inflight: str, fallback: str) -> None:
+def test_run_script(synthetic_parquets: Dict[str, Path], tmp_path: Path, max_ticks: int, mode: str, slow_frac: str,
+                    slow_sleep: str, timeout_s: str, max_inflight: str, fallback: str) -> None:
     """
     Test run script with various modes and parameters (reduced in quick mode).
     """
