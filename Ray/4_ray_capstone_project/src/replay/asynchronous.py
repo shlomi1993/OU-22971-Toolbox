@@ -17,9 +17,6 @@ from src.tlc import RunMode, TickMetrics
 from src.zone_actor import ZoneRecommendation, ZoneSnapshot
 
 
-logger = logging.getLogger(__name__)
-
-
 @ray.remote
 def score_zone_async(snapshot: ZoneSnapshot, slow_sleep_s: float, actor_handle: ActorHandle) -> ZoneRecommendation:
     """
@@ -113,11 +110,7 @@ class AsyncReplay(Replay):
             while zone_queue and len(pending) < self.config.max_inflight_zones:
                 zone_id = zone_queue.pop(0)
                 sleep_s = self.config.slow_zone_sleep_s if zone_id in self.slow_zones else 0.0
-                ref = score_zone_async.remote(
-                    snapshots[zone_id],
-                    slow_sleep_s=sleep_s,
-                    actor_handle=self.actors[zone_id]
-                )
+                ref = score_zone_async.remote(snapshots[zone_id], slow_sleep_s=sleep_s, actor_handle=self.actors[zone_id])
                 pending[ref] = zone_id
 
             if not pending:
@@ -133,8 +126,7 @@ class AsyncReplay(Replay):
             # Check if we've hit the timeout with remaining pending tasks
             elapsed = time.time() - tick_start
             if elapsed >= self.config.tick_timeout_s and pending:
-                logger.warning(f"[async] tick {tick_id}: timeout after {elapsed:.2f}s, "
-                             f"{len(pending)} zones pending")
+                self.logger.warning(f"[async] tick {tick_id}: timeout after {elapsed:.2f}s, {len(pending)} zones pending")
                 break
 
     def _finalize_tick(self, tick_id: int) -> Dict[int, bool]:
@@ -164,7 +156,7 @@ class AsyncReplay(Replay):
             readiness[zone_id] = ray.get(actor.has_decision_for_tick.remote(tick_id))
 
         n_ready = sum(readiness.values())
-        logger.info(f"[async] tick {tick_id}: {n_ready}/{len(readiness)} zones ready")
+        self.logger.info(f"[async] tick {tick_id}: {n_ready}/{len(readiness)} zones ready")
 
         return readiness
 
@@ -201,7 +193,7 @@ class AsyncReplay(Replay):
         self.all_decisions[tick_id] = tick_decisions
 
         if n_fallback > 0:
-            logger.info(f"[async] tick {tick_id}: {n_fallback} zones used fallback policy")
+            self.logger.info(f"[async] tick {tick_id}: {n_fallback} zones used fallback policy")
 
     def _collect_tick_metrics(self, tick_id: int, readiness: Dict[int, bool],
                              tick_elapsed: float) -> TickMetrics:
