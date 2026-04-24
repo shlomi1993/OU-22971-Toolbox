@@ -12,3 +12,4 @@ dependencies:
   - pip
   - pip:
       - ray[default]==2.54.*
+      - -e .  # Install the current package in editable mode

@@ -175,9 +175,13 @@ def build_run_parser() -> argparse.ArgumentParser:
     return parser
 
 
-if __name__ == "__main__":
+def main():
     standalone_parser = argparse.ArgumentParser(parents=[build_run_parser()])
     args = standalone_parser.parse_args()
     mode = ReplayMode(args.mode)
     config = ReplayConfig.from_args(args)
     run_replay(args.ray_address, args.prepared_dir, args.output_dir, mode, config)
+
+
+if __name__ == "__main__":
+    main()

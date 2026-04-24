@@ -131,7 +131,11 @@ def build_prepare_parser() -> argparse.ArgumentParser:
     return parser
 
 
-if __name__ == "__main__":
+def main():
     standalone_parser = argparse.ArgumentParser(parents=[build_prepare_parser()])
     args = standalone_parser.parse_args()
     prepare_assets(args.ref_parquet, args.replay_parquet, args.output_dir, args.n_zones, args.seed)
+
+
+if __name__ == "__main__":
+    main()

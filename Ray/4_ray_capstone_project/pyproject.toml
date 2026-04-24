@@ -23,5 +23,10 @@ dev = [
 [tool.setuptools.packages.find]
 include = ["src*"]
 
+[project.scripts]
+prepare = "src.prepare:main"
+run = "src.run:main"
+reset = "src.reset:main"
+
 [tool.pytest.ini_options]
 pythonpath = ["."]

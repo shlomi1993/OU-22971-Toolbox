@@ -14,7 +14,15 @@ Example usage:
     python main.py run --prepared-dir prepared/ --mode async --output-dir output/
     python main.py reset
 
-Each subcommand can also be executed as a standalone script (e.g., python src/prepare.py).
+Each subcommand can also be run independently as a standalone script:
+    python src/prepare.py --ref-parquet data/2023-01.parquet --replay-parquet data/2023-02.parquet --output-dir prepared/
+    python src/run.py --prepared-dir prepared/ --mode async --output-dir output/
+    python src/reset.py
+
+Or via a dedicated command available after installing the package:
+    prepare --ref-parquet data/2023-01.parquet --replay-parquet data/2023-02.parquet --output-dir prepared/
+    run --prepared-dir prepared/ --mode async --output-dir output/
+    reset
 """
 
 import argparse
