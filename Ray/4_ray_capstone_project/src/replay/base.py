@@ -145,7 +145,7 @@ class Replay(ABC):
         Returns:
             str: Mode name (e.g., "Blocking", "Async")
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def _run_scoring(self, tick_id: int, snapshots: Dict[int, ZoneSnapshot]) -> None:
@@ -164,7 +164,7 @@ class Replay(ABC):
             tick_id (int): Current tick ID
             snapshots (Dict[int, ZoneSnapshot]): Mapping of zone_id to snapshot
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def _finalize_tick(self, tick_id: int) -> Dict[int, bool]:
@@ -186,7 +186,7 @@ class Replay(ABC):
         Returns:
             Dict[int, bool]: Mapping of zone_id to readiness status (True if zone has a decision, False otherwise)
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def _close_tick(self, tick_id: int, readiness: Dict[int, bool]) -> None:
@@ -210,7 +210,7 @@ class Replay(ABC):
             tick_id (int): Current tick ID
             readiness (Dict[int, bool]): Mapping of zone_id to readiness status from _finalize_tick
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def _collect_tick_metrics(self, tick_id: int, readiness: Dict[int, bool], tick_elapsed: float) -> TickMetrics:
@@ -225,7 +225,7 @@ class Replay(ABC):
         Returns:
             TickMetrics: Metrics object for this tick, including latency, readiness, and any other relevant data
         """
-        pass
+        raise NotImplementedError()
 
     def _write_artifacts(self) -> None:
         """
