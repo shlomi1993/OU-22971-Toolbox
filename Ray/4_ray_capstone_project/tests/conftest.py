@@ -46,20 +46,6 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     items[:] = [item for item in items if "full" not in item.keywords]
 
 
-def pytest_runtest_logstart(nodeid: str, location: tuple) -> None:
-    """
-    Print decorated test title before each test runs.
-    """
-    try:
-        width = os.get_terminal_size().columns
-    except OSError:
-        width = 80  # Fallback for non-terminal environments
-
-    print(f"\n\033[34m{'#' * width}")
-    print(nodeid)
-    print(f"{'#' * width}\033[0m")
-
-
 @pytest.fixture(scope="session")
 def max_ticks(request: pytest.FixtureRequest) -> int:
     """
