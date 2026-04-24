@@ -47,14 +47,13 @@ This downloads `green_tripdata_2023-01.parquet` (reference) and `green_tripdata_
 
 To reset all generated artifacts and stop Ray:
 
-**Linux/macOS:**
 ```bash
-bash scripts/bash/reset_ray.sh
+python main.py reset
 ```
 
-**Windows PowerShell:**
-```powershell
-powershell -File scripts/powershell/reset_ray.ps1
+Or use the convenience wrapper (installed in conda environment):
+```bash
+reset
 ```
 
 ---
@@ -72,7 +71,7 @@ The system follows this control loop:
 ### Key components
 
 - **`ZoneActor`** — one Ray actor per active zone. Owns mutable state: recent demand history, active tick, reported/accepted decisions, observability counters. Only `ZoneActor` mutates durable zone state. Writes are idempotent by `(zone_id, tick_id)`.
-- **`score_zone`** — Ray remote task. Receives a `ZoneSnapshot`, computes a deterministic `NEED`/`OK` decision. In blocking mode returns to the controller; in async mode reports to the actor.
+- **`score_zone_blocking` / `score_zone_async`** — Ray remote tasks. Receive a `ZoneSnapshot`, compute a deterministic `NEED`/`OK` recommendation. In blocking mode returns a `ZoneRecommendation` to the controller; in async mode reports to the actor before returning.
 - **Driver loop** — advances ticks, collects snapshots, launches scoring tasks, finalizes ticks. Two strategies: blocking baseline and asynchronous controller.
 - **Skew model** — a configurable fraction of zones receive artificial sleep to simulate uneven completion times.
 
@@ -82,10 +81,11 @@ The system follows this control loop:
 
 ### `main.py` — CLI entry point
 
-Main entry point with two subcommands:
+Main entry point with three subcommands:
 
 - **`prepare` subcommand**: Parses CLI arguments, calls `src.prepare.prepare_assets()`
-- **`run` subcommand**: Parses CLI arguments, initializes Ray, creates `ReplayConfig`, calls `src.run.run_replay()`
+- **`run` subcommand**: Parses CLI arguments, creates `ReplayConfig`, calls `src.run.run_replay()`
+- **`reset` subcommand**: Calls `src.reset.reset_ray()` to stop Ray and remove generated artifacts
 
 **Usage**:
 ```bash
@@ -99,72 +99,69 @@ prepare --ref-parquet data/2023-01.parquet --replay-parquet data/2023-02.parquet
 run --prepared-dir prepared/ --mode async
 ```
 
-### `src/replay/core.py` — shared constants, data functions, artifact writers
+### `src/core.py` — shared constants, data functions, artifact writers
 
 - **Constants**: `TICK_MINUTES=15`, `DEFAULT_N_ZONES=20`, `DEFAULT_SEED=42`
-- **Enums**: `Decision` (`NEED`/`OK`), `ReplayMode` (`blocking`/`async`/`stress`)
+- **Enums**: `ReplayMode` (`blocking`/`async`/`stress`)
 - **Dataclasses**: `ReplayConfig` (all runtime settings), `TickMetrics` (per-tick performance)
 - **Data loading**: `load_parquet()` validates required columns; `validate_adjacent_months()` ensures the two files are consecutive months from the same year
-- **Zone selection**: `select_active_zones()` picks the top-N busiest zones from the reference month, deterministic under a fixed seed
+- **Zone selection**: `identify_busiest_zones()` picks the top-N busiest zones from the reference month, deterministic under a fixed seed
 - **Baseline**: `aggregate_ticks()` bins pickups into 15-minute windows; `build_baseline_table()` computes `(mean_demand, std_demand)` per `(zone_id, hour_of_day, day_of_week)`
 - **Cross-check**: `cross_check_replay()` confirms prepared replay counts match a direct pandas grouped calculation on a sample window
 - **Artifact writers**: `write_json()`, `write_metrics_csv()`, `write_tick_summary()`, `write_latency_log()`
 
 ### `src/zone_actor.py` — per-zone actor and decision types
 
+- **`Recommendation`**: enum with `NEED`/`OK` values for scoring outcomes
 - **`ZoneSnapshot`**: minimal snapshot passed to scoring tasks. Contains `zone_id`, `tick_id`, `recent_demand`, `baseline_mean`, `baseline_std`. The `compute_decision()` method implements the threshold rule.
-- **`src/prepare.py` — data preparation
+- **`ZoneRecommendation`**: result from a scoring task with `zone_id`, `tick_id`, `decision`, `task_latency_s`
+- **`ZoneActor`**: Ray actor owning mutable state per zone
+  - `activate_tick()` / `get_snapshot()` — prepare per-tick state
+  - `report_decision()` — async mode: scoring task reports back; idempotent
+  - `write_decision()` — blocking mode: controller writes directly; idempotent
+  - `finalize_tick()` — async mode: apply reported decision or fallback
+  - `has_decision_for_tick()` — async mode: poll readiness
+  - `get_accepted_decisions()` — returns full `{tick_id: decision}` history
+  - `get_counters()` — returns `ZoneCounters` for observability
+
+### `src/prepare.py` — data preparation
 
 **`prepare_assets()` function:**
 
 1. Loads reference and replay parquets
 2. Validates adjacent months
-3. Selects active zones (deterministic with seed)
+3. Identifies busiest active zones (deterministic with seed)
 4. Aggregates both months into 15-minute ticks
 5. Builds baseline table from reference month
 6. Builds replay table filtered to active zones
 7. Runs pandas cross-check
 8. Writes prepared assets: `baseline.parquet`, `replay.parquet`, `active_zones.json`, `prep_meta.json`
 
-Called via `python main.py prepare` or the `prepare` wrapper command.ack; idempotent
-  - `get_accepted_decisions()` — returns full `{tick_id: decision}` history
-  - `get_counters()` — returns `ZoneCounters` for observability
+Called via `python main.py prepare` or the `prepare` wrapper command.
 
-### `prepare.py` — data preparation (Steps A–B)
-
-1. Loads reference and replay parquets
-2. Validates adjacent months
-3. Selects active zones (deterministic with seed)
-4. Aggregates both months into 15-minute ticks
-5. Builds baseline table from reference month
-6. Busrc/run.py` — runtime execution
+### `src/run.py` — runtime execution
 
 **`run_replay()` function:**
-Entry point that initializes Ray context, loads prepared assets, creates actors, delegates to the appropriate driver (`run_blocking`, `run_async`, or `run_stress`), then writes artifacts and metrics.
+Entry point that initializes Ray context, loads prepared assets, delegates to the appropriate driver (`run_blocking`, `run_async`, or `run_stress`), then writes artifacts and metrics.
 
-Called via `python main.py run` or the `run` wrapper command. active zones
-7. Runs pandas cross-check
-8. Writes prepared assets: `baseline.parquet`, `replay.parquet`, `active_zones.json`, `prep_meta.json`
+Called via `python main.py run` or the `run` wrapper command.
 
-### `run.py` — runtime (Steps C–H)
+### `src/replay/` — execution mode implementations
 
-**`score_zone` remote task:**
-- Receives a `ZoneSnapshot` and optional `slow_sleep_s` for skew simulation
-- Calls `snapshot.compute_decision()` — deterministic from input
-- In blocking mode: returns `ZoneDecision` to the controller
-- In async mode: calls `actor_handle.report_decision.remote()` before returning
-- Retry-safe: task is stateless, reports are idempotent at the actor
+- **`base.py`**: Abstract `Replay` base class defining the template method pattern for replay execution. Subclasses implement mode-specific scoring and finalization.
+- **`blocking.py`**: `BlockingReplay` subclass and `score_zone_blocking` remote task. Returns `ZoneRecommendation` to the controller.
+- **`asynchronous.py`**: `AsyncReplay` subclass and `score_zone_async` remote task. Reports to the actor via `actor_handle.report_decision.remote()` before returning.
 
-**Blocking driver (`run_blocking`):**
+**Blocking driver (`BlockingReplay`):**
 1. For each tick: activate tick on all actors, collect snapshots
-2. Launch all `score_zone` tasks
+2. Launch all `score_zone_blocking` tasks
 3. `ray.get()` all results — waits for every zone
 4. Write accepted decisions into actors via `write_decision()`
 5. Tick latency is dominated by the slowest zone
 
-**Async driver (`run_async`):**
+**Async driver (`AsyncReplay`):**
 1. For each tick: activate tick on all actors, collect snapshots
-2. Launch scoring tasks with bounded concurrency (`max_inflight_zones`)
+2. Launch `score_zone_async` tasks with bounded concurrency (`max_inflight_zones`)
 3. Use `ray.wait()` with `tick_timeout_s` to collect completed tasks
 4. Poll actor readiness via `has_decision_for_tick()`
 5. Finalize all actors with `finalize_tick()` — actors with no report get fallback
@@ -251,18 +248,15 @@ python main.py run --prepared-dir prepared --output-dir output --mode stress \
 bash tests/test_ray_flow.sh
 ```
 
-**Windows PowerShell:**
-```powershell
-powershell -File tests/test_ray_flow.ps1
-```
-
-Add `--keep-artifacts` (bash) or `-KeepArtifacts` (PowerShell) to retain output after the test completes.
+Add `--keep-artifacts` to retain output after the test completes.
 
 ### Unit tests
 
 ```bash
-pytest tests/test_ray_capstone_project.py -v
+pytest tests/ -v
 ```
+
+Test files: `test_core_logic.py`, `test_zone_actor.py`, `test_workflows.py`.
 
 ---
 
@@ -275,14 +269,14 @@ The demo consists of three separate runs on the same replay data, followed by ar
 **Linux/macOS:**
 ```bash
 conda activate 22971-ray-capstone
-bash scripts/bash/reset_ray.sh
+python main.py reset
 bash scripts/bash/download_data.sh
 ```
 
 **Windows PowerShell:**
 ```powershell
 conda activate 22971-ray-capstone
-powershell -File scripts/powershell/reset_ray.ps1
+python main.py reset
 powershell -File scripts/powershell/download_data.ps1
 ```
 
@@ -293,10 +287,11 @@ Have two terminals: one for running commands, one for inspecting artifacts.
 Walk through the project files in order:
 
 - **`main.py`**: main entry point with `prepare` and `run` subcommands; imports implementation from prepare and run modules
-- **`src/replay/core.py`**: constants, dataclasses (`ReplayConfig`, `TickMetrics`), data loading and validation, zone selection, baseline building, scoring rule, fallback policy, artifact writers
-- **`src/zone_actor.py`**: `ZoneSnapshot.compute_decision()` threshold logic, `ZoneActor` with `activate_tick` / `get_snapshot` / `report_decision` / `write_decision` / `finalize_tick`, idempotent writes by `(zone_id, tick_id)`, duplicate/late counters
-- **`prepare.py`**: loads 2 adjacent parquets → validates months → selects zones → aggregates ticks → builds baseline → writes prepared assets; includes pandas cross-check
-- **`run.py`**: `score_zone` remote task (blocking returns to controller, async reports to actor), `run_blocking` (waits for all), `run_async` (bounded concurrency + timeout + polling + fallback), `run_stress` (both with 60% slow zones / 3s sleep)
+- **`src/core.py`**: constants, dataclasses (`ReplayConfig`, `TickMetrics`), data loading and validation, zone selection, baseline building, artifact writers
+- **`src/zone_actor.py`**: `Recommendation` enum, `ZoneSnapshot.compute_decision()` threshold logic, `ZoneActor` with `activate_tick` / `get_snapshot` / `report_decision` / `write_decision` / `finalize_tick`, idempotent writes by `(zone_id, tick_id)`, duplicate/late counters
+- **`src/prepare.py`**: loads 2 adjacent parquets → validates months → identifies busiest zones → aggregates ticks → builds baseline → writes prepared assets; includes pandas cross-check
+- **`src/run.py`**: delegates to `BlockingReplay` / `AsyncReplay` classes, `run_stress` runs both with 60% slow zones / 3s sleep
+- **`src/replay/`**: `base.py` (abstract `Replay` template), `blocking.py` (`score_zone_blocking` task, `BlockingReplay`), `asynchronous.py` (`score_zone_async` task, `AsyncReplay`)
 
 ### Part 2 — Blocking baseline run (~2 min)
 
@@ -411,21 +406,28 @@ Each run mode writes artifacts into its own subdirectory under `output/`:
 | File | Purpose |
 |---|---|
 | [main.py](main.py) | **Main entry point**: CLI with `prepare` and `run` subcommands |
-| [src/replay/core.py](src/replay/core.py) | Shared constants, dataclasses, data loading, scoring logic, artifact writers |
+| [src/core.py](src/core.py) | Shared constants, dataclasses, data loading, scoring logic, artifact writers |
 | [src/zone_actor.py](src/zone_actor.py) | `ZoneActor` Ray actor, `ZoneSnapshot`, `ZoneDecision`, fallback logic |
 | [src/prepare.py](src/prepare.py) | Preparation module: load parquets, validate, build baseline and replay tables |
-| [src/run.py](src/run.py) | Runtime module: `score_zone` task, blocking/async/stress drivers, artifact writing |
+| [src/run.py](src/run.py) | Runtime module: delegates to `BlockingReplay`/`AsyncReplay`, stress mode comparison |
+| [src/replay/base.py](src/replay/base.py) | Abstract `Replay` base class with template method pattern |
+| [src/replay/blocking.py](src/replay/blocking.py) | `BlockingReplay` driver and `score_zone_blocking` remote task |
+| [src/replay/asynchronous.py](src/replay/asynchronous.py) | `AsyncReplay` driver and `score_zone_async` remote task |
 | [src/reset.py](src/reset.py) | Reset utilities: stop Ray and clean up artifacts |
 | [bin/prepare](bin/prepare), [bin/run](bin/run), [bin/reset](bin/reset) | Command wrapper scripts (installed to conda environment) |
-| [tests/test_ray_capstone_project.py](tests/test_ray_capstone_project.py) | Pytest unit tests for all modules |
+| [tests/test_core_logic.py](tests/test_core_logic.py) | Pytest unit tests for core module |
+| [tests/test_zone_actor.py](tests/test_zone_actor.py) | Pytest unit tests for zone actor |
+| [tests/test_workflows.py](tests/test_workflows.py) | Pytest workflow-level tests |
+| [tests/conftest.py](tests/conftest.py) | Shared test fixtures |
+| [tests/helpers.py](tests/helpers.py) | Test helper utilities |
 | [tests/test_ray_flow.sh](tests/test_ray_flow.sh) | End-to-end system test for Linux/macOS (runs all 3 demo modes, verifies artifacts) |
-| [tests/test_ray_flow.ps1](tests/test_ray_flow.ps1) | End-to-end system test for Windows PowerShell |
 | [scripts/bash/download_data.sh](scripts/bash/download_data.sh) | Download TLC parquet data into `data/` (Linux/macOS) |
 | [scripts/powershell/download_data.ps1](scripts/powershell/download_data.ps1) | Download TLC parquet data into `data/` (Windows) |
 | [scripts/bash/install.sh](scripts/bash/install.sh) | Install command wrappers into conda environment (Linux/macOS) |
 | [scripts/powershell/install.ps1](scripts/powershell/install.ps1) | Install command wrappers into conda environment (Windows) |
 | [scripts/bash/uninstall.sh](scripts/bash/uninstall.sh) | Remove command wrappers from conda environment (Linux/macOS) |
 | [scripts/powershell/uninstall.ps1](scripts/powershell/uninstall.ps1) | Remove command wrappers from conda environment (Windows) |
+| [pytest.ini](pytest.ini) | Pytest configuration |
 | [environment.yml](environment.yml) | Conda environment specification |
 
 ---
