@@ -11,12 +11,14 @@ Output artifacts:
 - prep_meta.json: Preparation metadata
 """
 
+import argparse
 import logging
 import pandas as pd
 
 from pathlib import Path
 
 from src.core import (
+    DEFAULT_N_ZONES,
     DEFAULT_SEED,
     TICK_MINUTES,
     aggregate_ticks,
@@ -106,3 +108,29 @@ def prepare_assets(ref_parquet: Path, replay_parquet: Path, output_dir: Path, n_
     write_prepared_assets(output_dir, baseline, replay_table, active_zones, ref_label, replay_label, ref_df, replay_df, seed)
 
     logger.info(f"Prepared assets written to {output_dir}")
+
+
+def build_prepare_parser() -> argparse.ArgumentParser:
+    """
+    Build argument parser for prepare command.
+
+    Returns:
+        argparse.ArgumentParser: Parser for prepare command arguments.
+    """
+    parser = argparse.ArgumentParser(
+        description="Prepare TLC replay assets from adjacent-month parquet files",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        add_help=False  # Disable help when used as parent parser
+    )
+    parser.add_argument("--ref-parquet", type=Path, required=True, help="Path to reference month parquet file")
+    parser.add_argument("--replay-parquet", type=Path, required=True, help="Path to replay month parquet file")
+    parser.add_argument("--output-dir", type=Path, default=Path("prepared"), help="Directory to write prepared assets")
+    parser.add_argument("--n-zones", type=int, default=DEFAULT_N_ZONES, help="Number of active zones to select")
+    parser.add_argument("--seed", type=int, default=DEFAULT_SEED, help="Random seed for zone selection reproducibility")
+    return parser
+
+
+if __name__ == "__main__":
+    standalone_parser = argparse.ArgumentParser(parents=[build_prepare_parser()])
+    args = standalone_parser.parse_args()
+    prepare_assets(args.ref_parquet, args.replay_parquet, args.output_dir, args.n_zones, args.seed)
