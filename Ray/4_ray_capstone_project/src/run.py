@@ -10,6 +10,7 @@ Execution modes:
 - stress: Harsh skew (60% slow zones, 3s delay) to stress-test async controller
 """
 
+import argparse
 import json
 import logging
 import numpy as np
@@ -18,7 +19,21 @@ import ray
 from pathlib import Path
 from typing import List
 
-from src.core import ReplayConfig, ReplayMode, TickMetrics, write_json
+from src.core import (
+    DEFAULT_COMPLETION_FRACTION,
+    DEFAULT_MAX_INFLIGHT_ZONES,
+    DEFAULT_N_ZONES,
+    DEFAULT_SEED,
+    DEFAULT_SLOW_ZONE_FRACTION,
+    DEFAULT_SLOW_ZONE_SLEEP_S,
+    DEFAULT_TICK_TIMEOUT_S,
+    FALLBACK_POLICY_PREVIOUS,
+    TICK_MINUTES,
+    ReplayConfig,
+    ReplayMode,
+    TickMetrics,
+    write_json,
+)
 from src.replay.blocking import BlockingReplay
 from src.replay.asynchronous import AsyncReplay
 
@@ -128,3 +143,40 @@ def run_replay(ray_address: str, prepared_dir: Path, output_dir: Path, mode: Rep
             run_async(prepared_dir, output_dir, config)
         else:
             run_stress(prepared_dir, output_dir, config)
+
+
+def build_run_parser() -> argparse.ArgumentParser:
+    """
+    Build argument parser for run command.
+
+    Returns:
+        argparse.ArgumentParser: Parser for run command arguments.
+    """
+    parser = argparse.ArgumentParser(
+        description="Run TLC replay in blocking/async/stress mode",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        add_help=False  # Disable help when used as parent parser
+    )
+    parser.add_argument("--prepared-dir", type=Path, required=True, help="Directory with prepared assets from prepare command")
+    parser.add_argument("--output-dir", type=Path, default=Path("output"), help="Root output directory for run artifacts")
+    parser.add_argument("--ray-address", default=None, help="Ray cluster address, None for local mode")
+    parser.add_argument("--mode", choices=[m.value for m in ReplayMode], required=True, help="Execution mode: blocking waits for all zones, async uses bounded concurrency with timeout, stress tests harsh skew")
+    parser.add_argument("--n-zones", type=int, default=DEFAULT_N_ZONES, help="Number of active zones to use")
+    parser.add_argument("--tick-minutes", type=int, default=TICK_MINUTES, help="Number of minutes per tick, that is the time window for each recommendation batch")
+    parser.add_argument("--max-inflight-zones", type=int, default=DEFAULT_MAX_INFLIGHT_ZONES, help="Max concurrent scoring tasks in async mode")
+    parser.add_argument("--tick-timeout-s", type=float, default=DEFAULT_TICK_TIMEOUT_S, help="Tick timeout in seconds for async mode")
+    parser.add_argument("--completion-fraction", type=float, default=DEFAULT_COMPLETION_FRACTION, help="Minimum fraction of zones required for finalization")
+    parser.add_argument("--slow-zone-fraction", type=float, default=DEFAULT_SLOW_ZONE_FRACTION, help="Fraction of zones to simulate as slow")
+    parser.add_argument("--slow-zone-sleep-s", type=float, default=DEFAULT_SLOW_ZONE_SLEEP_S, help="Artificial delay in seconds for slow zones")
+    parser.add_argument("--fallback-policy", default=FALLBACK_POLICY_PREVIOUS, help="Fallback policy for late zones")
+    parser.add_argument("--seed", type=int, default=DEFAULT_SEED, help="Random seed for reproducibility")
+    parser.add_argument("--max-ticks", type=int, default=None, help="Limit the max number of ticks to run (for testing)")
+    return parser
+
+
+if __name__ == "__main__":
+    standalone_parser = argparse.ArgumentParser(parents=[build_run_parser()])
+    args = standalone_parser.parse_args()
+    mode = ReplayMode(args.mode)
+    config = ReplayConfig.from_args(args)
+    run_replay(args.ray_address, args.prepared_dir, args.output_dir, mode, config)

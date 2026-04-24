@@ -10,6 +10,7 @@ Provides:
 - Helper functions: Zone selection, slow zone sampling, prepared asset loading
 """
 
+import argparse
 import json
 import logging
 import numpy as np
@@ -96,6 +97,30 @@ class ReplayConfig(RoundedDataclass):
     fallback_policy: str = FALLBACK_POLICY_PREVIOUS
     seed: int = DEFAULT_SEED
     max_ticks: int = None  # None = no limit
+
+    @classmethod
+    def from_args(cls: type["ReplayConfig"], args: argparse.Namespace) -> "ReplayConfig":
+        """
+        Create ReplayConfig from parsed command-line arguments.
+
+        Args:
+            args (argparse.Namespace): argparse.Namespace with parsed arguments
+
+        Returns:
+            ReplayConfig: ReplayConfig instance populated from args
+        """
+        return cls(
+            n_zones=args.n_zones,
+            tick_minutes=args.tick_minutes,
+            max_inflight_zones=args.max_inflight_zones,
+            tick_timeout_s=args.tick_timeout_s,
+            completion_fraction=args.completion_fraction,
+            slow_zone_fraction=args.slow_zone_fraction,
+            slow_zone_sleep_s=args.slow_zone_sleep_s,
+            fallback_policy=args.fallback_policy,
+            seed=args.seed,
+            max_ticks=args.max_ticks,
+        )
 
 
 @dataclass

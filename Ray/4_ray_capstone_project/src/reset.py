@@ -4,6 +4,7 @@ Reset utilities for the Ray capstone project.
 Provides functions to stop Ray and clean up generated artifacts.
 """
 
+import argparse
 import logging
 import shutil
 import subprocess
@@ -51,3 +52,25 @@ def reset_ray(project_dir: Path) -> None:
         logger.info("No output artifacts to remove")
 
     logger.info("Reset complete")
+
+
+def build_reset_parser() -> argparse.ArgumentParser:
+    """
+    Build argument parser for reset command.
+
+    Returns:
+        argparse.ArgumentParser: Parser for reset command arguments.
+    """
+    parser = argparse.ArgumentParser(
+        description="Stop Ray and remove generated artifacts",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        add_help=False  # Disable help when used as parent parser
+    )
+    parser.add_argument("--project-dir", type=Path, default=Path(__file__).parent.parent, help="Project root directory")
+    return parser
+
+
+if __name__ == "__main__":
+    standalone_parser = argparse.ArgumentParser(parents=[build_reset_parser()])
+    args = standalone_parser.parse_args()
+    reset_ray(args.project_dir)
