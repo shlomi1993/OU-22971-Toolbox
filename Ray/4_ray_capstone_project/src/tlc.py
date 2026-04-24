@@ -3,8 +3,8 @@ Shared utilities and data structures for TLC replay experiments.
 
 Provides:
 - Constants: Tick duration, default parameters, fallback policies
-- Enums: RunMode
-- Dataclasses: RunConfig, TickMetrics, PreparedData
+- Enums: ReplayMode
+- Dataclasses: ReplayConfig, TickMetrics, PreparedData
 - Data functions: Parquet loading, validation, aggregation, baseline building
 - Artifact writers: JSON, CSV, latency logs, tick summaries
 - Helper functions: Zone selection, slow zone sampling, prepared asset loading
@@ -75,14 +75,14 @@ class RoundedDataclass:
         return self._round_floats(asdict(self))
 
 
-class RunMode(str, Enum):
+class ReplayMode(str, Enum):
     BLOCKING = "blocking"
     ASYNC = "async"
     STRESS = "stress"
 
 
 @dataclass
-class RunConfig(RoundedDataclass):
+class ReplayConfig(RoundedDataclass):
     """
     Runtime configuration for the replay loop.
     """

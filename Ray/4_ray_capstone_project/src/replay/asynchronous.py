@@ -64,7 +64,7 @@ class AsyncReplay(Replay):
         Args:
             prepared_dir (Path): Directory containing prepared assets from prepare.py
             output_dir (Path): Root output directory for artifacts
-            config (RunConfig): Runtime configuration for the replay
+            config (ReplayConfig): Runtime configuration for the replay
         """
         super().__init__(*args, **kwargs)
         self.prev_late_count = 0

@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Tuple, Deque
 
-from src.tlc import DEMAND_WINDOW_SIZE, FALLBACK_POLICY_PREVIOUS, RoundedDataclass, RunConfig
+from src.tlc import DEMAND_WINDOW_SIZE, FALLBACK_POLICY_PREVIOUS, RoundedDataclass, ReplayConfig
 
 
 Baseline = Dict[Tuple[int, int], Tuple[float, float]]
@@ -102,7 +102,7 @@ class ZoneActor:
     and the driver finalizes ticks under a partial-readiness policy.
     """
 
-    def __init__(self, zone_id: int, replay_part: pd.DataFrame, baseline_part: pd.DataFrame, config: RunConfig) -> None:
+    def __init__(self, zone_id: int, replay_part: pd.DataFrame, baseline_part: pd.DataFrame, config: ReplayConfig) -> None:
         """
         Initialize the ZoneActor with its zone_id, replay data partition, baseline partition, and runtime config.
 
@@ -110,7 +110,7 @@ class ZoneActor:
             zone_id (int): The ID of the zone this actor is responsible for.
             replay_part (pd.DataFrame): The partition of the replay data for this zone.
             baseline_part (pd.DataFrame): The partition of the baseline data for this zone.
-            config (RunConfig): Runtime configuration parameters.
+            config (ReplayConfig): Runtime configuration parameters.
         """
         self.zone_id = zone_id
         self.config = config

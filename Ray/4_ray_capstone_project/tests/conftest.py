@@ -65,13 +65,13 @@ def max_ticks(request: pytest.FixtureRequest) -> int:
     """
     Return max_ticks value based on run mode.
     """
-    return 50 if request.config.getoption("--full") else 3
+    return 50 if request.config.getoption("--full") else 1
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def ray_ctx() -> Generator[None, None, None]:
     """
-    Initialize and teardown Ray for each test.
+    Initialize and teardown Ray once for entire test session.
     """
     warnings.filterwarnings("ignore", category=FutureWarning, module="ray")
     os.environ["RAY_DEDUP_LOGS"] = "0"

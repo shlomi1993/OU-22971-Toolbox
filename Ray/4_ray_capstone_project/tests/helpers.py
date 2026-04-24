@@ -85,7 +85,7 @@ def run_script(args: List[str], timeout: int = 120) -> subprocess.CompletedProce
         subprocess.CompletedProcess: CompletedProcess instance with returncode
     """
     cmd = [sys.executable] + args
-    print(f"\nRunning:\n\033[92m{' '.join(cmd)}\033[0m\n", flush=True)
+    print(f"\nRunning:\n\033[34m{' '.join(cmd)}\033[0m\n", flush=True)
     result = subprocess.run(cmd, cwd=str(PROJECT_DIR), timeout=timeout)
     return result
 

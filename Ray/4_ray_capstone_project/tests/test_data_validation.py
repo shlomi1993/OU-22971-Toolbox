@@ -19,7 +19,7 @@ import pytest
 from src.tlc import (
     FALLBACK_POLICY_PREVIOUS,
     TICK_MINUTES,
-    RunConfig,
+    ReplayConfig,
     TickMetrics,
     aggregate_ticks,
     build_baseline_table,
@@ -135,7 +135,7 @@ def test_fallback_always_previous_policy() -> None:
 
 
 def test_artifact_files_written(tmp_path: Path) -> None:
-    config = RunConfig(n_zones=2)
+    config = ReplayConfig(n_zones=2)
     metrics = [
         TickMetrics(tick_id=0, mode="blocking", n_zones_completed=2, total_tick_latency_s=0.5, per_zone_latency={1: 0.1, 2: 0.2})
     ]
