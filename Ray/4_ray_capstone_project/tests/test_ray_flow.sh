@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 # test_flow.sh — System test: downloads data, prepares assets, runs all 3 demo modes.
 #
+# Usage:
+#   ./test_ray_flow.sh [--keep-artifacts|-k] [--max-ticks N]
+#
+# Options:
+#   --keep-artifacts, -k    Keep generated artifacts after test completion
+#   --max-ticks N           Number of ticks to run (default: 50)
+#
 # This file executes:
 #   1. bash scripts/bash/download_data.sh
 #   2. prepare --ref-parquet data/green_tripdata_2023-01.parquet --replay-parquet data/green_tripdata_2023-02.parquet --output-dir prepared --n-zones 20
@@ -47,9 +54,20 @@ log_and_run() {
 }
 
 KEEP_ARTIFACTS=false
-for arg in "$@"; do
-    case "$arg" in
-        --keep-artifacts|-k) KEEP_ARTIFACTS=true ;;
+MAX_TICKS=50
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --keep-artifacts|-k)
+            KEEP_ARTIFACTS=true
+            shift
+            ;;
+        --max-ticks)
+            MAX_TICKS="$2"
+            shift 2
+            ;;
+        *)
+            shift
+            ;;
     esac
 done
 
@@ -92,7 +110,7 @@ log_and_run run \
     --mode blocking \
     --slow-zone-fraction 0.25 \
     --slow-zone-sleep-s 1.0 \
-    --max-ticks 50
+    --max-ticks "$MAX_TICKS"
 echo "Blocking run complete. Artifacts in $OUTPUT_DIR/blocking/"
 
 # --- Run 2: Async controller ---
@@ -107,7 +125,7 @@ log_and_run run \
     --tick-timeout-s 2.0 \
     --completion-fraction 0.75 \
     --max-inflight-zones 4 \
-    --max-ticks 50
+    --max-ticks "$MAX_TICKS"
 echo "Async run complete. Artifacts in $OUTPUT_DIR/async/"
 
 # --- Run 3: Stress test ---
@@ -120,7 +138,7 @@ log_and_run run \
     --slow-zone-fraction 0.6 \
     --slow-zone-sleep-s 3.0 \
     --tick-timeout-s 2.0 \
-    --max-ticks 50
+    --max-ticks "$MAX_TICKS"
 echo "Stress run complete. Artifacts in $OUTPUT_DIR/stress/"
 
 # --- Verify artifacts ---
