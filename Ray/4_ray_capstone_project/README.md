@@ -85,7 +85,7 @@ The system follows this control loop:
 Main entry point with two subcommands:
 
 - **`prepare` subcommand**: Parses CLI arguments, calls `src.prepare.prepare_assets()`
-- **`run` subcommand**: Parses CLI arguments, initializes Ray, creates `RunConfig`, calls `src.run.run_replay()`
+- **`run` subcommand**: Parses CLI arguments, initializes Ray, creates `ReplayConfig`, calls `src.run.run_replay()`
 
 **Usage**:
 ```bash
@@ -102,8 +102,8 @@ run --prepared-dir prepared/ --mode async
 ### `src/tlc.py` — shared constants, data functions, artifact writers
 
 - **Constants**: `TICK_MINUTES=15`, `DEFAULT_N_ZONES=20`, `DEFAULT_SEED=42`
-- **Enums**: `Decision` (`NEED`/`OK`), `RunMode` (`blocking`/`async`/`stress`)
-- **Dataclasses**: `RunConfig` (all runtime settings), `TickMetrics` (per-tick performance)
+- **Enums**: `Decision` (`NEED`/`OK`), `ReplayMode` (`blocking`/`async`/`stress`)
+- **Dataclasses**: `ReplayConfig` (all runtime settings), `TickMetrics` (per-tick performance)
 - **Data loading**: `load_parquet()` validates required columns; `validate_adjacent_months()` ensures the two files are consecutive months from the same year
 - **Zone selection**: `select_active_zones()` picks the top-N busiest zones from the reference month, deterministic under a fixed seed
 - **Baseline**: `aggregate_ticks()` bins pickups into 15-minute windows; `build_baseline_table()` computes `(mean_demand, std_demand)` per `(zone_id, hour_of_day, day_of_week)`
@@ -293,7 +293,7 @@ Have two terminals: one for running commands, one for inspecting artifacts.
 Walk through the project files in order:
 
 - **`main.py`**: main entry point with `prepare` and `run` subcommands; imports implementation from prepare and run modules
-- **`src/tlc.py`**: constants, dataclasses (`RunConfig`, `TickMetrics`), data loading and validation, zone selection, baseline building, scoring rule, fallback policy, artifact writers
+- **`src/tlc.py`**: constants, dataclasses (`ReplayConfig`, `TickMetrics`), data loading and validation, zone selection, baseline building, scoring rule, fallback policy, artifact writers
 - **`src/zone_actor.py`**: `ZoneSnapshot.compute_decision()` threshold logic, `ZoneActor` with `activate_tick` / `get_snapshot` / `report_decision` / `write_decision` / `finalize_tick`, idempotent writes by `(zone_id, tick_id)`, duplicate/late counters
 - **`prepare.py`**: loads 2 adjacent parquets → validates months → selects zones → aggregates ticks → builds baseline → writes prepared assets; includes pandas cross-check
 - **`run.py`**: `score_zone` remote task (blocking returns to controller, async reports to actor), `run_blocking` (waits for all), `run_async` (bounded concurrency + timeout + polling + fallback), `run_stress` (both with 60% slow zones / 3s sleep)

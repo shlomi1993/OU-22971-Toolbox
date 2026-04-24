@@ -15,7 +15,7 @@ Covers:
 import pytest
 import ray
 
-from src.tlc import FALLBACK_POLICY_PREVIOUS, RunConfig
+from src.tlc import FALLBACK_POLICY_PREVIOUS, ReplayConfig
 from src.zone_actor import Recommendation, WriteStatus, ZoneActor
 from tests.helpers import make_zone_data, RNG_SEED
 
@@ -28,7 +28,7 @@ from tests.helpers import make_zone_data, RNG_SEED
 @pytest.mark.usefixtures("ray_ctx")
 def test_write_decision_idempotent() -> None:
     replay, baseline = make_zone_data(zone_id=10)
-    config = RunConfig(n_zones=1)
+    config = ReplayConfig(n_zones=1)
     actor = ZoneActor.remote(10, replay, baseline, config)
     ray.get(actor.activate_tick.remote(0))
 
@@ -46,7 +46,7 @@ def test_write_decision_idempotent() -> None:
 @pytest.mark.usefixtures("ray_ctx")
 def test_report_decision_duplicate_detected() -> None:
     replay, baseline = make_zone_data(zone_id=20)
-    config = RunConfig(n_zones=1)
+    config = ReplayConfig(n_zones=1)
     actor = ZoneActor.remote(20, replay, baseline, config)
     ray.get(actor.activate_tick.remote(0))
 
@@ -62,7 +62,7 @@ def test_report_decision_duplicate_detected() -> None:
 @pytest.mark.usefixtures("ray_ctx")
 def test_report_late_for_closed_or_inactive_tick() -> None:
     replay, baseline = make_zone_data(zone_id=30)
-    config = RunConfig(n_zones=1)
+    config = ReplayConfig(n_zones=1)
     actor = ZoneActor.remote(30, replay, baseline, config)
 
     ray.get(actor.activate_tick.remote(0))
@@ -84,7 +84,7 @@ def test_report_late_for_closed_or_inactive_tick() -> None:
 @pytest.mark.usefixtures("ray_ctx")
 def test_finalize_prefers_reported_decision() -> None:
     replay, baseline = make_zone_data(zone_id=40)
-    config = RunConfig(n_zones=1)
+    config = ReplayConfig(n_zones=1)
     actor = ZoneActor.remote(40, replay, baseline, config)
 
     ray.get(actor.activate_tick.remote(0))
@@ -98,7 +98,7 @@ def test_finalize_prefers_reported_decision() -> None:
 @pytest.mark.usefixtures("ray_ctx")
 def test_finalize_uses_fallback_when_no_report() -> None:
     replay, baseline = make_zone_data(zone_id=50)
-    config = RunConfig(n_zones=1)
+    config = ReplayConfig(n_zones=1)
     actor = ZoneActor.remote(50, replay, baseline, config)
 
     ray.get(actor.activate_tick.remote(0))
@@ -118,7 +118,7 @@ def test_finalize_uses_fallback_when_no_report() -> None:
 @pytest.mark.usefixtures("ray_ctx")
 def test_finalize_tick_idempotent() -> None:
     replay, baseline = make_zone_data(zone_id=60)
-    config = RunConfig(n_zones=1)
+    config = ReplayConfig(n_zones=1)
     actor = ZoneActor.remote(60, replay, baseline, config)
 
     ray.get(actor.activate_tick.remote(0))
@@ -134,7 +134,7 @@ def test_finalize_tick_idempotent() -> None:
 @pytest.mark.usefixtures("ray_ctx")
 def test_late_report_after_finalize_does_not_overwrite() -> None:
     replay, baseline = make_zone_data(zone_id=70)
-    config = RunConfig(n_zones=1)
+    config = ReplayConfig(n_zones=1)
     actor = ZoneActor.remote(70, replay, baseline, config)
 
     ray.get(actor.activate_tick.remote(0))
@@ -152,7 +152,7 @@ def test_late_report_after_finalize_does_not_overwrite() -> None:
 @pytest.mark.usefixtures("ray_ctx")
 def test_first_tick_finalize_without_report_defaults_ok() -> None:
     replay, baseline = make_zone_data(zone_id=80)
-    config = RunConfig(n_zones=1)
+    config = ReplayConfig(n_zones=1)
     actor = ZoneActor.remote(80, replay, baseline, config)
 
     ray.get(actor.activate_tick.remote(0))
@@ -167,7 +167,7 @@ def test_first_tick_finalize_without_report_defaults_ok() -> None:
 @pytest.mark.usefixtures("ray_ctx")
 def test_multi_tick_decisions_accumulate() -> None:
     replay, baseline = make_zone_data(zone_id=90, n_ticks=5)
-    config = RunConfig(n_zones=1)
+    config = ReplayConfig(n_zones=1)
     actor = ZoneActor.remote(90, replay, baseline, config)
 
     for tick_id in range(3):
@@ -190,7 +190,7 @@ def test_multi_tick_decisions_accumulate() -> None:
 
 @pytest.mark.usefixtures("ray_ctx")
 def test_blocking_all_zones_decided_no_fallback() -> None:
-    config = RunConfig(n_zones=3, seed=RNG_SEED)
+    config = ReplayConfig(n_zones=3, seed=RNG_SEED)
     zone_ids = [100, 200, 300]
     actors = {}
     for zid in zone_ids:
@@ -220,7 +220,7 @@ def test_blocking_all_zones_decided_no_fallback() -> None:
 
 @pytest.mark.usefixtures("ray_ctx")
 def test_async_partial_readiness_triggers_fallback() -> None:
-    config = RunConfig(n_zones=3, seed=RNG_SEED)
+    config = ReplayConfig(n_zones=3, seed=RNG_SEED)
     zone_ids = [110, 220, 330]
     actors = {}
     for zid in zone_ids:

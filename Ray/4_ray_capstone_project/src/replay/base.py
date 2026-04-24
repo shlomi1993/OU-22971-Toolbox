@@ -18,7 +18,7 @@ from ray.actor import ActorHandle
 
 from src.tlc import (
     PreparedData,
-    RunConfig,
+    ReplayConfig,
     TickMetrics,
     load_prepared,
     write_json,
@@ -37,14 +37,14 @@ class Replay(ABC):
     abstract methods implemented by subclasses.
     """
 
-    def __init__(self, prepared_dir: Path, output_dir: Path, config: RunConfig) -> None:
+    def __init__(self, prepared_dir: Path, output_dir: Path, config: ReplayConfig) -> None:
         """
         Initialize the replay system.
 
         Args:
             prepared_dir (Path): Directory containing prepared assets from prepare.py
             output_dir (Path): Root output directory for artifacts
-            config (RunConfig): Runtime configuration for the replay
+            config (ReplayConfig): Runtime configuration for the replay
         """
         self.prepared_dir = prepared_dir
         self.output_dir = output_dir
