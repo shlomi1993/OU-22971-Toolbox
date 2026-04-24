@@ -257,3 +257,48 @@ def test_stress_workflow(synthetic_parquets: Dict[str, Path], tmp_path: Path, ma
         sub_dir = stress_dir / sub
         for fname in BLOCKING_ASYNC_ARTIFACTS:
             assert (sub_dir / fname).exists(), f"Missing stress/{sub}/{fname}"
+
+
+# ============================================================================
+# Standalone script execution
+# ============================================================================
+
+
+def test_standalone_scripts(synthetic_parquets: Dict[str, Path], tmp_path: Path) -> None:
+    """
+    Test prepare.py, run.py, and reset.py run as standalone scripts.
+    """
+    prepared_dir = tmp_path / "standalone_prepared"
+    output_dir = tmp_path / "standalone_output"
+
+    # Run prepare.py
+    run_script([
+        "src/prepare.py",
+        "--ref-parquet", str(synthetic_parquets["ref"]),
+        "--replay-parquet", str(synthetic_parquets["replay"]),
+        "--output-dir", str(prepared_dir),
+        "--n-zones", "3",
+    ])
+    assert prepared_dir.exists(), "Prepared directory should exist after prepare"
+
+    # Run run.py
+    run_script([
+        "src/run.py",
+        "--prepared-dir", str(prepared_dir),
+        "--output-dir", str(output_dir),
+        "--mode", "blocking",
+        "--n-zones", "3",
+        "--max-ticks", "1",
+    ])
+    assert output_dir.exists(), "Output directory should exist after run"
+
+    # Run reset.py
+    run_script([
+        "src/reset.py",
+        "--prepared-dir", str(prepared_dir),
+        "--output-dir", str(output_dir),
+    ])
+
+    # Verify cleanup
+    assert not prepared_dir.exists(), "reset.py should remove prepared directory"
+    assert not output_dir.exists(), "reset.py should remove output directory"
