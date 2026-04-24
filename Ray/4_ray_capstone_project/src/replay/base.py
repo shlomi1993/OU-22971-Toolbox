@@ -183,13 +183,7 @@ class Replay(ABC):
         """
         Step E - Run per-zone scoring.
 
-        Blocking mode:
-        - Submit each zone snapshot to a scoring task
-        - Collect all task returns in the controller for the current tick
-
-        Async mode:
-        - Submit each zone snapshot to a scoring task
-        - Have each scoring task report its result to that zone's actor for the current tick
+        Submit zone snapshots to scoring tasks and handle result collection or reporting.
 
         Args:
             tick_id (int): Current tick ID
@@ -202,14 +196,7 @@ class Replay(ABC):
         """
         Step F - Finalize the tick under partial readiness.
 
-        Blocking mode:
-        - Wait until all task results for the current tick have been returned to the controller
-        - Close the tick only after the controller has a complete result set
-
-        Async mode:
-        - Check which actors have already received a report for the current tick by asking
-          actors for their current tick status
-        - Decide whether the policy says to keep waiting or to close the tick
+        Determine which zones are ready and decide when to proceed to tick closure.
 
         Args:
             tick_id (int): Current tick ID
@@ -224,18 +211,7 @@ class Replay(ABC):
         """
         Step G - Close the tick in each actor.
 
-        Blocking mode:
-        - Have the controller write the accepted decision for each zone into its actor
-        - Ensure duplicate accepted writes for the same zone and tick are safe to replay
-
-        Async mode:
-        - Ask each actor to finalize the current tick using either its reported decision
-          or the fallback policy
-        - Ensure duplicate reports for the same zone and tick are safe to replay
-        - Late results that arrive after finalization should be logged and ignored by the actor
-
-        In both modes:
-        - Update actor state needed for the next tick
+        Finalize decisions for the tick and update actor state. Ensures idempotent writes.
 
         Args:
             tick_id (int): Current tick ID
