@@ -21,12 +21,16 @@ from typing import List
 
 from src.core import (
     DEFAULT_COMPLETION_FRACTION,
+    DEFAULT_DELAYED_FRACTION,
+    DEFAULT_DELAY_TICKS,
     DEFAULT_MAX_INFLIGHT_ZONES,
     DEFAULT_N_ZONES,
     DEFAULT_OUTPUT_DIR,
+    DEFAULT_REPEAT_STRAGGLER_FRACTION,
     DEFAULT_SEED,
     DEFAULT_SLOW_ZONE_FRACTION,
     DEFAULT_SLOW_ZONE_SLEEP_S,
+    DEFAULT_STRAGGLER_TRIGGER_COUNT,
     DEFAULT_TICK_TIMEOUT_S,
     FALLBACK_POLICY_PREVIOUS,
     TICK_MINUTES,
@@ -37,6 +41,8 @@ from src.core import (
 )
 from src.replay.blocking import BlockingReplay
 from src.replay.asynchronous import AsyncReplay
+from src.replay.delayed import DelayedReplay  # Stretch A
+from src.replay.subactor import SubActorReplay  # Stretch B
 
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
@@ -126,6 +132,43 @@ def run_stress(prepared_dir: Path, output_dir: Path, config: ReplayConfig) -> Li
     return async_metrics
 
 
+def run_delayed(prepared_dir: Path, output_dir: Path, config: ReplayConfig) -> List[TickMetrics]:
+    """
+    Stretch A — Async replay with delayed demand arrivals.
+
+    A configurable fraction of demand data is withheld for `delay_ticks` ticks and released later, forcing the scoring
+    logic to operate on incomplete information.
+
+    Args:
+        prepared_dir (Path): Directory with prepared assets from prepare.py
+        output_dir (Path): Root output directory (artifacts go into output_dir/delayed/)
+        config (ReplayConfig): Runtime configuration
+
+    Returns:
+        List[TickMetrics]: Per-tick metrics for the delayed run
+    """
+    replay = DelayedReplay(prepared_dir, output_dir, config)
+    return replay.run()
+
+
+def run_subactor(prepared_dir: Path, output_dir: Path, config: ReplayConfig) -> List[TickMetrics]:
+    """
+    Stretch B — Async replay with adaptive sub-actor creation.
+
+    Repeat-straggler zones are detected at runtime and receive dedicated sub-actor helpers that bypass artificial skew.
+
+    Args:
+        prepared_dir (Path): Directory with prepared assets from prepare.py
+        output_dir (Path): Root output directory (artifacts go into output_dir/subactor/)
+        config (ReplayConfig): Runtime configuration
+
+    Returns:
+        List[TickMetrics]: Per-tick metrics for the subactor run
+    """
+    replay = SubActorReplay(prepared_dir, output_dir, config)
+    return replay.run()
+
+
 def run_replay(ray_address: str, prepared_dir: Path, output_dir: Path, mode: ReplayMode, config: ReplayConfig) -> None:
     """
     Run the replay in the specified mode with the given configuration.
@@ -142,6 +185,10 @@ def run_replay(ray_address: str, prepared_dir: Path, output_dir: Path, mode: Rep
             run_blocking(prepared_dir, output_dir, config)
         elif mode == ReplayMode.ASYNC:
             run_async(prepared_dir, output_dir, config)
+        elif mode == ReplayMode.DELAYED:
+            run_delayed(prepared_dir, output_dir, config)
+        elif mode == ReplayMode.SUBACTOR:
+            run_subactor(prepared_dir, output_dir, config)
         else:
             run_stress(prepared_dir, output_dir, config)
 
@@ -172,6 +219,12 @@ def build_run_parser() -> argparse.ArgumentParser:
     parser.add_argument("--fallback-policy", default=FALLBACK_POLICY_PREVIOUS, help="Fallback policy for late zones")
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED, help="Random seed for reproducibility")
     parser.add_argument("--max-ticks", type=int, default=None, help="Limit the max number of ticks to run (for testing)")
+    # Stretch A — delayed arrivals
+    parser.add_argument("--delayed-fraction", type=float, default=DEFAULT_DELAYED_FRACTION, help="Fraction of ticks where demand is withheld (delayed mode)")
+    parser.add_argument("--delay-ticks", type=int, default=DEFAULT_DELAY_TICKS, help="Number of ticks to withhold demand before release (delayed mode)")
+    # Stretch B — adaptive sub-actors
+    parser.add_argument("--repeat-straggler-fraction", type=float, default=DEFAULT_REPEAT_STRAGGLER_FRACTION, help="Fraction of zones that are repeat stragglers (subactor mode)")
+    parser.add_argument("--straggler-trigger-count", type=int, default=DEFAULT_STRAGGLER_TRIGGER_COUNT, help="Slow-tick count before creating a sub-actor (subactor mode)")
     return parser
 
 
