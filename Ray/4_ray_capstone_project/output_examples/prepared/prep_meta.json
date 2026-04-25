@@ -1,0 +1,10 @@
+{
+  "ref_label": "2023-01",
+  "replay_label": "2023-02",
+  "n_zones": 20,
+  "tick_minutes": 15,
+  "seed": 42,
+  "n_ref_rows": 68211,
+  "n_replay_rows": 64809,
+  "n_replay_ticks": 2637
+}

@@ -2,3797 +2,3797 @@
   {
     "tick_id": 0,
     "zone_id": 7,
-    "latency_s": 3.0013
+    "latency_s": 3.001
   },
   {
     "tick_id": 0,
     "zone_id": 33,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 0,
-    "zone_id": 41,
     "latency_s": 3.0011
   },
   {
     "tick_id": 0,
+    "zone_id": 41,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 0,
     "zone_id": 42,
-    "latency_s": 3.0012
+    "latency_s": 3.001
   },
   {
     "tick_id": 0,
     "zone_id": 43,
-    "latency_s": 0.0001
+    "latency_s": 0.0
   },
   {
     "tick_id": 0,
     "zone_id": 65,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 0,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 0,
+    "zone_id": 74,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 0,
+    "zone_id": 75,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 0,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 0,
+    "zone_id": 92,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 0,
+    "zone_id": 95,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 0,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 0,
+    "zone_id": 116,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 0,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 0,
+    "zone_id": 130,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 0,
+    "zone_id": 134,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 0,
+    "zone_id": 166,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 0,
+    "zone_id": 244,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 0,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 7,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 33,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 41,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 42,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 65,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 75,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 95,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 116,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 130,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 134,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 166,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 244,
+    "latency_s": 3.0002
+  },
+  {
+    "tick_id": 1,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 2,
+    "zone_id": 7,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 2,
+    "zone_id": 33,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 2,
+    "zone_id": 41,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 2,
+    "zone_id": 42,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 2,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 2,
+    "zone_id": 65,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 2,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 2,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 2,
+    "zone_id": 75,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 2,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 2,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 2,
+    "zone_id": 95,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 2,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 2,
+    "zone_id": 116,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 2,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 2,
+    "zone_id": 130,
     "latency_s": 3.0009
   },
   {
-    "tick_id": 0,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 0,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 0,
-    "zone_id": 75,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 0,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 0,
-    "zone_id": 92,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 0,
-    "zone_id": 95,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 0,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 0,
-    "zone_id": 116,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 0,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 0,
-    "zone_id": 130,
-    "latency_s": 3.0013
-  },
-  {
-    "tick_id": 0,
+    "tick_id": 2,
     "zone_id": 134,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 0,
-    "zone_id": 166,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 0,
-    "zone_id": 244,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 0,
-    "zone_id": 260,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 7,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 33,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 41,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 42,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 65,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 74,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 75,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 95,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 116,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 130,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 134,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 166,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 244,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 1,
-    "zone_id": 260,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 2,
-    "zone_id": 7,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 2,
-    "zone_id": 33,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 2,
-    "zone_id": 41,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 2,
-    "zone_id": 42,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 2,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 2,
-    "zone_id": 65,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 2,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 2,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 2,
-    "zone_id": 75,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 2,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 2,
-    "zone_id": 92,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 2,
-    "zone_id": 95,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 2,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 2,
-    "zone_id": 116,
     "latency_s": 3.0005
   },
   {
     "tick_id": 2,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 2,
-    "zone_id": 130,
+    "zone_id": 166,
     "latency_s": 3.0003
   },
   {
     "tick_id": 2,
-    "zone_id": 134,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 2,
-    "zone_id": 166,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 2,
     "zone_id": 244,
-    "latency_s": 3.0011
+    "latency_s": 3.0004
   },
   {
     "tick_id": 2,
     "zone_id": 260,
-    "latency_s": 0.0
+    "latency_s": 0.0001
   },
   {
     "tick_id": 3,
     "zone_id": 7,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 33,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 41,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 42,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 65,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 75,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 95,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 116,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 130,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 134,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 166,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 244,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 3,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 7,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 33,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 41,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 42,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 65,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 75,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 95,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 116,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 130,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 134,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 166,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 244,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 4,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 7,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 33,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 41,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 42,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 65,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 75,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 95,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 116,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 130,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 134,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 166,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 244,
-    "latency_s": 3.0009
-  },
-  {
-    "tick_id": 5,
-    "zone_id": 260,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 7,
-    "latency_s": 3.0013
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 33,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 41,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 42,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 65,
-    "latency_s": 3.0013
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 75,
     "latency_s": 3.0014
   },
   {
-    "tick_id": 6,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 95,
-    "latency_s": 3.0013
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 116,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 130,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 134,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 166,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 244,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 6,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 7,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 33,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 41,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 42,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 65,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 66,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 75,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 95,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 116,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 130,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 134,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 166,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 244,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 7,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 7,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 33,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 41,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 42,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 65,
-    "latency_s": 3.0009
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 75,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 95,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 116,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 130,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 134,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 166,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 244,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 8,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 7,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 33,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 41,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 42,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 65,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 75,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 95,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 116,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 130,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 134,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 166,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 244,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 9,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 7,
-    "latency_s": 3.0016
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 33,
-    "latency_s": 3.0024
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 41,
-    "latency_s": 3.0022
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 42,
-    "latency_s": 3.0029
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 65,
-    "latency_s": 3.0027
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 75,
-    "latency_s": 3.0023
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 82,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 95,
-    "latency_s": 3.0022
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 116,
-    "latency_s": 3.0021
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 130,
-    "latency_s": 3.0035
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 134,
-    "latency_s": 3.0031
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 166,
-    "latency_s": 3.0192
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 244,
-    "latency_s": 3.0197
-  },
-  {
-    "tick_id": 10,
-    "zone_id": 260,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 7,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 33,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 41,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 42,
-    "latency_s": 3.0009
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 65,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 66,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 75,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 92,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 95,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 116,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 130,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 134,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 166,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 244,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 11,
-    "zone_id": 260,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 7,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 33,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 41,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 42,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 65,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 75,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 95,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 116,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 130,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 134,
-    "latency_s": 3.0001
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 166,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 244,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 12,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 7,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 33,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 41,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 42,
-    "latency_s": 3.0001
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 65,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 75,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 95,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 116,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 130,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 134,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 166,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 244,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 13,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 7,
-    "latency_s": 3.0018
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 33,
-    "latency_s": 3.0015
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 41,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 42,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 65,
-    "latency_s": 3.0013
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 75,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 95,
-    "latency_s": 3.0013
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 116,
-    "latency_s": 3.0013
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 130,
-    "latency_s": 3.0013
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 134,
-    "latency_s": 3.0013
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 166,
-    "latency_s": 3.0013
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 244,
-    "latency_s": 3.0013
-  },
-  {
-    "tick_id": 14,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 7,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 33,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 41,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 42,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 65,
-    "latency_s": 3.0009
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 75,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 95,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 116,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 130,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 134,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 166,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 244,
-    "latency_s": 3.0001
-  },
-  {
-    "tick_id": 15,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 7,
-    "latency_s": 3.0001
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 33,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 41,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 42,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 65,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 75,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 95,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 116,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 130,
-    "latency_s": 3.0001
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 134,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 166,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 244,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 16,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 7,
-    "latency_s": 3.0027
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 33,
-    "latency_s": 3.004
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 41,
-    "latency_s": 3.0042
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 42,
-    "latency_s": 3.0037
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 65,
-    "latency_s": 3.005
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 75,
-    "latency_s": 3.0051
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 95,
-    "latency_s": 3.0041
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 116,
-    "latency_s": 3.0018
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 130,
-    "latency_s": 3.0075
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 134,
-    "latency_s": 3.0059
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 166,
-    "latency_s": 3.0021
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 244,
-    "latency_s": 3.0048
-  },
-  {
-    "tick_id": 17,
-    "zone_id": 260,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 7,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 33,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 41,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 42,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 65,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 66,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 74,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 75,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 82,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 95,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 116,
-    "latency_s": 3.0001
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 130,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 134,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 166,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 244,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 18,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 7,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 33,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 41,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 42,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 65,
-    "latency_s": 3.0001
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 75,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 95,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 116,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 130,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 134,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 166,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 244,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 19,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 7,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 33,
-    "latency_s": 3.0001
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 41,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 42,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 65,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 75,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 95,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 116,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 130,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 134,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 166,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 244,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 20,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 7,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 33,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 41,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 42,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 65,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 75,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 95,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 116,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 130,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 134,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 166,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 244,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 21,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 7,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 33,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 41,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 42,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 65,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 75,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 95,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 116,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 130,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 134,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 166,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 244,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 22,
-    "zone_id": 260,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 23,
-    "zone_id": 7,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 23,
+    "tick_id": 3,
     "zone_id": 33,
     "latency_s": 3.0009
   },
   {
-    "tick_id": 23,
+    "tick_id": 3,
     "zone_id": 41,
-    "latency_s": 3.0015
-  },
-  {
-    "tick_id": 23,
-    "zone_id": 42,
     "latency_s": 3.0005
   },
   {
-    "tick_id": 23,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 23,
-    "zone_id": 65,
-    "latency_s": 3.0016
-  },
-  {
-    "tick_id": 23,
-    "zone_id": 66,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 23,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 23,
-    "zone_id": 75,
-    "latency_s": 3.0021
-  },
-  {
-    "tick_id": 23,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 23,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 23,
-    "zone_id": 95,
-    "latency_s": 3.0015
-  },
-  {
-    "tick_id": 23,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 23,
-    "zone_id": 116,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 23,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 23,
-    "zone_id": 130,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 23,
-    "zone_id": 134,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 23,
-    "zone_id": 166,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 23,
-    "zone_id": 244,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 23,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 7,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 33,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 41,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 24,
+    "tick_id": 3,
     "zone_id": 42,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 65,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 75,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 95,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 116,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 130,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 134,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 166,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 244,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 24,
-    "zone_id": 260,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 7,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 33,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 41,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 42,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 65,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 75,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 95,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 116,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 130,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 134,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 166,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 244,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 25,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 7,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 33,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 41,
-    "latency_s": 3.0009
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 42,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 65,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 75,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 95,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 116,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 130,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 134,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 166,
     "latency_s": 3.0013
   },
   {
-    "tick_id": 26,
-    "zone_id": 244,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 26,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 27,
-    "zone_id": 7,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 27,
-    "zone_id": 33,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 27,
-    "zone_id": 41,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 27,
-    "zone_id": 42,
-    "latency_s": 3.0001
-  },
-  {
-    "tick_id": 27,
+    "tick_id": 3,
     "zone_id": 43,
     "latency_s": 0.0
   },
   {
-    "tick_id": 27,
+    "tick_id": 3,
     "zone_id": 65,
     "latency_s": 3.0009
   },
   {
-    "tick_id": 27,
+    "tick_id": 3,
     "zone_id": 66,
     "latency_s": 0.0
   },
   {
-    "tick_id": 27,
+    "tick_id": 3,
     "zone_id": 74,
     "latency_s": 0.0
   },
   {
-    "tick_id": 27,
+    "tick_id": 3,
     "zone_id": 75,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 27,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 27,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 27,
-    "zone_id": 95,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 27,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 27,
-    "zone_id": 116,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 27,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 27,
-    "zone_id": 130,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 27,
-    "zone_id": 134,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 27,
-    "zone_id": 166,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 27,
-    "zone_id": 244,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 27,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 7,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 33,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 41,
-    "latency_s": 3.0001
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 42,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 65,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 75,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 95,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 116,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 130,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 134,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 166,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 244,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 28,
-    "zone_id": 260,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 7,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 33,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 41,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 42,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 65,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 75,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 95,
-    "latency_s": 3.0001
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 116,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 130,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 134,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 166,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 244,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 29,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 7,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 33,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 41,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 42,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 65,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 74,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 75,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 95,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 116,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 130,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 134,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 166,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 244,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 30,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 7,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 33,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 41,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 42,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 65,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 75,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 95,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 116,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 130,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 134,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 166,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 244,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 31,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 7,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 33,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 41,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 42,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 65,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 75,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 95,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 116,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 130,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 134,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 166,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 244,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 32,
-    "zone_id": 260,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 33,
-    "zone_id": 7,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 33,
-    "zone_id": 33,
     "latency_s": 3.0009
   },
   {
-    "tick_id": 33,
-    "zone_id": 41,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 33,
-    "zone_id": 42,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 33,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 33,
-    "zone_id": 65,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 33,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 33,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 33,
-    "zone_id": 75,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 33,
+    "tick_id": 3,
     "zone_id": 82,
     "latency_s": 0.0
   },
   {
-    "tick_id": 33,
+    "tick_id": 3,
     "zone_id": 92,
     "latency_s": 0.0
   },
   {
-    "tick_id": 33,
+    "tick_id": 3,
     "zone_id": 95,
-    "latency_s": 3.0011
+    "latency_s": 3.0012
   },
   {
-    "tick_id": 33,
+    "tick_id": 3,
     "zone_id": 97,
     "latency_s": 0.0
   },
   {
-    "tick_id": 33,
+    "tick_id": 3,
     "zone_id": 116,
-    "latency_s": 3.0004
+    "latency_s": 3.0012
   },
   {
-    "tick_id": 33,
+    "tick_id": 3,
     "zone_id": 129,
     "latency_s": 0.0
   },
   {
-    "tick_id": 33,
+    "tick_id": 3,
     "zone_id": 130,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 3,
+    "zone_id": 134,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 3,
+    "zone_id": 166,
     "latency_s": 3.0011
   },
   {
-    "tick_id": 33,
+    "tick_id": 3,
+    "zone_id": 244,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 3,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 4,
+    "zone_id": 7,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 4,
+    "zone_id": 33,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 4,
+    "zone_id": 41,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 4,
+    "zone_id": 42,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 4,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 4,
+    "zone_id": 65,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 4,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 4,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 4,
+    "zone_id": 75,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 4,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 4,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 4,
+    "zone_id": 95,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 4,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 4,
+    "zone_id": 116,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 4,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 4,
+    "zone_id": 130,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 4,
     "zone_id": 134,
     "latency_s": 3.0002
   },
   {
-    "tick_id": 33,
+    "tick_id": 4,
     "zone_id": 166,
-    "latency_s": 3.0005
+    "latency_s": 3.0009
   },
   {
-    "tick_id": 33,
+    "tick_id": 4,
     "zone_id": 244,
     "latency_s": 3.0011
   },
   {
-    "tick_id": 33,
+    "tick_id": 4,
     "zone_id": 260,
     "latency_s": 0.0
   },
   {
-    "tick_id": 34,
+    "tick_id": 5,
     "zone_id": 7,
-    "latency_s": 3.0011
+    "latency_s": 3.0013
   },
   {
-    "tick_id": 34,
+    "tick_id": 5,
     "zone_id": 33,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 34,
-    "zone_id": 41,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 34,
-    "zone_id": 42,
     "latency_s": 3.0005
   },
   {
-    "tick_id": 34,
+    "tick_id": 5,
+    "zone_id": 41,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 5,
+    "zone_id": 42,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 5,
     "zone_id": 43,
     "latency_s": 0.0001
   },
   {
-    "tick_id": 34,
+    "tick_id": 5,
     "zone_id": 65,
-    "latency_s": 3.001
+    "latency_s": 3.0008
   },
   {
-    "tick_id": 34,
+    "tick_id": 5,
     "zone_id": 66,
     "latency_s": 0.0
   },
   {
-    "tick_id": 34,
+    "tick_id": 5,
     "zone_id": 74,
     "latency_s": 0.0
   },
   {
-    "tick_id": 34,
+    "tick_id": 5,
     "zone_id": 75,
-    "latency_s": 3.0008
+    "latency_s": 3.0012
   },
   {
-    "tick_id": 34,
+    "tick_id": 5,
     "zone_id": 82,
     "latency_s": 0.0
   },
   {
-    "tick_id": 34,
+    "tick_id": 5,
     "zone_id": 92,
     "latency_s": 0.0
   },
   {
-    "tick_id": 34,
+    "tick_id": 5,
     "zone_id": 95,
-    "latency_s": 3.0009
+    "latency_s": 3.0012
   },
   {
-    "tick_id": 34,
+    "tick_id": 5,
     "zone_id": 97,
     "latency_s": 0.0
   },
   {
-    "tick_id": 34,
+    "tick_id": 5,
     "zone_id": 116,
-    "latency_s": 3.0011
+    "latency_s": 3.0012
   },
   {
-    "tick_id": 34,
+    "tick_id": 5,
     "zone_id": 129,
     "latency_s": 0.0
   },
   {
-    "tick_id": 34,
+    "tick_id": 5,
     "zone_id": 130,
-    "latency_s": 3.0001
-  },
-  {
-    "tick_id": 34,
-    "zone_id": 134,
-    "latency_s": 3.0001
-  },
-  {
-    "tick_id": 34,
-    "zone_id": 166,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 34,
-    "zone_id": 244,
     "latency_s": 3.0011
   },
   {
-    "tick_id": 34,
-    "zone_id": 260,
-    "latency_s": 0.0
+    "tick_id": 5,
+    "zone_id": 134,
+    "latency_s": 3.0007
   },
   {
-    "tick_id": 35,
+    "tick_id": 5,
+    "zone_id": 166,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 5,
+    "zone_id": 244,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 5,
+    "zone_id": 260,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 6,
     "zone_id": 7,
     "latency_s": 3.0011
   },
   {
-    "tick_id": 35,
+    "tick_id": 6,
     "zone_id": 33,
-    "latency_s": 3.0009
+    "latency_s": 3.0012
   },
   {
-    "tick_id": 35,
+    "tick_id": 6,
     "zone_id": 41,
-    "latency_s": 3.0007
+    "latency_s": 3.001
   },
   {
-    "tick_id": 35,
+    "tick_id": 6,
     "zone_id": 42,
-    "latency_s": 3.0001
+    "latency_s": 3.0008
   },
   {
-    "tick_id": 35,
+    "tick_id": 6,
     "zone_id": 43,
     "latency_s": 0.0
   },
   {
-    "tick_id": 35,
+    "tick_id": 6,
     "zone_id": 65,
     "latency_s": 3.0004
   },
   {
-    "tick_id": 35,
+    "tick_id": 6,
     "zone_id": 66,
     "latency_s": 0.0
   },
   {
-    "tick_id": 35,
+    "tick_id": 6,
     "zone_id": 74,
     "latency_s": 0.0
   },
   {
-    "tick_id": 35,
+    "tick_id": 6,
     "zone_id": 75,
-    "latency_s": 3.0003
+    "latency_s": 3.0013
   },
   {
-    "tick_id": 35,
+    "tick_id": 6,
     "zone_id": 82,
     "latency_s": 0.0
   },
   {
-    "tick_id": 35,
+    "tick_id": 6,
     "zone_id": 92,
     "latency_s": 0.0
   },
   {
-    "tick_id": 35,
+    "tick_id": 6,
     "zone_id": 95,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 35,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 35,
-    "zone_id": 116,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 35,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 35,
-    "zone_id": 130,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 35,
-    "zone_id": 134,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 35,
-    "zone_id": 166,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 35,
-    "zone_id": 244,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 35,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 36,
-    "zone_id": 7,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 36,
-    "zone_id": 33,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 36,
-    "zone_id": 41,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 36,
-    "zone_id": 42,
     "latency_s": 3.0008
   },
   {
-    "tick_id": 36,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 36,
-    "zone_id": 65,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 36,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 36,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 36,
-    "zone_id": 75,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 36,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 36,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 36,
-    "zone_id": 95,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 36,
+    "tick_id": 6,
     "zone_id": 97,
     "latency_s": 0.0
   },
   {
-    "tick_id": 36,
+    "tick_id": 6,
     "zone_id": 116,
-    "latency_s": 3.0001
+    "latency_s": 3.0007
   },
   {
-    "tick_id": 36,
+    "tick_id": 6,
     "zone_id": 129,
     "latency_s": 0.0
   },
   {
-    "tick_id": 36,
+    "tick_id": 6,
     "zone_id": 130,
-    "latency_s": 3.001
+    "latency_s": 3.0004
   },
   {
-    "tick_id": 36,
+    "tick_id": 6,
     "zone_id": 134,
-    "latency_s": 3.0011
+    "latency_s": 3.0009
   },
   {
-    "tick_id": 36,
+    "tick_id": 6,
     "zone_id": 166,
-    "latency_s": 3.0007
+    "latency_s": 3.0006
   },
   {
-    "tick_id": 36,
+    "tick_id": 6,
     "zone_id": 244,
-    "latency_s": 3.0011
+    "latency_s": 3.0012
   },
   {
-    "tick_id": 36,
+    "tick_id": 6,
     "zone_id": 260,
     "latency_s": 0.0
   },
   {
-    "tick_id": 37,
+    "tick_id": 7,
     "zone_id": 7,
-    "latency_s": 3.0029
-  },
-  {
-    "tick_id": 37,
-    "zone_id": 33,
-    "latency_s": 3.0029
-  },
-  {
-    "tick_id": 37,
-    "zone_id": 41,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 37,
-    "zone_id": 42,
-    "latency_s": 3.0026
-  },
-  {
-    "tick_id": 37,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 37,
-    "zone_id": 65,
-    "latency_s": 3.002
-  },
-  {
-    "tick_id": 37,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 37,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 37,
-    "zone_id": 75,
     "latency_s": 3.0033
   },
   {
-    "tick_id": 37,
+    "tick_id": 7,
+    "zone_id": 33,
+    "latency_s": 3.003
+  },
+  {
+    "tick_id": 7,
+    "zone_id": 41,
+    "latency_s": 3.0119
+  },
+  {
+    "tick_id": 7,
+    "zone_id": 42,
+    "latency_s": 3.0083
+  },
+  {
+    "tick_id": 7,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 7,
+    "zone_id": 65,
+    "latency_s": 3.0061
+  },
+  {
+    "tick_id": 7,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 7,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 7,
+    "zone_id": 75,
+    "latency_s": 3.0106
+  },
+  {
+    "tick_id": 7,
     "zone_id": 82,
     "latency_s": 0.0
   },
   {
-    "tick_id": 37,
+    "tick_id": 7,
     "zone_id": 92,
     "latency_s": 0.0
   },
   {
-    "tick_id": 37,
+    "tick_id": 7,
     "zone_id": 95,
-    "latency_s": 3.003
+    "latency_s": 3.0095
   },
   {
-    "tick_id": 37,
+    "tick_id": 7,
     "zone_id": 97,
     "latency_s": 0.0
   },
   {
-    "tick_id": 37,
+    "tick_id": 7,
     "zone_id": 116,
-    "latency_s": 3.0072
+    "latency_s": 3.0063
   },
   {
-    "tick_id": 37,
+    "tick_id": 7,
     "zone_id": 129,
     "latency_s": 0.0
   },
   {
-    "tick_id": 37,
+    "tick_id": 7,
     "zone_id": 130,
-    "latency_s": 3.0065
+    "latency_s": 3.0072
+  },
+  {
+    "tick_id": 7,
+    "zone_id": 134,
+    "latency_s": 3.0064
+  },
+  {
+    "tick_id": 7,
+    "zone_id": 166,
+    "latency_s": 3.0115
+  },
+  {
+    "tick_id": 7,
+    "zone_id": 244,
+    "latency_s": 3.0098
+  },
+  {
+    "tick_id": 7,
+    "zone_id": 260,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 7,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 33,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 41,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 42,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 43,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 65,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 75,
+    "latency_s": 3.0002
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 82,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 95,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 116,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 130,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 134,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 166,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 244,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 8,
+    "zone_id": 260,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 7,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 33,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 41,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 42,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 43,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 65,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 74,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 75,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 95,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 116,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 130,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 134,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 166,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 244,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 9,
+    "zone_id": 260,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 7,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 33,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 41,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 42,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 65,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 75,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 95,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 116,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 130,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 134,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 166,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 244,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 10,
+    "zone_id": 260,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 7,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 33,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 41,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 42,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 65,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 75,
+    "latency_s": 3.0001
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 95,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 116,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 130,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 134,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 166,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 244,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 11,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 7,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 33,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 41,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 42,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 65,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 75,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 95,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 116,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 130,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 134,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 166,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 244,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 12,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 7,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 33,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 41,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 42,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 65,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 75,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 95,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 116,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 130,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 134,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 166,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 244,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 13,
+    "zone_id": 260,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 7,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 33,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 41,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 42,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 65,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 75,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 95,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 116,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 130,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 134,
+    "latency_s": 3.0002
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 166,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 244,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 14,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 7,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 33,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 41,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 42,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 65,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 75,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 95,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 116,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 130,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 134,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 166,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 244,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 15,
+    "zone_id": 260,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 7,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 33,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 41,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 42,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 65,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 75,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 95,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 116,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 130,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 134,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 166,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 244,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 16,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 7,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 33,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 41,
+    "latency_s": 3.0002
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 42,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 65,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 75,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 95,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 116,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 130,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 134,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 166,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 244,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 17,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 7,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 33,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 41,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 42,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 65,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 75,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 95,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 116,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 130,
+    "latency_s": 3.0002
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 134,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 166,
+    "latency_s": 3.0002
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 244,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 18,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 7,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 33,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 41,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 42,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 65,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 75,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 92,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 95,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 116,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 130,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 134,
+    "latency_s": 3.0001
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 166,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 244,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 19,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 7,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 33,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 41,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 42,
+    "latency_s": 3.0002
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 65,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 75,
+    "latency_s": 3.0001
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 95,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 116,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 130,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 134,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 166,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 244,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 20,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 7,
+    "latency_s": 3.0002
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 33,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 41,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 42,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 65,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 75,
+    "latency_s": 3.0001
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 95,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 116,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 130,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 134,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 166,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 244,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 21,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 7,
+    "latency_s": 3.0041
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 33,
+    "latency_s": 3.0035
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 41,
+    "latency_s": 3.0031
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 42,
+    "latency_s": 3.0039
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 65,
+    "latency_s": 3.0084
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 75,
+    "latency_s": 3.0072
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 95,
+    "latency_s": 3.0079
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 116,
+    "latency_s": 3.0033
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 130,
+    "latency_s": 3.0023
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 134,
+    "latency_s": 3.0074
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 166,
+    "latency_s": 3.0076
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 244,
+    "latency_s": 3.0075
+  },
+  {
+    "tick_id": 22,
+    "zone_id": 260,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 7,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 33,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 41,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 42,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 43,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 65,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 75,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 92,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 95,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 116,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 130,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 134,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 166,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 244,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 23,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 7,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 33,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 41,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 42,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 43,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 65,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 75,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 95,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 116,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 130,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 134,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 166,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 244,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 24,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 7,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 33,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 41,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 42,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 65,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 75,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 95,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 116,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 130,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 134,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 166,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 244,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 25,
+    "zone_id": 260,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 7,
+    "latency_s": 3.0002
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 33,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 41,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 42,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 43,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 65,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 66,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 75,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 95,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 116,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 130,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 134,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 166,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 244,
+    "latency_s": 3.0002
+  },
+  {
+    "tick_id": 26,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 7,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 33,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 41,
+    "latency_s": 3.0002
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 42,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 65,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 75,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 95,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 116,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 130,
+    "latency_s": 3.0002
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 134,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 166,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 244,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 27,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 7,
+    "latency_s": 3.0021
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 33,
+    "latency_s": 3.002
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 41,
+    "latency_s": 3.0016
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 42,
+    "latency_s": 3.0015
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 43,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 65,
+    "latency_s": 3.0018
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 75,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 95,
+    "latency_s": 3.0016
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 116,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 130,
+    "latency_s": 3.0014
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 134,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 166,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 244,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 28,
+    "zone_id": 260,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 7,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 33,
+    "latency_s": 3.0016
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 41,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 42,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 65,
+    "latency_s": 3.0054
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 75,
+    "latency_s": 3.0076
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 95,
+    "latency_s": 3.0083
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 116,
+    "latency_s": 3.0014
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 130,
+    "latency_s": 3.006
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 134,
+    "latency_s": 3.0014
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 166,
+    "latency_s": 3.0081
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 244,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 29,
+    "zone_id": 260,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 7,
+    "latency_s": 3.0014
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 33,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 41,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 42,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 43,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 65,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 66,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 75,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 95,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 116,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 130,
+    "latency_s": 3.0002
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 134,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 166,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 244,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 30,
+    "zone_id": 260,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 7,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 33,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 41,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 42,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 43,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 65,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 66,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 75,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 95,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 116,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 130,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 134,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 166,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 244,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 31,
+    "zone_id": 260,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 7,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 33,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 41,
+    "latency_s": 3.0002
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 42,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 65,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 75,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 95,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 116,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 130,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 134,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 166,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 244,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 32,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 7,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 33,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 41,
+    "latency_s": 3.0014
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 42,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 65,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 75,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 95,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 116,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 130,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 134,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 166,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 244,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 33,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 7,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 33,
+    "latency_s": 3.0014
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 41,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 42,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 43,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 65,
+    "latency_s": 3.0015
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 66,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 74,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 75,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 95,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 116,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 130,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 134,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 166,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 244,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 34,
+    "zone_id": 260,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 7,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 33,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 41,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 42,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 43,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 65,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 75,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 95,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 116,
+    "latency_s": 3.0013
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 130,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 134,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 166,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 244,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 35,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 7,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 33,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 41,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 42,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 65,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 75,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 95,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 116,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 130,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 134,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 166,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 244,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 36,
+    "zone_id": 260,
+    "latency_s": 0.0
   },
   {
     "tick_id": 37,
-    "zone_id": 134,
+    "zone_id": 7,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 37,
+    "zone_id": 33,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 37,
+    "zone_id": 41,
+    "latency_s": 3.0017
+  },
+  {
+    "tick_id": 37,
+    "zone_id": 42,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 37,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 37,
+    "zone_id": 65,
     "latency_s": 3.0016
   },
   {
     "tick_id": 37,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 37,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 37,
+    "zone_id": 75,
+    "latency_s": 3.0017
+  },
+  {
+    "tick_id": 37,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 37,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 37,
+    "zone_id": 95,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 37,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 37,
+    "zone_id": 116,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 37,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 37,
+    "zone_id": 130,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 37,
+    "zone_id": 134,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 37,
     "zone_id": 166,
-    "latency_s": 3.0046
+    "latency_s": 3.0007
   },
   {
     "tick_id": 37,
     "zone_id": 244,
-    "latency_s": 3.0044
+    "latency_s": 3.0014
   },
   {
     "tick_id": 37,
@@ -3802,289 +3802,289 @@
   {
     "tick_id": 38,
     "zone_id": 7,
-    "latency_s": 3.001
+    "latency_s": 3.0012
   },
   {
     "tick_id": 38,
     "zone_id": 33,
-    "latency_s": 3.0011
+    "latency_s": 3.0012
   },
   {
     "tick_id": 38,
     "zone_id": 41,
-    "latency_s": 3.0004
+    "latency_s": 3.0012
   },
   {
     "tick_id": 38,
     "zone_id": 42,
-    "latency_s": 3.001
+    "latency_s": 3.0004
   },
   {
     "tick_id": 38,
     "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 38,
+    "zone_id": 65,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 38,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 38,
+    "zone_id": 74,
     "latency_s": 0.0001
   },
   {
     "tick_id": 38,
-    "zone_id": 65,
+    "zone_id": 75,
     "latency_s": 3.0002
   },
   {
     "tick_id": 38,
-    "zone_id": 66,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 38,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 38,
+    "zone_id": 95,
+    "latency_s": 3.0002
+  },
+  {
+    "tick_id": 38,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 38,
+    "zone_id": 116,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 38,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 38,
+    "zone_id": 130,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 38,
+    "zone_id": 134,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 38,
+    "zone_id": 166,
+    "latency_s": 3.0002
+  },
+  {
+    "tick_id": 38,
+    "zone_id": 244,
+    "latency_s": 3.0003
+  },
+  {
+    "tick_id": 38,
+    "zone_id": 260,
     "latency_s": 0.0001
   },
   {
-    "tick_id": 38,
+    "tick_id": 39,
+    "zone_id": 7,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 39,
+    "zone_id": 33,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 39,
+    "zone_id": 41,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 39,
+    "zone_id": 42,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 39,
+    "zone_id": 43,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 39,
+    "zone_id": 65,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 39,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 39,
     "zone_id": 74,
     "latency_s": 0.0
   },
   {
-    "tick_id": 38,
+    "tick_id": 39,
     "zone_id": 75,
-    "latency_s": 3.0003
+    "latency_s": 3.0011
   },
   {
-    "tick_id": 38,
+    "tick_id": 39,
     "zone_id": 82,
     "latency_s": 0.0
   },
   {
-    "tick_id": 38,
+    "tick_id": 39,
     "zone_id": 92,
     "latency_s": 0.0
   },
   {
-    "tick_id": 38,
+    "tick_id": 39,
     "zone_id": 95,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 39,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 39,
+    "zone_id": 116,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 39,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 39,
+    "zone_id": 130,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 39,
+    "zone_id": 134,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 39,
+    "zone_id": 166,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 39,
+    "zone_id": 244,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 39,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 40,
+    "zone_id": 7,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 40,
+    "zone_id": 33,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 40,
+    "zone_id": 41,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 40,
+    "zone_id": 42,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 40,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 40,
+    "zone_id": 65,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 40,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 40,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 40,
+    "zone_id": 75,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 40,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 40,
+    "zone_id": 92,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 40,
+    "zone_id": 95,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 40,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 40,
+    "zone_id": 116,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 40,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 40,
+    "zone_id": 130,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 40,
+    "zone_id": 134,
     "latency_s": 3.0008
   },
   {
-    "tick_id": 38,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 38,
-    "zone_id": 116,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 38,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 38,
-    "zone_id": 130,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 38,
-    "zone_id": 134,
-    "latency_s": 3.0009
-  },
-  {
-    "tick_id": 38,
-    "zone_id": 166,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 38,
-    "zone_id": 244,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 38,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 7,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 33,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 41,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 42,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 65,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 75,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 95,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 116,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 130,
-    "latency_s": 3.0009
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 134,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 166,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 244,
-    "latency_s": 3.0002
-  },
-  {
-    "tick_id": 39,
-    "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 40,
-    "zone_id": 7,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 40,
-    "zone_id": 33,
-    "latency_s": 3.0006
-  },
-  {
-    "tick_id": 40,
-    "zone_id": 41,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 40,
-    "zone_id": 42,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 40,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 40,
-    "zone_id": 65,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 40,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 40,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 40,
-    "zone_id": 75,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 40,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 40,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 40,
-    "zone_id": 95,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 40,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 40,
-    "zone_id": 116,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 40,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 40,
-    "zone_id": 130,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 40,
-    "zone_id": 134,
-    "latency_s": 3.0006
-  },
-  {
     "tick_id": 40,
     "zone_id": 166,
     "latency_s": 3.0011
@@ -4102,22 +4102,22 @@
   {
     "tick_id": 41,
     "zone_id": 7,
-    "latency_s": 3.0003
+    "latency_s": 3.0012
   },
   {
     "tick_id": 41,
     "zone_id": 33,
-    "latency_s": 3.0011
+    "latency_s": 3.0012
   },
   {
     "tick_id": 41,
     "zone_id": 41,
-    "latency_s": 3.0007
+    "latency_s": 3.0003
   },
   {
     "tick_id": 41,
     "zone_id": 42,
-    "latency_s": 3.0004
+    "latency_s": 3.0003
   },
   {
     "tick_id": 41,
@@ -4127,7 +4127,7 @@
   {
     "tick_id": 41,
     "zone_id": 65,
-    "latency_s": 3.0011
+    "latency_s": 3.0006
   },
   {
     "tick_id": 41,
@@ -4142,82 +4142,82 @@
   {
     "tick_id": 41,
     "zone_id": 75,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 41,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 41,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 41,
-    "zone_id": 95,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 41,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 41,
-    "zone_id": 116,
     "latency_s": 3.0009
   },
   {
     "tick_id": 41,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 41,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 41,
+    "zone_id": 95,
+    "latency_s": 3.0007
+  },
+  {
+    "tick_id": 41,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 41,
+    "zone_id": 116,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 41,
     "zone_id": 129,
     "latency_s": 0.0
   },
   {
     "tick_id": 41,
     "zone_id": 130,
-    "latency_s": 3.001
+    "latency_s": 3.0011
   },
   {
     "tick_id": 41,
     "zone_id": 134,
-    "latency_s": 3.0011
+    "latency_s": 3.0006
   },
   {
     "tick_id": 41,
     "zone_id": 166,
-    "latency_s": 3.0007
+    "latency_s": 3.0011
   },
   {
     "tick_id": 41,
     "zone_id": 244,
-    "latency_s": 3.0005
+    "latency_s": 3.0006
   },
   {
     "tick_id": 41,
     "zone_id": 260,
-    "latency_s": 0.0
+    "latency_s": 0.0001
   },
   {
     "tick_id": 42,
     "zone_id": 7,
-    "latency_s": 3.0011
+    "latency_s": 3.0012
   },
   {
     "tick_id": 42,
     "zone_id": 33,
-    "latency_s": 3.0006
+    "latency_s": 3.0012
   },
   {
     "tick_id": 42,
     "zone_id": 41,
-    "latency_s": 3.0001
+    "latency_s": 3.0009
   },
   {
     "tick_id": 42,
     "zone_id": 42,
-    "latency_s": 3.0011
+    "latency_s": 3.0005
   },
   {
     "tick_id": 42,
@@ -4227,7 +4227,7 @@
   {
     "tick_id": 42,
     "zone_id": 65,
-    "latency_s": 3.001
+    "latency_s": 3.0011
   },
   {
     "tick_id": 42,
@@ -4242,12 +4242,12 @@
   {
     "tick_id": 42,
     "zone_id": 75,
-    "latency_s": 3.0005
+    "latency_s": 3.0011
   },
   {
     "tick_id": 42,
     "zone_id": 82,
-    "latency_s": 0.0
+    "latency_s": 0.0002
   },
   {
     "tick_id": 42,
@@ -4257,7 +4257,7 @@
   {
     "tick_id": 42,
     "zone_id": 95,
-    "latency_s": 3.0005
+    "latency_s": 3.0011
   },
   {
     "tick_id": 42,
@@ -4267,32 +4267,32 @@
   {
     "tick_id": 42,
     "zone_id": 116,
-    "latency_s": 3.0011
+    "latency_s": 3.0009
   },
   {
     "tick_id": 42,
     "zone_id": 129,
-    "latency_s": 0.0
+    "latency_s": 0.0001
   },
   {
     "tick_id": 42,
     "zone_id": 130,
-    "latency_s": 3.0011
+    "latency_s": 3.0007
   },
   {
     "tick_id": 42,
     "zone_id": 134,
-    "latency_s": 3.0003
+    "latency_s": 3.0015
   },
   {
     "tick_id": 42,
     "zone_id": 166,
-    "latency_s": 3.001
+    "latency_s": 3.0013
   },
   {
     "tick_id": 42,
     "zone_id": 244,
-    "latency_s": 3.0011
+    "latency_s": 3.0013
   },
   {
     "tick_id": 42,
@@ -4302,497 +4302,497 @@
   {
     "tick_id": 43,
     "zone_id": 7,
-    "latency_s": 3.0029
+    "latency_s": 3.0011
   },
   {
     "tick_id": 43,
     "zone_id": 33,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 43,
+    "zone_id": 41,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 43,
+    "zone_id": 42,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 43,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 43,
+    "zone_id": 65,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 43,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 43,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 43,
+    "zone_id": 75,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 43,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 43,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 43,
+    "zone_id": 95,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 43,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 43,
+    "zone_id": 116,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 43,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 43,
+    "zone_id": 130,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 43,
+    "zone_id": 134,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 43,
+    "zone_id": 166,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 43,
+    "zone_id": 244,
+    "latency_s": 3.0002
+  },
+  {
+    "tick_id": 43,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 7,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 33,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 41,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 42,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 65,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 74,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 75,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 95,
+    "latency_s": 3.0004
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 116,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 129,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 130,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 134,
+    "latency_s": 3.0006
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 166,
+    "latency_s": 3.0005
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 244,
+    "latency_s": 3.0011
+  },
+  {
+    "tick_id": 44,
+    "zone_id": 260,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 45,
+    "zone_id": 7,
+    "latency_s": 3.0014
+  },
+  {
+    "tick_id": 45,
+    "zone_id": 33,
+    "latency_s": 3.001
+  },
+  {
+    "tick_id": 45,
+    "zone_id": 41,
+    "latency_s": 3.0036
+  },
+  {
+    "tick_id": 45,
+    "zone_id": 42,
+    "latency_s": 3.0033
+  },
+  {
+    "tick_id": 45,
+    "zone_id": 43,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 45,
+    "zone_id": 65,
+    "latency_s": 3.0019
+  },
+  {
+    "tick_id": 45,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 45,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 45,
+    "zone_id": 75,
     "latency_s": 3.0021
   },
   {
-    "tick_id": 43,
-    "zone_id": 41,
-    "latency_s": 3.003
-  },
-  {
-    "tick_id": 43,
-    "zone_id": 42,
-    "latency_s": 3.002
-  },
-  {
-    "tick_id": 43,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 43,
-    "zone_id": 65,
-    "latency_s": 3.0037
-  },
-  {
-    "tick_id": 43,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 43,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 43,
-    "zone_id": 75,
-    "latency_s": 3.0032
-  },
-  {
-    "tick_id": 43,
+    "tick_id": 45,
     "zone_id": 82,
     "latency_s": 0.0
   },
   {
-    "tick_id": 43,
+    "tick_id": 45,
     "zone_id": 92,
     "latency_s": 0.0
   },
   {
-    "tick_id": 43,
+    "tick_id": 45,
     "zone_id": 95,
-    "latency_s": 3.0045
+    "latency_s": 3.0012
   },
   {
-    "tick_id": 43,
+    "tick_id": 45,
     "zone_id": 97,
     "latency_s": 0.0
   },
   {
-    "tick_id": 43,
+    "tick_id": 45,
     "zone_id": 116,
-    "latency_s": 3.0038
+    "latency_s": 3.0018
   },
   {
-    "tick_id": 43,
+    "tick_id": 45,
     "zone_id": 129,
     "latency_s": 0.0
   },
   {
-    "tick_id": 43,
+    "tick_id": 45,
     "zone_id": 130,
-    "latency_s": 3.0035
+    "latency_s": 3.0016
   },
   {
-    "tick_id": 43,
+    "tick_id": 45,
     "zone_id": 134,
-    "latency_s": 3.0061
+    "latency_s": 3.0007
   },
   {
-    "tick_id": 43,
+    "tick_id": 45,
     "zone_id": 166,
-    "latency_s": 3.0038
+    "latency_s": 3.002
   },
   {
-    "tick_id": 43,
+    "tick_id": 45,
     "zone_id": 244,
-    "latency_s": 3.0025
+    "latency_s": 3.0021
   },
   {
-    "tick_id": 43,
+    "tick_id": 45,
     "zone_id": 260,
     "latency_s": 0.0001
   },
   {
-    "tick_id": 44,
+    "tick_id": 46,
     "zone_id": 7,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 44,
-    "zone_id": 33,
     "latency_s": 3.0008
   },
   {
-    "tick_id": 44,
+    "tick_id": 46,
+    "zone_id": 33,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 46,
     "zone_id": 41,
-    "latency_s": 3.0005
+    "latency_s": 3.0012
   },
   {
-    "tick_id": 44,
+    "tick_id": 46,
     "zone_id": 42,
-    "latency_s": 3.0011
+    "latency_s": 3.0009
   },
   {
-    "tick_id": 44,
+    "tick_id": 46,
     "zone_id": 43,
     "latency_s": 0.0001
   },
   {
-    "tick_id": 44,
+    "tick_id": 46,
     "zone_id": 65,
-    "latency_s": 3.0011
+    "latency_s": 3.0002
   },
   {
-    "tick_id": 44,
+    "tick_id": 46,
     "zone_id": 66,
-    "latency_s": 0.0
+    "latency_s": 0.0001
   },
   {
-    "tick_id": 44,
+    "tick_id": 46,
     "zone_id": 74,
     "latency_s": 0.0
   },
   {
-    "tick_id": 44,
+    "tick_id": 46,
     "zone_id": 75,
-    "latency_s": 3.0011
+    "latency_s": 3.0012
   },
   {
-    "tick_id": 44,
+    "tick_id": 46,
     "zone_id": 82,
     "latency_s": 0.0
   },
   {
-    "tick_id": 44,
+    "tick_id": 46,
     "zone_id": 92,
-    "latency_s": 0.0001
+    "latency_s": 0.0
   },
   {
-    "tick_id": 44,
+    "tick_id": 46,
     "zone_id": 95,
     "latency_s": 3.0011
   },
   {
-    "tick_id": 44,
+    "tick_id": 46,
     "zone_id": 97,
     "latency_s": 0.0
   },
   {
-    "tick_id": 44,
+    "tick_id": 46,
     "zone_id": 116,
-    "latency_s": 3.0011
+    "latency_s": 3.0006
   },
   {
-    "tick_id": 44,
+    "tick_id": 46,
     "zone_id": 129,
     "latency_s": 0.0
   },
   {
-    "tick_id": 44,
+    "tick_id": 46,
     "zone_id": 130,
-    "latency_s": 3.0011
+    "latency_s": 3.0006
   },
   {
-    "tick_id": 44,
+    "tick_id": 46,
     "zone_id": 134,
-    "latency_s": 3.0011
+    "latency_s": 3.0006
   },
   {
-    "tick_id": 44,
+    "tick_id": 46,
     "zone_id": 166,
-    "latency_s": 3.001
-  },
-  {
-    "tick_id": 44,
-    "zone_id": 244,
     "latency_s": 3.0011
   },
   {
-    "tick_id": 44,
-    "zone_id": 260,
-    "latency_s": 0.0
+    "tick_id": 46,
+    "zone_id": 244,
+    "latency_s": 3.0004
   },
   {
-    "tick_id": 45,
+    "tick_id": 46,
+    "zone_id": 260,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 47,
     "zone_id": 7,
     "latency_s": 3.002
   },
   {
-    "tick_id": 45,
+    "tick_id": 47,
     "zone_id": 33,
-    "latency_s": 3.0025
+    "latency_s": 3.0029
   },
   {
-    "tick_id": 45,
+    "tick_id": 47,
     "zone_id": 41,
-    "latency_s": 3.0027
-  },
-  {
-    "tick_id": 45,
-    "zone_id": 42,
-    "latency_s": 3.002
-  },
-  {
-    "tick_id": 45,
-    "zone_id": 43,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 45,
-    "zone_id": 65,
-    "latency_s": 3.0014
-  },
-  {
-    "tick_id": 45,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 45,
-    "zone_id": 74,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 45,
-    "zone_id": 75,
-    "latency_s": 3.0024
-  },
-  {
-    "tick_id": 45,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 45,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 45,
-    "zone_id": 95,
-    "latency_s": 3.0022
-  },
-  {
-    "tick_id": 45,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 45,
-    "zone_id": 116,
-    "latency_s": 3.003
-  },
-  {
-    "tick_id": 45,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 45,
-    "zone_id": 130,
-    "latency_s": 3.002
-  },
-  {
-    "tick_id": 45,
-    "zone_id": 134,
-    "latency_s": 3.002
-  },
-  {
-    "tick_id": 45,
-    "zone_id": 166,
-    "latency_s": 3.002
-  },
-  {
-    "tick_id": 45,
-    "zone_id": 244,
     "latency_s": 3.0023
   },
   {
-    "tick_id": 45,
-    "zone_id": 260,
+    "tick_id": 47,
+    "zone_id": 42,
+    "latency_s": 3.0023
+  },
+  {
+    "tick_id": 47,
+    "zone_id": 43,
     "latency_s": 0.0001
   },
   {
-    "tick_id": 46,
-    "zone_id": 7,
-    "latency_s": 3.0011
+    "tick_id": 47,
+    "zone_id": 65,
+    "latency_s": 3.0022
   },
   {
-    "tick_id": 46,
-    "zone_id": 33,
-    "latency_s": 3.0015
-  },
-  {
-    "tick_id": 46,
-    "zone_id": 41,
-    "latency_s": 3.002
-  },
-  {
-    "tick_id": 46,
-    "zone_id": 42,
-    "latency_s": 3.0007
-  },
-  {
-    "tick_id": 46,
-    "zone_id": 43,
+    "tick_id": 47,
+    "zone_id": 66,
     "latency_s": 0.0
   },
   {
-    "tick_id": 46,
-    "zone_id": 65,
-    "latency_s": 3.002
-  },
-  {
-    "tick_id": 46,
-    "zone_id": 66,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 46,
+    "tick_id": 47,
     "zone_id": 74,
     "latency_s": 0.0
   },
   {
-    "tick_id": 46,
+    "tick_id": 47,
     "zone_id": 75,
-    "latency_s": 3.0015
+    "latency_s": 3.0011
   },
   {
-    "tick_id": 46,
+    "tick_id": 47,
     "zone_id": 82,
     "latency_s": 0.0
   },
   {
-    "tick_id": 46,
+    "tick_id": 47,
     "zone_id": 92,
     "latency_s": 0.0
   },
   {
-    "tick_id": 46,
+    "tick_id": 47,
     "zone_id": 95,
-    "latency_s": 3.0007
+    "latency_s": 3.0004
   },
   {
-    "tick_id": 46,
+    "tick_id": 47,
     "zone_id": 97,
     "latency_s": 0.0
   },
   {
-    "tick_id": 46,
+    "tick_id": 47,
     "zone_id": 116,
-    "latency_s": 3.0014
+    "latency_s": 3.0011
   },
   {
-    "tick_id": 46,
+    "tick_id": 47,
     "zone_id": 129,
     "latency_s": 0.0
   },
   {
-    "tick_id": 46,
+    "tick_id": 47,
     "zone_id": 130,
-    "latency_s": 3.0014
+    "latency_s": 3.0011
   },
   {
-    "tick_id": 46,
+    "tick_id": 47,
     "zone_id": 134,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 46,
-    "zone_id": 166,
-    "latency_s": 3.0013
-  },
-  {
-    "tick_id": 46,
-    "zone_id": 244,
-    "latency_s": 3.0013
-  },
-  {
-    "tick_id": 46,
-    "zone_id": 260,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 47,
-    "zone_id": 7,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 47,
-    "zone_id": 33,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 47,
-    "zone_id": 41,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 47,
-    "zone_id": 42,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 47,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 47,
-    "zone_id": 65,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 47,
-    "zone_id": 66,
-    "latency_s": 0.0001
-  },
-  {
-    "tick_id": 47,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 47,
-    "zone_id": 75,
     "latency_s": 3.0006
   },
   {
     "tick_id": 47,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 47,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 47,
-    "zone_id": 95,
-    "latency_s": 3.0012
-  },
-  {
-    "tick_id": 47,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 47,
-    "zone_id": 116,
-    "latency_s": 3.0003
-  },
-  {
-    "tick_id": 47,
-    "zone_id": 129,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 47,
-    "zone_id": 130,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 47,
-    "zone_id": 134,
-    "latency_s": 3.0008
-  },
-  {
-    "tick_id": 47,
     "zone_id": 166,
     "latency_s": 3.0011
   },
   {
     "tick_id": 47,
     "zone_id": 244,
-    "latency_s": 3.0003
+    "latency_s": 3.0011
   },
   {
     "tick_id": 47,
@@ -4802,132 +4802,132 @@
   {
     "tick_id": 48,
     "zone_id": 7,
-    "latency_s": 3.0011
+    "latency_s": 3.0012
   },
   {
     "tick_id": 48,
     "zone_id": 33,
-    "latency_s": 3.0005
+    "latency_s": 3.0012
   },
   {
     "tick_id": 48,
     "zone_id": 41,
-    "latency_s": 3.0011
+    "latency_s": 3.0007
   },
   {
     "tick_id": 48,
     "zone_id": 42,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 48,
+    "zone_id": 43,
+    "latency_s": 0.0001
+  },
+  {
+    "tick_id": 48,
+    "zone_id": 65,
+    "latency_s": 3.0008
+  },
+  {
+    "tick_id": 48,
+    "zone_id": 66,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 48,
+    "zone_id": 74,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 48,
+    "zone_id": 75,
+    "latency_s": 3.0012
+  },
+  {
+    "tick_id": 48,
+    "zone_id": 82,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 48,
+    "zone_id": 92,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 48,
+    "zone_id": 95,
+    "latency_s": 3.0009
+  },
+  {
+    "tick_id": 48,
+    "zone_id": 97,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 48,
+    "zone_id": 116,
     "latency_s": 3.001
   },
   {
     "tick_id": 48,
-    "zone_id": 43,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 48,
-    "zone_id": 65,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 48,
-    "zone_id": 66,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 48,
-    "zone_id": 74,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 48,
-    "zone_id": 75,
-    "latency_s": 3.0009
-  },
-  {
-    "tick_id": 48,
-    "zone_id": 82,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 48,
-    "zone_id": 92,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 48,
-    "zone_id": 95,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 48,
-    "zone_id": 97,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 48,
-    "zone_id": 116,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 48,
     "zone_id": 129,
     "latency_s": 0.0
   },
   {
     "tick_id": 48,
     "zone_id": 130,
-    "latency_s": 3.0003
+    "latency_s": 3.0011
   },
   {
     "tick_id": 48,
     "zone_id": 134,
-    "latency_s": 3.0005
+    "latency_s": 3.0006
   },
   {
     "tick_id": 48,
     "zone_id": 166,
-    "latency_s": 3.0011
+    "latency_s": 3.0009
   },
   {
     "tick_id": 48,
     "zone_id": 244,
-    "latency_s": 3.0011
+    "latency_s": 3.0002
   },
   {
     "tick_id": 48,
     "zone_id": 260,
-    "latency_s": 0.0
-  },
-  {
-    "tick_id": 49,
-    "zone_id": 7,
-    "latency_s": 3.0005
-  },
-  {
-    "tick_id": 49,
-    "zone_id": 33,
-    "latency_s": 3.0011
-  },
-  {
-    "tick_id": 49,
-    "zone_id": 41,
-    "latency_s": 3.0004
-  },
-  {
-    "tick_id": 49,
-    "zone_id": 42,
-    "latency_s": 3.0009
-  },
-  {
-    "tick_id": 49,
-    "zone_id": 43,
     "latency_s": 0.0001
   },
   {
     "tick_id": 49,
+    "zone_id": 7,
+    "latency_s": 3.0088
+  },
+  {
+    "tick_id": 49,
+    "zone_id": 33,
+    "latency_s": 3.0081
+  },
+  {
+    "tick_id": 49,
+    "zone_id": 41,
+    "latency_s": 3.0073
+  },
+  {
+    "tick_id": 49,
+    "zone_id": 42,
+    "latency_s": 3.0066
+  },
+  {
+    "tick_id": 49,
+    "zone_id": 43,
+    "latency_s": 0.0
+  },
+  {
+    "tick_id": 49,
     "zone_id": 65,
-    "latency_s": 3.0011
+    "latency_s": 3.0061
   },
   {
     "tick_id": 49,
@@ -4942,12 +4942,12 @@
   {
     "tick_id": 49,
     "zone_id": 75,
-    "latency_s": 3.0002
+    "latency_s": 3.0052
   },
   {
     "tick_id": 49,
     "zone_id": 82,
-    "latency_s": 0.0001
+    "latency_s": 0.0
   },
   {
     "tick_id": 49,
@@ -4957,7 +4957,7 @@
   {
     "tick_id": 49,
     "zone_id": 95,
-    "latency_s": 3.0002
+    "latency_s": 3.004
   },
   {
     "tick_id": 49,
@@ -4967,7 +4967,7 @@
   {
     "tick_id": 49,
     "zone_id": 116,
-    "latency_s": 3.0011
+    "latency_s": 3.0031
   },
   {
     "tick_id": 49,
@@ -4977,22 +4977,22 @@
   {
     "tick_id": 49,
     "zone_id": 130,
-    "latency_s": 3.0011
+    "latency_s": 3.003
   },
   {
     "tick_id": 49,
     "zone_id": 134,
-    "latency_s": 3.0011
+    "latency_s": 3.003
   },
   {
     "tick_id": 49,
     "zone_id": 166,
-    "latency_s": 3.0011
+    "latency_s": 3.0026
   },
   {
     "tick_id": 49,
     "zone_id": 244,
-    "latency_s": 3.0011
+    "latency_s": 3.003
   },
   {
     "tick_id": 49,

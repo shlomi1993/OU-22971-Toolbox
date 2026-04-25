@@ -94,6 +94,12 @@ pytest.ini                  # Pytest configuration
 
 ## Execution
 
+**Prerequisites:** Ensure the conda environment is activated before running any commands:
+
+```bash
+conda activate 22971-ray-capstone
+```
+
 The program exposes three commands:
 - `prepare` - Read two adjacent-month TLC parquet files and prepare assets for replay execution.
 - `run` - Run Ray-based replay on the prepared assets.
@@ -108,6 +114,8 @@ Every command can be invoked in three equivalent ways:
 | Unified CLI | `python main.py run <args>` |
 
 The examples below use the shortest form, but if anything goes wrong once can consider using `python main <cmd> <args>`.
+
+**Note:** If you haven't activated the environment, you can prefix commands with `conda run -n 22971-ray-capstone`.
 
 
 ### Step 1 - Prepare Replay Assets
@@ -142,7 +150,7 @@ run \
     --slow-zone-fraction 0.25 \
     --slow-zone-sleep-s 1.0 \
     --seed 42 \
-    --max-ticks 20  # For short run, omit to replay the full month
+    --max-ticks 50  # For short run, omit to replay the full month
 ```
 
 This command runs the replay in blocking mode with simulated skew (25% slow zones, 1s delay). Scoring tasks return decisions to the controller. The controller waits for **all** zones before closing each tick and writes accepted decisions into actors.
@@ -172,7 +180,7 @@ run \
     --completion-fraction 0.75 \
     --max-inflight-zones 4 \
     --seed 42 \
-    --max-ticks 20  # For short run, omit to replay the full month
+    --max-ticks 50
 ```
 
 This command runs the replay in async mode with simulated skew (25% slow zones, 1s delay), bounded concurrency (max 4 inflight zones), 2s timeout, and 75% completion threshold. Scoring tasks report decisions directly to actors. The driver polls actor readiness and closes ticks under the configured partial-readiness policy. Late zones receive a deterministic fallback.
@@ -200,7 +208,7 @@ run \
     --slow-zone-sleep-s 3.0 \
     --tick-timeout-s 2.0 \
     --seed 42 \
-    --max-ticks 20  # For short run, omit to replay the full month
+    --max-ticks 50
 ```
 
 This command runs both blocking and async modes back-to-back with harsher skew (60% slow zones, 3s delay) and writes a side-by-side comparison to evaluate degradation under stress.
