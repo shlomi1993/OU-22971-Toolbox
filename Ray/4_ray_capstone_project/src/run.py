@@ -1,5 +1,5 @@
 """
-Runtime execution module for distributed replay with Ray.
+Runtime execution script for Ray-based TLC replay system.
 
 Orchestrates blocking, async, and stress test modes using Ray remote actors and tasks.
 Each mode creates ZoneActors, launches scoring tasks with simulated skew, and writes detailed metrics and decision logs.
@@ -7,7 +7,7 @@ Each mode creates ZoneActors, launches scoring tasks with simulated skew, and wr
 Execution modes:
 - blocking: Wait for all zones before advancing each tick (baseline)
 - async: Bounded concurrency with timeout and partial-readiness fallback
-- stress: Harsh skew (60% slow zones, 3s delay) to stress-test async controller
+- stress: Harsh skew (many slow zones with delay) to stress-test async controller
 """
 
 import argparse
@@ -30,8 +30,8 @@ from src.core import (
     DEFAULT_TICK_TIMEOUT_S,
     FALLBACK_POLICY_PREVIOUS,
     TICK_MINUTES,
-    ReplayConfig,
     ReplayMode,
+    ReplayConfig,
     TickMetrics,
     write_json,
 )

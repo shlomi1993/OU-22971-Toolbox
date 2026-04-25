@@ -1,13 +1,7 @@
 """
-Shared utilities and data structures for TLC replay experiments.
+Core utilities and data structures for Ray-based TLC replay system.
 
-Provides:
-- Constants: Tick duration, default parameters, fallback policies
-- Enums: ReplayMode
-- Dataclasses: ReplayConfig, TickMetrics, PreparedData
-- Data functions: Parquet loading, validation, aggregation, baseline building
-- Artifact writers: JSON, CSV, latency logs, tick summaries
-- Helper functions: Zone selection, slow zone sampling, prepared asset loading
+Provides constants, enums, dataclasses, data processing functions, artifact writers, and more.
 """
 
 import argparse
@@ -51,6 +45,12 @@ CROSS_CHECK_N_TICKS = 4  # Number of ticks to sample for cross-check validation
 REQUIRED_PARQUET_COLS = ["lpep_pickup_datetime", "lpep_dropoff_datetime", "PULocationID"]  # Required columns in input files
 
 
+class ReplayMode(str, Enum):
+    BLOCKING = "blocking"
+    ASYNC = "async"
+    STRESS = "stress"
+
+
 @dataclass
 class RoundedDataclass:
     """
@@ -85,12 +85,6 @@ class RoundedDataclass:
             Dict[str, Any]: The dataclass as a dict with rounded floats.
         """
         return self._round_floats(asdict(self))
-
-
-class ReplayMode(str, Enum):
-    BLOCKING = "blocking"
-    ASYNC = "async"
-    STRESS = "stress"
 
 
 @dataclass

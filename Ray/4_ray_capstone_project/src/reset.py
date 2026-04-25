@@ -1,5 +1,5 @@
 """
-Reset utilities for the Ray capstone project.
+Reset script for the Ray project.
 
 Provides functions to stop Ray and clean up generated artifacts.
 """
