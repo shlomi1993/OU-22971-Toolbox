@@ -1,4 +1,4 @@
-# Ray Capstone — TLC-Backed Per-Zone Recommendations Under Skew
+# Ray Capstone - TLC-Backed Per-Zone Recommendations Under Skew
 
 A replay-based recommendation system built on [Ray](https://www.ray.io/). The system processes NYC Green Taxi trip data in 15-minute windows (ticks), producing a per-zone demand recommendation (`NEED` or `OK`) at every tick. A blocking baseline and an asynchronous controller run the same replay side by side, exposing how skew, bounded concurrency, timeout-driven fallback, and idempotent actor writes affect latency and output correctness.
 
@@ -6,17 +6,17 @@ A replay-based recommendation system built on [Ray](https://www.ray.io/). The sy
 
 ## Table of contents
 
-- [Ray Capstone — TLC-Backed Per-Zone Recommendations Under Skew](#ray-capstone--tlc-backed-per-zone-recommendations-under-skew)
+- [Ray Capstone - TLC-Backed Per-Zone Recommendations Under Skew](#ray-capstone--tlc-backed-per-zone-recommendations-under-skew)
   - [Table of contents](#table-of-contents)
   - [Video Walkthrough](#video-walkthrough)
   - [Project Structure](#project-structure)
   - [Architecture Overview](#architecture-overview)
   - [Setup](#setup)
   - [Execution](#execution)
-    - [Step 1 — Prepare Replay Assets](#step-1--prepare-replay-assets)
-    - [Step 2 — Blocking Baseline](#step-2--blocking-baseline)
-    - [Step 3 — Async controller](#step-3--async-controller)
-    - [Step 4 — Stress test](#step-4--stress-test)
+    - [Step 1 - Prepare Replay Assets](#step-1--prepare-replay-assets)
+    - [Step 2 - Blocking Baseline](#step-2--blocking-baseline)
+    - [Step 3 - Async controller](#step-3--async-controller)
+    - [Step 4 - Stress test](#step-4--stress-test)
     - [Cleanup](#cleanup)
   - [Decision Rule](#decision-rule)
   - [Partial-readiness Policy](#partial-readiness-policy)
@@ -110,7 +110,7 @@ Every command can be invoked in three equivalent ways:
 The examples below use the shortest form, but if anything goes wrong once can consider using `python main <cmd> <args>`.
 
 
-### Step 1 — Prepare Replay Assets
+### Step 1 - Prepare Replay Assets
 
 ```bash
 prepare \
@@ -126,13 +126,13 @@ This command read the two adjacent-month parquet files, validates them, identifi
 **Results:**
 
 Prepared assets are written to `prepared/` (examples are available in [output_examples/prepared](output_examples/prepared)):
-- [active_zones.json](output_examples/prepared/active_zones.json) — List of selected zone IDs.
-- [baseline.parquet](output_examples/prepared/baseline.parquet) — Per-zone baseline statistics by `(zone_id, hour_of_day, day_of_week)`.
-- [replay.parquet](output_examples/prepared/replay.parquet) — Replay table with `(zone_id, tick_start, demand)` for all active zones.
-- [prep_meta.json](output_examples/prepared/prep_meta.json) — Preparation summary including months validated, row counts, tick count, and seed
+- [active_zones.json](output_examples/prepared/active_zones.json) - List of selected zone IDs.
+- [baseline.parquet](output_examples/prepared/baseline.parquet) - Per-zone baseline statistics by `(zone_id, hour_of_day, day_of_week)`.
+- [replay.parquet](output_examples/prepared/replay.parquet) - Replay table with `(zone_id, tick_start, demand)` for all active zones.
+- [prep_meta.json](output_examples/prepared/prep_meta.json) - Preparation summary including months validated, row counts, tick count, and seed
 
 
-### Step 2 — Blocking Baseline
+### Step 2 - Blocking Baseline
 
 ```bash
 run \
@@ -149,16 +149,16 @@ This command runs the replay in blocking mode with simulated skew (25% slow zone
 **Results:**
 
 Blocking run artifacts are written to `output/blocking/` (examples are available in [output_examples/run/blocking](output_examples/run/blocking)):
-- [run_config.json](output_examples/run/blocking/run_config.json) — Runtime configuration used for the run.
-- [metrics.csv](output_examples/run/blocking/metrics.csv) — Per-tick metrics showing latency, completions, fallbacks, and late/duplicate counts.
-- [tick_summary.json](output_examples/run/blocking/tick_summary.json) — Per-tick decisions and metrics for each zone.
-- [latency_log.json](output_examples/run/blocking/latency_log.json) — Per-zone per-tick latency entries.
-- [actor_counters.json](output_examples/run/blocking/actor_counters.json) — Per-zone duplicate, late, and fallback counters.
+- [run_config.json](output_examples/run/blocking/run_config.json) - Runtime configuration used for the run.
+- [metrics.csv](output_examples/run/blocking/metrics.csv) - Per-tick metrics showing latency, completions, fallbacks, and late/duplicate counts.
+- [tick_summary.json](output_examples/run/blocking/tick_summary.json) - Per-tick decisions and metrics for each zone.
+- [latency_log.json](output_examples/run/blocking/latency_log.json) - Per-zone per-tick latency entries.
+- [actor_counters.json](output_examples/run/blocking/actor_counters.json) - Per-zone duplicate, late, and fallback counters.
 
 **Takeaway:** Blocking is simple but skew-sensitive. A single slow zone dominates tick latency, visible in metrics where `max_zone_latency_s` far exceeds `mean_zone_latency_s`.
 
 
-### Step 3 — Async controller
+### Step 3 - Async controller
 
 ```bash
 run \
@@ -178,16 +178,16 @@ This command runs the replay in async mode with simulated skew (25% slow zones, 
 **Results:**
 
 Run artifacts are written to `output/async/` (examples are available in [output_examples/run/async](output_examples/run/async)):
-- [run_config.json](output_examples/run/async/run_config.json) — Runtime configuration used for the run.
-- [metrics.csv](output_examples/run/async/metrics.csv) — Per-tick metrics showing latency, completions, fallbacks, and late/duplicate counts.
-- [tick_summary.json](output_examples/run/async/tick_summary.json) — Per-tick decisions and metrics for each zone.
-- [latency_log.json](output_examples/run/async/latency_log.json) — Per-zone per-tick latency entries.
-- [actor_counters.json](output_examples/run/async/actor_counters.json) — Per-zone duplicate, late, and fallback counters.
+- [run_config.json](output_examples/run/async/run_config.json) - Runtime configuration used for the run.
+- [metrics.csv](output_examples/run/async/metrics.csv) - Per-tick metrics showing latency, completions, fallbacks, and late/duplicate counts.
+- [tick_summary.json](output_examples/run/async/tick_summary.json) - Per-tick decisions and metrics for each zone.
+- [latency_log.json](output_examples/run/async/latency_log.json) - Per-zone per-tick latency entries.
+- [actor_counters.json](output_examples/run/async/actor_counters.json) - Per-zone duplicate, late, and fallback counters.
 
 **Takeaway:** Async mode allows ticks to complete without waiting for slow zones, achieving lower total tick latency compared to blocking. The trade-off is increased complexity and reliance on fallback decisions for late zones.
 
 
-### Step 4 — Stress test
+### Step 4 - Stress test
 
 ```bash
 run \
@@ -205,9 +205,9 @@ This command runs both blocking and async modes back-to-back with harsher skew (
 **Results:**
 
 Run artifacts are written to `output/stress/` (examples are available in [output_examples/run/stress](output_examples/run/stress)):
-- [blocking/](output_examples/run/stress/blocking) — Full blocking mode artifacts with harsh skew parameters.
-- [async/](output_examples/run/stress/async) — Full async mode artifacts with harsh skew parameters.
-- [comparison.json](output_examples/run/stress/comparison.json) — Side-by-side comparison of blocking vs async metrics.
+- [blocking/](output_examples/run/stress/blocking) - Full blocking mode artifacts with harsh skew parameters.
+- [async/](output_examples/run/stress/async) - Full async mode artifacts with harsh skew parameters.
+- [comparison.json](output_examples/run/stress/comparison.json) - Side-by-side comparison of blocking vs async metrics.
 
 **Takeaway:** Async degrades gracefully with controlled tick completion and more fallbacks. Blocking degrades sharply with mean and max tick latency increasing significantly under harsher skew.
 
@@ -234,9 +234,9 @@ The baseline statistics are computed from the reference month, grouped by zone, 
 
 The async controller finalizes each tick using:
 
-- **Bounded concurrency** — `max_inflight_zones` limits simultaneous scoring tasks.
-- **Timeout** — zones still pending after `tick_timeout_s` seconds are considered late.
-- **Fallback** — late zones inherit their previous accepted decision (`always_previous`), and zones without history default to `OK`.
+- **Bounded concurrency** - `max_inflight_zones` limits simultaneous scoring tasks.
+- **Timeout** - zones still pending after `tick_timeout_s` seconds are considered late.
+- **Fallback** - late zones inherit their previous accepted decision (`always_previous`), and zones without history default to `OK`.
 
 Fallback behavior is deterministic (same inputs + seed = same outcomes) and fully visible in artifacts: `actor_counters.json` tracks `n_fallbacks`, `n_late`, `n_duplicates` per zone; `metrics.csv` tracks `n_zones_fallback` per tick.
 

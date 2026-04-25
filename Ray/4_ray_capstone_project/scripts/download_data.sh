@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# download_data.sh — Download TLC Green Taxi parquet files into the data/ directory.
+# download_data.sh - Download TLC Green Taxi parquet files into the data/ directory.
 # Skips files that already exist. Safe to run multiple times.
 set -euo pipefail
 

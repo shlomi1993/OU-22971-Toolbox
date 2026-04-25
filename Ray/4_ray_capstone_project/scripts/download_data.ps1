@@ -1,4 +1,4 @@
-# download_data.ps1 — Download TLC Green Taxi parquet files into the data/ directory.
+# download_data.ps1 - Download TLC Green Taxi parquet files into the data/ directory.
 # Skips files that already exist. Safe to run multiple times.
 # WARNING: this script was not tested!
 
