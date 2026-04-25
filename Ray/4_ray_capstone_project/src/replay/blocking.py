@@ -6,16 +6,14 @@ advancing each tick. This is the simplest execution mode with straightforward co
 sensitive to skew since the tick cannot advance until all zones have reported in.
 """
 
-import time
 import numpy as np
 import ray
 
 from typing import Dict
 
-from src.core import TickMetrics
+from src.core import TickMetrics, ZoneSnapshot
 from src.replay.base import Replay
-from src.replay.scoring import score_zone
-from src.zone_actor import ZoneRecommendation, ZoneSnapshot
+from src.scoring_task import score_zone
 
 
 class BlockingReplay(Replay):

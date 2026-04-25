@@ -51,6 +51,14 @@ class ReplayMode(str, Enum):
     STRESS = "stress"
 
 
+class DemandVerdict(str, Enum):
+    """
+    Decision verdict for a zone at a given tick, based on recent demand vs baseline.
+    """
+    NEED = "NEED"
+    OK = "OK"
+
+
 @dataclass
 class RoundedDataclass:
     """
@@ -101,7 +109,7 @@ class ReplayConfig(RoundedDataclass):
     slow_zone_sleep_s: float = DEFAULT_SLOW_ZONE_SLEEP_S
     fallback_policy: str = FALLBACK_POLICY_PREVIOUS
     seed: int = DEFAULT_SEED
-    max_ticks: int = None  # None = no limit
+    max_ticks: int = None  # None or 0 mean no limit
 
     @classmethod
     def from_args(cls: type["ReplayConfig"], args: argparse.Namespace) -> "ReplayConfig":
@@ -126,6 +134,31 @@ class ReplayConfig(RoundedDataclass):
             seed=args.seed,
             max_ticks=args.max_ticks,
         )
+
+
+@dataclass
+class ZoneSnapshot(RoundedDataclass):
+    """
+    Snapshot of demand and baseline for a zone at a given tick, used as input for scoring.
+    """
+    zone_id: int
+    tick_id: int
+    recent_demand: List[float] = field(default_factory=list)
+    baseline_mean: float = 0.0
+    baseline_std: float = 0.0
+    is_slow_zone: bool = False
+    slow_sleep_s: float = 0.0
+
+
+@dataclass
+class ScoringResult(RoundedDataclass):
+    """
+    Result of scoring for a zone at a given tick.
+    """
+    zone_id: int
+    tick_id: int
+    decision: DemandVerdict
+    task_latency_s: float = 0.0
 
 
 @dataclass
@@ -340,6 +373,23 @@ def cross_check_replay(raw_df: pd.DataFrame, replay_table: pd.DataFrame, active_
     return bool(match)
 
 
+def load_prepared(prepared_dir: Path) -> PreparedData:
+    """
+    Load prepared assets from disk.
+
+    Args:
+        prepared_dir (Path): Directory containing baseline.parquet, replay.parquet, active_zones.json.
+
+    Returns:
+        PreparedData: Dataclass containing replay table, baseline table, and active zones list.
+    """
+    replay = pd.read_parquet(prepared_dir / "replay.parquet")
+    baseline = pd.read_parquet(prepared_dir / "baseline.parquet")
+    with open(prepared_dir / "active_zones.json") as f:
+        active_zones = json.load(f)
+    return PreparedData(replay, baseline, active_zones)
+
+
 def write_json(data: Any, path: Path) -> None:
     """
     Write a JSON-serializable object to disk.
@@ -403,20 +453,3 @@ def write_latency_log(tick_metrics: List[TickMetrics], path: Path) -> None:
         for zone_id, lat in m.per_zone_latency.items():
             log_entries.append({"tick_id": m.tick_id, "zone_id": zone_id, "latency_s": round(lat, 4)})
     write_json(log_entries, path)
-
-
-def load_prepared(prepared_dir: Path) -> PreparedData:
-    """
-    Load prepared assets from disk.
-
-    Args:
-        prepared_dir (Path): Directory containing baseline.parquet, replay.parquet, active_zones.json.
-
-    Returns:
-        PreparedData: Dataclass containing replay table, baseline table, and active zones list.
-    """
-    replay = pd.read_parquet(prepared_dir / "replay.parquet")
-    baseline = pd.read_parquet(prepared_dir / "baseline.parquet")
-    with open(prepared_dir / "active_zones.json") as f:
-        active_zones = json.load(f)
-    return PreparedData(replay, baseline, active_zones)

@@ -12,11 +12,12 @@ Covers:
 - Async mode (partial readiness with fallback)
 """
 
+import numpy as np
 import pytest
 import ray
 
-from src.core import FALLBACK_POLICY_PREVIOUS, ReplayConfig
-from src.zone_actor import Recommendation, WriteStatus, ZoneActor
+from src.core import FALLBACK_POLICY_PREVIOUS, DemandVerdict, ReplayConfig
+from src.zone_actor import WriteStatus, ZoneActor
 from tests.helpers import make_zone_data, RNG_SEED
 
 
@@ -159,7 +160,7 @@ def test_first_tick_finalize_without_report_defaults_ok() -> None:
     ray.get(actor.finalize_tick.remote(0, FALLBACK_POLICY_PREVIOUS))
 
     decisions = ray.get(actor.get_accepted_decisions.remote())
-    assert decisions[0] == Recommendation.OK, "First tick with no report and no history must default to OK"
+    assert decisions[0] == DemandVerdict.OK, "First tick with no report and no history must default to OK"
     counters = ray.get(actor.get_counters.remote())
     assert counters.n_fallbacks == 1, "First-use fallback must be counted"
 
@@ -173,7 +174,9 @@ def test_multi_tick_decisions_accumulate() -> None:
     for tick_id in range(3):
         ray.get(actor.activate_tick.remote(tick_id))
         snap = ray.get(actor.get_snapshot.remote(tick_id))
-        decision = snap.compute_decision()
+        avg = np.mean(snap.recent_demand) if snap.recent_demand else 0.0
+        threshold = snap.baseline_mean + max(snap.baseline_std, 1.0)
+        decision = DemandVerdict.NEED if snap.recent_demand and avg > threshold else DemandVerdict.OK
         ray.get(actor.write_decision.remote(tick_id, decision))
 
     decisions = ray.get(actor.get_accepted_decisions.remote())
@@ -202,7 +205,9 @@ def test_blocking_all_zones_decided_no_fallback() -> None:
     snapshots = {zid: ray.get(a.get_snapshot.remote(tick_id)) for zid, a in actors.items()}
 
     for zid, snap in snapshots.items():
-        decision = snap.compute_decision()
+        avg = np.mean(snap.recent_demand) if snap.recent_demand else 0.0
+        threshold = snap.baseline_mean + max(snap.baseline_std, 1.0)
+        decision = DemandVerdict.NEED if snap.recent_demand and avg > threshold else DemandVerdict.OK
         ray.get(actors[zid].write_decision.remote(tick_id, decision))
 
     for zid in zone_ids:

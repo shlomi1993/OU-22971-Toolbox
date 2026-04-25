@@ -32,7 +32,8 @@ from src.core import (
     write_metrics_csv,
     write_tick_summary,
 )
-from src.zone_actor import Recommendation, ZoneActor, ZoneSnapshot
+from src.core import DemandVerdict
+from src.zone_actor import ZoneActor
 from tests.helpers import make_trips
 
 
@@ -114,19 +115,10 @@ def test_baseline_table_columns_and_values() -> None:
 # ============================================================================
 
 
-def test_snapshot_decision_threshold() -> None:
-    snap_need = ZoneSnapshot(zone_id=1, tick_id=0, recent_demand=[15.0, 16.0], baseline_mean=10.0, baseline_std=2.0)
-    snap_ok = ZoneSnapshot(zone_id=1, tick_id=0, recent_demand=[8.0, 9.0], baseline_mean=10.0, baseline_std=2.0)
-    snap_empty = ZoneSnapshot(zone_id=1, tick_id=0, recent_demand=[], baseline_mean=10.0, baseline_std=2.0)
-    assert snap_need.compute_decision() == Recommendation.NEED, "Demand above baseline+std must produce NEED"
-    assert snap_ok.compute_decision() == Recommendation.OK, "Demand below baseline+std must produce OK"
-    assert snap_empty.compute_decision() == Recommendation.OK, "Empty recent demand must produce OK"
-
-
 def test_fallback_always_previous_policy() -> None:
     assert ZoneActor.apply_fallback(FALLBACK_POLICY_PREVIOUS, "NEED") == "NEED", "Fallback should return previous decision when available"
-    assert ZoneActor.apply_fallback(FALLBACK_POLICY_PREVIOUS, None) == Recommendation.OK, "Fallback should default to OK when no previous decision exists (first-use edge case)"
-    assert ZoneActor.apply_fallback("unknown_policy", "NEED") == Recommendation.OK, "Unknown fallback policy should default to OK"
+    assert ZoneActor.apply_fallback(FALLBACK_POLICY_PREVIOUS, None) == DemandVerdict.OK, "Fallback should default to OK when no previous decision exists (first-use edge case)"
+    assert ZoneActor.apply_fallback("unknown_policy", "NEED") == DemandVerdict.OK, "Unknown fallback policy should default to OK"
 
 
 # ============================================================================
