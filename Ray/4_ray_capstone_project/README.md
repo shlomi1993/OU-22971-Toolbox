@@ -59,6 +59,8 @@ environment.yml             # Conda environment definition
 pytest.ini                  # Pytest configuration
 ```
 
+<img width="1672" height="941" alt="ChatGPT Image Apr 25, 2026, 11_38_10 AM" src="https://github.com/user-attachments/assets/c088f9a3-c5ae-4733-8481-1fbe5dcade1c" />
+
 
 ## Setup
 
