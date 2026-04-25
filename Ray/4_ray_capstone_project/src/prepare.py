@@ -12,11 +12,8 @@ import pandas as pd
 from pathlib import Path
 
 from src.artifacts import write_json
-from src.core import (
-    DEFAULT_N_ZONES,
-    DEFAULT_PREPARED_DIR,
-    DEFAULT_SEED,
-    TICK_MINUTES,
+from src.core import DEFAULT_N_ZONES, DEFAULT_PREPARED_DIR, DEFAULT_SEED, TICK_MINUTES
+from src.data_preparation import (
     aggregate_ticks,
     build_baseline_table,
     build_replay_table,
