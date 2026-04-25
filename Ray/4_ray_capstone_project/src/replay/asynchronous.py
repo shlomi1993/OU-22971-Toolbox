@@ -10,7 +10,7 @@ import time
 import ray
 
 from typing import Dict
-from src.core import TickMetrics, ZoneSnapshot
+from src.common import TickMetrics, ZoneSnapshot
 from src.replay.base import Replay
 from src.scoring_task import score_zone
 

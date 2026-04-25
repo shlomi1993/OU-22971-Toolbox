@@ -9,7 +9,7 @@ import numpy as np
 import ray
 
 from ray.actor import ActorHandle
-from src.core import DemandVerdict, ScoringResult, ZoneSnapshot
+from src.common import DemandVerdict, ScoringResult, ZoneSnapshot
 
 
 @ray.remote

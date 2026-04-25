@@ -11,7 +11,7 @@ import pandas as pd
 from pathlib import Path
 from typing import Any, Dict, List
 
-from src.core import TickMetrics
+from src.common import TickMetrics
 
 
 logger = logging.getLogger(__name__)

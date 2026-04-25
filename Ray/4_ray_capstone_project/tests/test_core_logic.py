@@ -17,7 +17,7 @@ import pytest
 from pathlib import Path
 
 from src.artifacts import write_json, write_latency_log, write_metrics_csv, write_tick_summary
-from src.core import FALLBACK_POLICY_PREVIOUS, TICK_MINUTES, ReplayConfig, TickMetrics
+from src.common import FALLBACK_POLICY_PREVIOUS, TICK_MINUTES, ReplayConfig, TickMetrics
 from src.data_preparation import (
     aggregate_ticks,
     build_baseline_table,
@@ -26,7 +26,7 @@ from src.data_preparation import (
     identify_busiest_zones,
     validate_adjacent_months,
 )
-from src.core import DemandVerdict
+from src.common import DemandVerdict
 from src.zone_actor import ZoneActor
 from tests.helpers import make_trips
 

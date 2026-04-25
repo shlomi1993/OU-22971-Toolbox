@@ -9,7 +9,7 @@ import subprocess
 
 from pathlib import Path
 
-from src.core import DEFAULT_OUTPUT_DIR, DEFAULT_PREPARED_DIR
+from src.common import DEFAULT_OUTPUT_DIR, DEFAULT_PREPARED_DIR
 
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")

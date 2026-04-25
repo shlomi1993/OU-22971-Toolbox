@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Tuple
 
-from src.core import CROSS_CHECK_N_TICKS, DEFAULT_SEED, REQUIRED_PARQUET_COLS, TICK_MINUTES
+from src.common import CROSS_CHECK_N_TICKS, DEFAULT_SEED, REQUIRED_PARQUET_COLS, TICK_MINUTES
 
 
 logger = logging.getLogger(__name__)
