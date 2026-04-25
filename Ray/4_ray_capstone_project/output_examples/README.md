@@ -13,7 +13,7 @@ bash scripts/download_data.sh
 
 **2. Prepare replay assets:**
 ```bash
-python main.py prepare \
+prepare \
     --ref-parquet data/green_tripdata_2023-01.parquet \
     --replay-parquet data/green_tripdata_2023-02.parquet \
     --output-dir output_examples/prepared \
@@ -23,7 +23,7 @@ python main.py prepare \
 
 **3. Run blocking baseline:**
 ```bash
-python main.py run \
+run \
     --prepared-dir output_examples/prepared \
     --output-dir output_examples/run \
     --mode blocking \
@@ -35,7 +35,7 @@ python main.py run \
 
 **4. Run async controller:**
 ```bash
-python main.py run \
+run \
     --prepared-dir output_examples/prepared \
     --output-dir output_examples/run \
     --mode async \
@@ -50,7 +50,7 @@ python main.py run \
 
 **5. Run stress test:**
 ```bash
-python main.py run \
+run \
     --prepared-dir output_examples/prepared \
     --output-dir output_examples/run \
     --mode stress \
