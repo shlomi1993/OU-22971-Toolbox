@@ -1,5 +1,5 @@
 """
-Shared pytest configuration and fixtures for Ray capstone project tests.
+Pytest configuration and fixtures for Ray capstone project tests.
 """
 
 import os

@@ -1,5 +1,5 @@
 """
-ZoneActor state management and fault-tolerance tests.
+Tests for ZoneActor state management and fault-tolerance.
 
 Covers:
 - Write decision idempotency

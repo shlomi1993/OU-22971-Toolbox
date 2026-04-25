@@ -1,5 +1,5 @@
 """
-Script-level integration and end-to-end workflow tests.
+Tests for script-level integration and end-to-end workflows.
 
 Covers:
 - Prepare script with various configurations
