@@ -38,6 +38,7 @@ trap 'error_handler $LINENO' ERR
 GREEN='\033[0;32m'
 CYAN='\033[0;36m'
 RED='\033[0;31m'
+GRAY='\033[0;90m'
 NC='\033[0m' # No Color
 
 # Suppress Ray warnings
@@ -52,6 +53,13 @@ log_and_run() {
     echo -e "${GREEN}$*${NC}"
     "$@"
 }
+
+format_duration() {
+    local secs=$1
+    printf '%dm %02ds' $((secs / 60)) $((secs % 60))
+}
+
+TOTAL_START=$SECONDS
 
 KEEP_ARTIFACTS=false
 MAX_TICKS=50
@@ -89,21 +97,26 @@ echo -e "${CYAN}=============================${NC}"
 # --- Download data ---
 echo ""
 echo -e "${CYAN}Step 1: Download TLC data${NC}"
+STEP_START=$SECONDS
 log_and_run bash "$PROJECT_DIR/scripts/download_data.sh"
+echo -e "${GRAY}Step 1 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 
 # --- Prepare assets ---
 echo ""
 echo -e "${CYAN}Step 2: Prepare replay assets${NC}"
+STEP_START=$SECONDS
 log_and_run prepare \
     --ref-parquet "$REF_FILE" \
     --replay-parquet "$REPLAY_FILE" \
     --output-dir "$PREPARED_DIR" \
     --n-zones 20
 echo "Prepared assets written to $PREPARED_DIR"
+echo -e "${GRAY}Step 2 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 
 # --- Run 1: Blocking baseline ---
 echo ""
 echo -e "${CYAN}Step 3: Run blocking baseline${NC}"
+STEP_START=$SECONDS
 log_and_run run \
     --prepared-dir "$PREPARED_DIR" \
     --output-dir "$OUTPUT_DIR" \
@@ -112,10 +125,12 @@ log_and_run run \
     --slow-zone-sleep-s 1.0 \
     --max-ticks "$MAX_TICKS"
 echo "Blocking run complete. Artifacts in $OUTPUT_DIR/blocking/"
+echo -e "${GRAY}Step 3 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 
 # --- Run 2: Async controller ---
 echo ""
 echo -e "${CYAN}Step 4: Run async controller${NC}"
+STEP_START=$SECONDS
 log_and_run run \
     --prepared-dir "$PREPARED_DIR" \
     --output-dir "$OUTPUT_DIR" \
@@ -127,10 +142,12 @@ log_and_run run \
     --max-inflight-zones 4 \
     --max-ticks "$MAX_TICKS"
 echo "Async run complete. Artifacts in $OUTPUT_DIR/async/"
+echo -e "${GRAY}Step 4 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 
 # --- Run 3: Stress test ---
 echo ""
 echo -e "${CYAN}Step 5: Run skew stress test${NC}"
+STEP_START=$SECONDS
 log_and_run run \
     --prepared-dir "$PREPARED_DIR" \
     --output-dir "$OUTPUT_DIR" \
@@ -140,15 +157,19 @@ log_and_run run \
     --tick-timeout-s 2.0 \
     --max-ticks "$MAX_TICKS"
 echo "Stress run complete. Artifacts in $OUTPUT_DIR/stress/"
+echo -e "${GRAY}Step 5 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 
 # --- Verify artifacts ---
 echo ""
 echo -e "${CYAN}Step 6: Verify output artifacts${NC}"
+STEP_START=$SECONDS
 for mode in blocking async; do
     for f in run_config.json metrics.csv latency_log.json tick_summary.json actor_counters.json; do
         if [ ! -f "$OUTPUT_DIR/$mode/$f" ]; then
             echo -e "${RED}FAIL: Missing $OUTPUT_DIR/$mode/$f${NC}"
             exit 1
+        else
+            echo "Found $OUTPUT_DIR/$mode/$f"
         fi
     done
 done
@@ -157,9 +178,12 @@ if [ ! -f "$OUTPUT_DIR/stress/comparison.json" ]; then
     exit 1
 fi
 
+echo -e "${GRAY}Step 6 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
+
 # --- Verdict ---
 echo ""
 echo -e "${GREEN}Full flow tests passed!${NC}"
+echo -e "${GRAY}Total elapsed: $(format_duration $((SECONDS - TOTAL_START)))${NC}"
 
 # --- Cleanup ---
 echo ""
