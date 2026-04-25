@@ -11,6 +11,7 @@ import pandas as pd
 
 from pathlib import Path
 
+from src.artifacts import write_json
 from src.core import (
     DEFAULT_N_ZONES,
     DEFAULT_PREPARED_DIR,
@@ -23,7 +24,6 @@ from src.core import (
     load_parquet,
     identify_busiest_zones,
     validate_adjacent_months,
-    write_json,
 )
 
 

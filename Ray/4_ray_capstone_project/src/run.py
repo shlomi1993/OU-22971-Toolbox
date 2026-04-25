@@ -19,6 +19,7 @@ import ray
 from pathlib import Path
 from typing import List
 
+from src.artifacts import write_json
 from src.core import (
     DEFAULT_COMPLETION_FRACTION,
     DEFAULT_MAX_INFLIGHT_ZONES,
@@ -33,7 +34,6 @@ from src.core import (
     ReplayMode,
     ReplayConfig,
     TickMetrics,
-    write_json,
 )
 from src.replay.blocking import BlockingReplay
 from src.replay.asynchronous import AsyncReplay
