@@ -12,27 +12,26 @@ Key features:
 - Observability counters for late/duplicate reports and fallback usage
 """
 
-import numpy as np
 import pandas as pd
 import ray
 
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Deque
+from typing import Dict, Optional, Tuple, Deque
 
-from src.core import DEMAND_WINDOW_SIZE, FALLBACK_POLICY_PREVIOUS, RoundedDataclass, ReplayConfig
+from src.core import (
+    DEMAND_WINDOW_SIZE,
+    FALLBACK_POLICY_PREVIOUS,
+    DemandVerdict,
+    ReplayConfig,
+    RoundedDataclass,
+    ScoringResult,
+    ZoneSnapshot,
+)
 
 
 Baseline = Dict[Tuple[int, int], Tuple[float, float]]
-
-
-class Recommendation(str, Enum):
-    """
-    Scoring outcome for a zone at a given tick.
-    """
-    NEED = "NEED"
-    OK = "OK"
 
 
 class WriteStatus(str, Enum):
@@ -46,46 +45,7 @@ class WriteStatus(str, Enum):
 
 
 @dataclass
-class ZoneRecommendation(RoundedDataclass):
-    """
-    Result from a scoring task.
-    """
-    zone_id: int
-    tick_id: int
-    decision: Recommendation
-    task_latency_s: float = 0.0
-
-
-@dataclass
-class ZoneSnapshot(RoundedDataclass):
-    """
-    Minimal snapshot passed to a scoring task.
-    """
-    zone_id: int
-    tick_id: int
-    recent_demand: List[float] = field(default_factory=list)
-    baseline_mean: float = 0.0
-    baseline_std: float = 0.0
-    is_slow_zone: bool = False
-    slow_sleep_s: float = 0.0
-
-    def compute_decision(self) -> Recommendation:
-        """
-        Simple threshold scoring rule.
-
-        Returns:
-            Recommendation: "NEED" if recent demand exceeds baseline mean + 1 std, else "OK".
-        """
-        if not self.recent_demand:
-            return Recommendation.OK
-
-        recent_avg = np.mean(self.recent_demand)
-        threshold = self.baseline_mean + max(self.baseline_std, 1.0)
-        return Recommendation.NEED if recent_avg > threshold else Recommendation.OK
-
-
-@dataclass
-class ZoneCounters(RoundedDataclass):
+class ActorCounters(RoundedDataclass):
     """
     Observability counters for a single zone actor.
     """
@@ -129,7 +89,7 @@ class ZoneActor:
         # Mutable state
         self.recent_demand: Deque[float] = deque(maxlen=DEMAND_WINDOW_SIZE)
         self.active_tick_id: Optional[int] = None
-        self.reported_decision: Optional[ZoneRecommendation] = None
+        self.reported_decision: Optional[ScoringResult] = None
         self.accepted_decisions: Dict[int, str] = {}  # tick_id -> decision
         self.last_accepted_decision: Optional[str] = None
 
@@ -201,7 +161,7 @@ class ZoneActor:
             return WriteStatus.DUPLICATE
 
         # Accept: store the reported decision (not yet finalized)
-        self.reported_decision = ZoneRecommendation(self.zone_id, tick_id, decision, latency)
+        self.reported_decision = ScoringResult(self.zone_id, tick_id, decision, latency)
         return WriteStatus.ACCEPTED
 
     def has_decision_for_tick(self, tick_id: int) -> bool:
@@ -260,10 +220,10 @@ class ZoneActor:
             str: The fallback decision to apply.
         """
         if policy != FALLBACK_POLICY_PREVIOUS:
-            return Recommendation.OK
+            return DemandVerdict.OK
         if last_decision is not None:
             return last_decision
-        return Recommendation.OK
+        return DemandVerdict.OK
 
     def finalize_tick(self, tick_id: int, fallback_policy: str) -> str:
         """
@@ -299,11 +259,11 @@ class ZoneActor:
         """
         return dict(self.accepted_decisions)
 
-    def get_counters(self) -> ZoneCounters:
+    def get_counters(self) -> ActorCounters:
         """
         Return observability counters. Each actor tracks its own counters for simplicity.
 
         Returns:
-            ZoneCounters: Counters object with zone_id, n_duplicates, n_late, n_fallbacks.
+            ActorCounters: Counters object with zone_id, n_duplicates, n_late, n_fallbacks.
         """
-        return ZoneCounters(self.zone_id, self.n_duplicates, self.n_late, self.n_fallbacks)
+        return ActorCounters(self.zone_id, self.n_duplicates, self.n_late, self.n_fallbacks)

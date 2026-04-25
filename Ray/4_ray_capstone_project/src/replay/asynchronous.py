@@ -10,10 +10,9 @@ import time
 import ray
 
 from typing import Dict
-from src.core import TickMetrics
+from src.core import TickMetrics, ZoneSnapshot
 from src.replay.base import Replay
-from src.replay.scoring import score_zone
-from src.zone_actor import ZoneSnapshot
+from src.scoring_task import score_zone
 
 
 class AsyncReplay(Replay):

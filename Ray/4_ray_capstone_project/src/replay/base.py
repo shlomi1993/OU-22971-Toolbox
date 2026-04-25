@@ -20,13 +20,14 @@ from src.core import (
     PreparedData,
     ReplayConfig,
     TickMetrics,
+    ZoneSnapshot,
     load_prepared,
     write_json,
     write_latency_log,
     write_metrics_csv,
     write_tick_summary,
 )
-from src.zone_actor import ZoneActor, ZoneSnapshot
+from src.zone_actor import ZoneActor
 
 
 class Replay(ABC):
