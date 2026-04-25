@@ -40,6 +40,14 @@ DEFAULT_SLOW_ZONE_SLEEP_S = 1.0  # Artificial delay in seconds for slow zones in
 # Fallback policies
 FALLBACK_POLICY_PREVIOUS = "always_previous"  # Fallback policy: always use previous tick's demand for late zones
 
+# Stretch A - Delayed arrivals defaults
+DEFAULT_DELAYED_FRACTION = 0.3  # Fraction of ticks where demand is withheld
+DEFAULT_DELAY_TICKS = 2  # Number of ticks to withhold demand before release
+
+# Stretch B - Adaptive subactor defaults
+DEFAULT_REPEAT_STRAGGLER_FRACTION = 0.15  # Fraction of zones that are repeat stragglers
+DEFAULT_STRAGGLER_TRIGGER_COUNT = 3  # Slow-tick count before creating a subactor
+
 # Validation constants
 CROSS_CHECK_N_TICKS = 4  # Number of ticks to sample for cross-check validation
 REQUIRED_PARQUET_COLS = ["lpep_pickup_datetime", "lpep_dropoff_datetime", "PULocationID"]  # Required columns in input files
@@ -49,6 +57,8 @@ class ReplayMode(str, Enum):
     BLOCKING = "blocking"
     ASYNC = "async"
     STRESS = "stress"
+    DELAYED = "delayed"
+    SUBACTOR = "subactor"
 
 
 @dataclass
@@ -102,6 +112,12 @@ class ReplayConfig(RoundedDataclass):
     fallback_policy: str = FALLBACK_POLICY_PREVIOUS
     seed: int = DEFAULT_SEED
     max_ticks: int = None  # None = no limit
+    # Stretch A - Delayed arrivals
+    delayed_fraction: float = DEFAULT_DELAYED_FRACTION
+    delay_ticks: int = DEFAULT_DELAY_TICKS
+    # Stretch B - Adaptive subactors
+    repeat_straggler_fraction: float = DEFAULT_REPEAT_STRAGGLER_FRACTION
+    straggler_trigger_count: int = DEFAULT_STRAGGLER_TRIGGER_COUNT
 
     @classmethod
     def from_args(cls: type["ReplayConfig"], args: argparse.Namespace) -> "ReplayConfig":
@@ -125,6 +141,10 @@ class ReplayConfig(RoundedDataclass):
             fallback_policy=args.fallback_policy,
             seed=args.seed,
             max_ticks=args.max_ticks,
+            delayed_fraction=getattr(args, 'delayed_fraction', DEFAULT_DELAYED_FRACTION),
+            delay_ticks=getattr(args, 'delay_ticks', DEFAULT_DELAY_TICKS),
+            repeat_straggler_fraction=getattr(args, 'repeat_straggler_fraction', DEFAULT_REPEAT_STRAGGLER_FRACTION),
+            straggler_trigger_count=getattr(args, 'straggler_trigger_count', DEFAULT_STRAGGLER_TRIGGER_COUNT),
         )
 
 

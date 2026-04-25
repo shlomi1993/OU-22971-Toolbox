@@ -12,6 +12,7 @@ Key features:
 - Observability counters for late/duplicate reports and fallback usage
 """
 
+import hashlib
 import numpy as np
 import pandas as pd
 import ray
@@ -93,6 +94,8 @@ class ZoneCounters(RoundedDataclass):
     n_duplicates: int = 0
     n_late: int = 0
     n_fallbacks: int = 0
+    n_delayed_withheld: int = 0
+    n_delayed_released: int = 0
 
 
 @ray.remote
@@ -137,6 +140,18 @@ class ZoneActor:
         self.n_duplicates = 0
         self.n_late = 0
         self.n_fallbacks = 0
+
+        # Stretch A - Delayed arrival tracking
+        self.pending_releases: Dict[int, List[Tuple[int, float]]] = {}  # release_tick -> [(orig_tick, demand)]
+        self.withheld_ticks: set = set()
+        self.visible_demand: Deque[float] = deque(maxlen=DEMAND_WINDOW_SIZE)
+        self.n_delayed_withheld = 0
+        self.n_delayed_released = 0
+        self.delay_log: List[Dict] = []
+
+        # Stretch B - Straggler tracking
+        self.tick_latencies: List[float] = []
+        self.straggler_ticks: int = 0
 
     def activate_tick(self, tick_id: int) -> None:
         """
@@ -304,6 +319,182 @@ class ZoneActor:
         Return observability counters. Each actor tracks its own counters for simplicity.
 
         Returns:
-            ZoneCounters: Counters object with zone_id, n_duplicates, n_late, n_fallbacks.
+            ZoneCounters: Counters object with zone_id, n_duplicates, n_late, n_fallbacks,
+                n_delayed_withheld, n_delayed_released.
         """
-        return ZoneCounters(self.zone_id, self.n_duplicates, self.n_late, self.n_fallbacks)
+        return ZoneCounters(self.zone_id, self.n_duplicates, self.n_late, self.n_fallbacks, self.n_delayed_withheld,
+                            self.n_delayed_released)
+
+    @staticmethod
+    def _is_demand_delayed(zone_id: int, tick_id: int, delayed_fraction: float, seed: int) -> bool:
+        """
+        Deterministically decide whether this tick's demand should be withheld.
+
+        Uses a hash of (zone_id, tick_id, seed) for reproducibility.
+
+        Args:
+            zone_id (int): The zone ID.
+            tick_id (int): The tick ID.
+            delayed_fraction (float): Probability of withholding demand (0.0 – 1.0).
+            seed (int): Random seed for deterministic behavior.
+
+        Returns:
+            bool: True if demand should be withheld for this tick.
+        """
+        hash = hashlib.sha256(f"{zone_id}:{tick_id}:{seed}".encode()).hexdigest()
+        return (int(hash, 16) % 1000) < int(delayed_fraction * 1000)
+
+    def activate_tick_delayed(self, tick_id: int, delay_ticks: int, delayed_fraction: float, seed: int) -> Dict:
+        """
+        Activate a tick under delayed-arrival semantics.
+
+        1. Release any pending demand whose release tick has arrived.
+        2. Determine whether this tick's demand is withheld.
+        3. If withheld, buffer it for release at tick_id + delay_ticks.
+
+        Args:
+            tick_id (int): The tick to activate.
+            delay_ticks (int): Number of ticks to withhold demand before release.
+            delayed_fraction (float): Fraction of ticks whose demand is delayed.
+            seed (int): Random seed for deterministic delay decisions.
+
+        Returns:
+            Dict: Info about released and withheld demand for logging.
+        """
+        self.active_tick_id = tick_id
+        self.reported_decision = None
+
+        info: Dict = {"released": [], "withheld": False, "release_tick": None}
+
+        # Release pending demand that is due at this tick
+        if tick_id in self.pending_releases:
+            for orig_tick, demand in self.pending_releases.pop(tick_id):
+                self.visible_demand.append(demand)
+                self.n_delayed_released += 1
+                entry = {"event": "release", "zone_id": self.zone_id,
+                         "orig_tick": orig_tick, "release_tick": tick_id, "demand": demand}
+                self.delay_log.append(entry)
+                info["released"].append(entry)
+
+        # Decide whether current tick's demand is withheld
+        if tick_id < len(self.tick_order):
+            tick_start = self.tick_order[tick_id]
+            current_demand = float(self.replay.get(tick_start, 0.0))
+        else:
+            current_demand = 0.0
+        if self._is_demand_delayed(self.zone_id, tick_id, delayed_fraction, seed):
+            release_tick = tick_id + delay_ticks
+            self.pending_releases.setdefault(release_tick, []).append((tick_id, current_demand))
+            self.withheld_ticks.add(tick_id)
+            self.n_delayed_withheld += 1
+            entry = {"event": "withhold", "zone_id": self.zone_id,
+                     "tick_id": tick_id, "release_tick": release_tick, "demand": current_demand}
+            self.delay_log.append(entry)
+            info["withheld"] = True
+            info["release_tick"] = release_tick
+
+        return info
+
+    def get_snapshot_delayed(self, tick_id: int) -> ZoneSnapshot:
+        """
+        Return a snapshot that uses only *visible* demand.
+
+        If the current tick's demand is withheld, the snapshot will not include it as the scoring logic sees an
+        incomplete picture.
+
+        Args:
+            tick_id (int): The current tick index.
+
+        Returns:
+            ZoneSnapshot: Snapshot with visible demand only.
+        """
+        # Baseline lookup (same as regular get_snapshot)
+        if tick_id < len(self.tick_order):
+            tick_start = self.tick_order[tick_id]
+            hour, dow = tick_start.hour, tick_start.dayofweek
+        else:
+            hour, dow = 12, 0
+        baseline_mean, baseline_std = self.baseline.get((hour, dow), (0.0, 0.0))
+
+        # Build demand window from visible demand only
+        if tick_id in self.withheld_ticks:
+            demand_window = list(self.visible_demand)  # current demand not included
+        else:
+            if tick_id < len(self.tick_order):
+                tick_start = self.tick_order[tick_id]
+                current_demand = float(self.replay.get(tick_start, 0.0))
+            else:
+                current_demand = 0.0
+            demand_window = list(self.visible_demand) + [current_demand]
+
+        return ZoneSnapshot(self.zone_id, tick_id, demand_window, baseline_mean, baseline_std)
+
+    def finalize_tick_delayed(self, tick_id: int, fallback_policy: str) -> str:
+        """
+        Finalize a tick under delayed-arrival semantics.
+
+        Args:
+            tick_id (int): The tick to finalize.
+            fallback_policy (str): Policy name for fallback.
+
+        Returns:
+            WriteStatus: WRITTEN or DUPLICATE.
+        """
+        if tick_id in self.accepted_decisions:
+            return WriteStatus.DUPLICATE
+
+        # Determine decision
+        if self.reported_decision is not None and self.reported_decision.tick_id == tick_id:
+            decision = self.reported_decision.decision
+            used_fallback = False
+        else:
+            decision = self.apply_fallback(fallback_policy, self.last_accepted_decision)
+            used_fallback = True
+
+        # Accept decision
+        self.accepted_decisions[tick_id] = decision
+        self.last_accepted_decision = decision
+        if used_fallback:
+            self.n_fallbacks += 1
+
+        # Update demand: always update recent_demand; only update visible if not withheld
+        if tick_id < len(self.tick_order):
+            tick_start = self.tick_order[tick_id]
+            demand = float(self.replay.get(tick_start, 0.0))
+            self.recent_demand.append(demand)
+            if tick_id not in self.withheld_ticks:
+                self.visible_demand.append(demand)
+
+        return WriteStatus.WRITTEN
+
+    def get_delay_log(self) -> List[Dict]:
+        """
+        Return the full delayed-arrival event log.
+
+        Returns:
+            List[Dict]: List of withhold / release events.
+        """
+        return list(self.delay_log)
+
+    def record_tick_latency(self, latency: float, slow_threshold: float) -> None:
+        """
+        Record the observed task latency for the most recent tick.
+
+        If the latency exceeds slow_threshold, increment the straggler counter.
+
+        Args:
+            latency (float): Observed scoring latency in seconds.
+            slow_threshold (float): Latency threshold above which the tick counts as slow.
+        """
+        self.tick_latencies.append(latency)
+        if latency > slow_threshold:
+            self.straggler_ticks += 1
+
+    def get_straggler_ticks(self) -> int:
+        """
+        Return the cumulative count of slow ticks for this zone.
+
+        Returns:
+            int: Number of ticks where observed latency exceeded the slow threshold.
+        """
+        return self.straggler_ticks
