@@ -9,7 +9,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 6.7186,
+    "total_tick_latency_s": 6.3772,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -65,7 +65,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3097,
+    "total_tick_latency_s": 2.3961,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -121,7 +121,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3068,
+    "total_tick_latency_s": 2.323,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -177,7 +177,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3162,
+    "total_tick_latency_s": 2.3727,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -233,7 +233,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3096,
+    "total_tick_latency_s": 2.3526,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -289,7 +289,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3484,
+    "total_tick_latency_s": 2.3318,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -345,7 +345,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3255,
+    "total_tick_latency_s": 2.3345,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -401,7 +401,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3137,
+    "total_tick_latency_s": 2.3064,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -457,7 +457,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.2914,
+    "total_tick_latency_s": 2.2769,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -513,7 +513,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3061,
+    "total_tick_latency_s": 2.2977,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -569,7 +569,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.2878,
+    "total_tick_latency_s": 2.2909,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -625,7 +625,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3122,
+    "total_tick_latency_s": 2.3009,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -681,7 +681,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.2958,
+    "total_tick_latency_s": 2.3062,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -737,7 +737,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3032,
+    "total_tick_latency_s": 2.3055,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -793,7 +793,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3104,
+    "total_tick_latency_s": 2.2994,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -849,7 +849,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.299,
+    "total_tick_latency_s": 2.2871,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -905,7 +905,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3003,
+    "total_tick_latency_s": 2.3032,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -961,7 +961,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3194,
+    "total_tick_latency_s": 2.3109,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -1017,7 +1017,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3051,
+    "total_tick_latency_s": 2.2908,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -1073,7 +1073,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3274,
+    "total_tick_latency_s": 2.2916,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -1129,7 +1129,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.2926,
+    "total_tick_latency_s": 2.2965,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -1185,7 +1185,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3122,
+    "total_tick_latency_s": 2.2855,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -1241,7 +1241,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3307,
+    "total_tick_latency_s": 2.3025,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -1297,7 +1297,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3999,
+    "total_tick_latency_s": 2.2929,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -1353,7 +1353,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3217,
+    "total_tick_latency_s": 2.3073,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -1409,7 +1409,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3961,
+    "total_tick_latency_s": 2.31,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -1465,7 +1465,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3189,
+    "total_tick_latency_s": 2.2933,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -1521,7 +1521,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3199,
+    "total_tick_latency_s": 2.4902,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -1577,7 +1577,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.2981,
+    "total_tick_latency_s": 2.4688,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -1633,7 +1633,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3602,
+    "total_tick_latency_s": 2.2794,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -1689,7 +1689,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3002,
+    "total_tick_latency_s": 2.2984,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -1745,7 +1745,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3253,
+    "total_tick_latency_s": 2.3052,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -1801,7 +1801,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.2913,
+    "total_tick_latency_s": 2.3092,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -1857,7 +1857,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3173,
+    "total_tick_latency_s": 2.2907,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -1913,7 +1913,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3115,
+    "total_tick_latency_s": 2.2823,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -1969,7 +1969,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.2979,
+    "total_tick_latency_s": 2.3098,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -2025,7 +2025,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.305,
+    "total_tick_latency_s": 2.3145,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -2081,7 +2081,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3137,
+    "total_tick_latency_s": 2.3045,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -2137,7 +2137,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.2876,
+    "total_tick_latency_s": 2.3261,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -2193,7 +2193,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3057,
+    "total_tick_latency_s": 2.2736,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -2249,7 +2249,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3794,
+    "total_tick_latency_s": 2.3075,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -2305,7 +2305,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.4948,
+    "total_tick_latency_s": 2.3207,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -2361,7 +2361,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.32,
+    "total_tick_latency_s": 2.3296,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -2417,7 +2417,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3215,
+    "total_tick_latency_s": 2.4468,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -2473,7 +2473,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3221,
+    "total_tick_latency_s": 2.3752,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -2529,7 +2529,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3136,
+    "total_tick_latency_s": 2.354,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -2585,7 +2585,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3104,
+    "total_tick_latency_s": 2.3124,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -2641,7 +2641,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.316,
+    "total_tick_latency_s": 2.3326,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -2697,7 +2697,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3135,
+    "total_tick_latency_s": 2.3396,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
@@ -2753,7 +2753,7 @@
     "mean_zone_latency_s": 0.0,
     "max_zone_latency_s": 0.0,
     "max_mean_ratio": 0.0,
-    "total_tick_latency_s": 2.3093,
+    "total_tick_latency_s": 2.3058,
     "per_zone_latency": {
       "7": 0.0,
       "33": 0.0,
