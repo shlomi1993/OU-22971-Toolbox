@@ -2,7 +2,7 @@
 
 A replay-based recommendation system built on [Ray](https://www.ray.io/). The system processes NYC Green Taxi trip data in 15-minute windows (ticks), producing a per-zone demand recommendation (`NEED` or `OK`) at every tick. A blocking baseline and an asynchronous controller run the same replay side by side, exposing how skew, bounded concurrency, timeout-driven fallback, and idempotent actor writes affect latency and output correctness.
 
-<img width="2816" height="1536" alt="NYC TLC Green Taxi zone illustration" src="https://github.com/user-attachments/assets/c7867af0-e208-4700-8daf-16e56c154c9d" />
+<img width="2816" height="1536" alt="NYC TLC Green Taxi zone illustration" src="https://github.com/user-attachments/assets/1cd8998a-972a-4a33-965c-3cf8778f40dd" />
 
 ## Table of contents
 
