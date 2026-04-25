@@ -184,7 +184,7 @@ def test_multi_tick_decisions_accumulate() -> None:
 
 
 # ============================================================================
-# Blocking mode — all zones complete, no fallback
+# Blocking mode - all zones complete, no fallback
 # ============================================================================
 
 
@@ -214,7 +214,7 @@ def test_blocking_all_zones_decided_no_fallback() -> None:
 
 
 # ============================================================================
-# Async mode — partial readiness triggers fallback
+# Async mode - partial readiness triggers fallback
 # ============================================================================
 
 
@@ -236,7 +236,7 @@ def test_async_partial_readiness_triggers_fallback() -> None:
     assert readiness[110] is True, "Zone 110 should have a reported decision"
     assert readiness[220] is False, "Zone 220 has_decision_for_tick must return False, not None"
     assert readiness[330] is False, "Zone 330 has_decision_for_tick must return False, not None"
-    assert sum(readiness.values()) == 1, "sum(readiness) must work — driver uses this to count ready zones"
+    assert sum(readiness.values()) == 1, "sum(readiness) must work - driver uses this to count ready zones"
 
     for actor in actors.values():
         ray.get(actor.finalize_tick.remote(tick_id, FALLBACK_POLICY_PREVIOUS))
