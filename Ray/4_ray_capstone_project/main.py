@@ -27,7 +27,7 @@ import argparse
 from src.prepare import prepare_assets, build_prepare_parser
 from src.reset import reset_ray, build_reset_parser
 from src.run import run_replay, build_run_parser
-from src.core import ReplayConfig, ReplayMode
+from src.common import ReplayConfig, ReplayMode
 
 
 def build_parser() -> argparse.ArgumentParser:

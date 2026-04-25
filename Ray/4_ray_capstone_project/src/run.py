@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import List
 
 from src.artifacts import write_json
-from src.core import (
+from src.common import (
     DEFAULT_COMPLETION_FRACTION,
     DEFAULT_MAX_INFLIGHT_ZONES,
     DEFAULT_N_ZONES,

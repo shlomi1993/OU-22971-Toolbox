@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 import ray
 
-from src.core import FALLBACK_POLICY_PREVIOUS, DemandVerdict, ReplayConfig
+from src.common import FALLBACK_POLICY_PREVIOUS, DemandVerdict, ReplayConfig
 from src.zone_actor import WriteStatus, ZoneActor
 from tests.helpers import make_zone_data, RNG_SEED
 

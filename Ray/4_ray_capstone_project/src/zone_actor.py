@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, Optional, Tuple, Deque
 
-from src.core import (
+from src.common import (
     DEMAND_WINDOW_SIZE,
     FALLBACK_POLICY_PREVIOUS,
     DemandVerdict,
