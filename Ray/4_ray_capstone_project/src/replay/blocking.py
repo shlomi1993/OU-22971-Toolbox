@@ -14,33 +14,8 @@ from typing import Dict
 
 from src.core import TickMetrics
 from src.replay.base import Replay
+from src.replay.scoring import score_zone
 from src.zone_actor import ZoneRecommendation, ZoneSnapshot
-
-
-@ray.remote
-def score_zone_blocking(snapshot: ZoneSnapshot, slow_sleep_s: float = 0.0) -> ZoneRecommendation:
-    """
-    Per-zone scoring task for blocking mode.
-
-    Deterministic from snapshot input. Returns the decision payload to the controller.
-
-    Args:
-        snapshot (ZoneSnapshot): Snapshot object from ZoneActor.get_snapshot()
-        slow_sleep_s (float): Artificial delay in seconds to simulate skew
-
-    Returns:
-        ZoneRecommendation: Decision payload with zone_id, tick_id, decision, task_latency_s
-    """
-    start = time.time()
-
-    # Simulate skew
-    if slow_sleep_s > 0:
-        time.sleep(slow_sleep_s)
-
-    decision = snapshot.compute_decision()
-    latency = time.time() - start
-
-    return ZoneRecommendation(snapshot.zone_id, snapshot.tick_id, decision, latency)
 
 
 class BlockingReplay(Replay):
@@ -89,7 +64,7 @@ class BlockingReplay(Replay):
         task_refs = {}
         for zone_id, snap in snapshots.items():
             sleep_s = self.config.slow_zone_sleep_s if zone_id in self.slow_zones else 0.0
-            task_refs[zone_id] = score_zone_blocking.remote(snap, slow_sleep_s=sleep_s)
+            task_refs[zone_id] = score_zone.remote(snap, slow_sleep_s=sleep_s)
 
         # Wait for all results
         self.current_tick_results = {zone_id: ray.get(ref) for zone_id, ref in task_refs.items()}

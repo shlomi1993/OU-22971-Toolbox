@@ -10,40 +10,10 @@ import time
 import ray
 
 from typing import Dict
-from ray.actor import ActorHandle
 from src.core import TickMetrics
 from src.replay.base import Replay
-from src.zone_actor import ZoneRecommendation, ZoneSnapshot
-
-
-@ray.remote
-def score_zone_async(snapshot: ZoneSnapshot, slow_sleep_s: float, actor_handle: ActorHandle) -> ZoneRecommendation:
-    """
-    Per-zone scoring task for async mode.
-
-    Deterministic from snapshot input. Reports the decision to the ZoneActor before returning.
-
-    Args:
-        snapshot (ZoneSnapshot): Snapshot object from ZoneActor.get_snapshot()
-        slow_sleep_s (float): Artificial delay in seconds to simulate skew
-        actor_handle (ActorHandle): Ray actor handle for async reporting to the zone's actor
-
-    Returns:
-        ZoneRecommendation: Decision payload with zone_id, tick_id, decision, task_latency_s
-    """
-    start = time.time()
-
-    # Simulate skew
-    if slow_sleep_s > 0:
-        time.sleep(slow_sleep_s)
-
-    decision = snapshot.compute_decision()
-    latency = time.time() - start
-
-    # Report to actor in async mode
-    ray.get(actor_handle.report_decision.remote(snapshot.tick_id, decision, latency))
-
-    return ZoneRecommendation(snapshot.zone_id, snapshot.tick_id, decision, latency)
+from src.replay.scoring import score_zone
+from src.zone_actor import ZoneSnapshot
 
 
 class AsyncReplay(Replay):
@@ -107,7 +77,7 @@ class AsyncReplay(Replay):
             while zone_queue and len(pending) < self.config.max_inflight_zones:
                 zone_id = zone_queue.pop(0)
                 sleep_s = self.config.slow_zone_sleep_s if zone_id in self.slow_zones else 0.0
-                ref = score_zone_async.remote(snapshots[zone_id], slow_sleep_s=sleep_s, actor_handle=self.actors[zone_id])
+                ref = score_zone.remote(snapshots[zone_id], slow_sleep_s=sleep_s, actor_handle=self.actors[zone_id])
                 pending[ref] = zone_id
 
             if not pending:
