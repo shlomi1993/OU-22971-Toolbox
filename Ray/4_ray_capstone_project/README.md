@@ -6,17 +6,17 @@ A replay-based recommendation system built on [Ray](https://www.ray.io/). The sy
 
 ## Table of contents
 
-- [Ray Capstone - TLC-Backed Per-Zone Recommendations Under Skew](#ray-capstone--tlc-backed-per-zone-recommendations-under-skew)
+- [Ray Capstone - TLC-Backed Per-Zone Recommendations Under Skew](#ray-capstone---tlc-backed-per-zone-recommendations-under-skew)
   - [Table of contents](#table-of-contents)
   - [Video Walkthrough](#video-walkthrough)
   - [Project Structure](#project-structure)
   - [Architecture Overview](#architecture-overview)
   - [Setup](#setup)
   - [Execution](#execution)
-    - [Step 1 - Prepare Replay Assets](#step-1--prepare-replay-assets)
-    - [Step 2 - Blocking Baseline](#step-2--blocking-baseline)
-    - [Step 3 - Async controller](#step-3--async-controller)
-    - [Step 4 - Stress test](#step-4--stress-test)
+    - [Step 1 - Prepare Replay Assets](#step-1---prepare-replay-assets)
+    - [Step 2 - Blocking Baseline](#step-2---blocking-baseline)
+    - [Step 3 - Async controller](#step-3---async-controller)
+    - [Step 4 - Stress test](#step-4---stress-test)
     - [Cleanup](#cleanup)
   - [Decision Rule](#decision-rule)
   - [Partial-readiness Policy](#partial-readiness-policy)
@@ -141,7 +141,8 @@ run \
     --mode blocking \
     --slow-zone-fraction 0.25 \
     --slow-zone-sleep-s 1.0 \
-    --seed 42
+    --seed 42 \
+    --max-ticks 20  # For short run, omit to replay the full month
 ```
 
 This command runs the replay in blocking mode with simulated skew (25% slow zones, 1s delay). Scoring tasks return decisions to the controller. The controller waits for **all** zones before closing each tick and writes accepted decisions into actors.
@@ -170,7 +171,8 @@ run \
     --tick-timeout-s 2.0 \
     --completion-fraction 0.75 \
     --max-inflight-zones 4 \
-    --seed 42
+    --seed 42 \
+    --max-ticks 20  # For short run, omit to replay the full month
 ```
 
 This command runs the replay in async mode with simulated skew (25% slow zones, 1s delay), bounded concurrency (max 4 inflight zones), 2s timeout, and 75% completion threshold. Scoring tasks report decisions directly to actors. The driver polls actor readiness and closes ticks under the configured partial-readiness policy. Late zones receive a deterministic fallback.
@@ -197,7 +199,8 @@ run \
     --slow-zone-fraction 0.6 \
     --slow-zone-sleep-s 3.0 \
     --tick-timeout-s 2.0 \
-    --seed 42
+    --seed 42 \
+    --max-ticks 20  # For short run, omit to replay the full month
 ```
 
 This command runs both blocking and async modes back-to-back with harsher skew (60% slow zones, 3s delay) and writes a side-by-side comparison to evaluate degradation under stress.
