@@ -1,5 +1,5 @@
 """
-Runtime execution script for Ray-based TLC replay system.
+Replay execution script for Ray-based TLC replay system.
 
 Orchestrates blocking, async, and stress test modes using Ray remote actors and tasks.
 Each mode creates ZoneActors, launches scoring tasks with simulated skew, and writes detailed metrics and decision logs.

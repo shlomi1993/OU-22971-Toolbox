@@ -1,5 +1,5 @@
 """
-Data validation, scoring logic, and artifact verification tests.
+Tests for data validation, scoring logic, and artifact verification.
 
 Covers:
 - Adjacent month validation

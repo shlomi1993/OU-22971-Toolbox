@@ -1,7 +1,5 @@
 """
-Reset script for the Ray project.
-
-Provides functions to stop Ray and clean up generated artifacts.
+A reset script to stop Ray and clean up generated artifacts.
 """
 
 import argparse
