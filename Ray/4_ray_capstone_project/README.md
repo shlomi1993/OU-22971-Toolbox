@@ -36,10 +36,13 @@ A replay-based recommendation system built on [Ray](https://www.ray.io/). The sy
 ```
 main.py                     # The main entry point for the program.
 src/
-├── core.py                 # Core shared utilities and data structures for the replay system.
 ├── prepare.py              # Data preparation script.
 ├── run.py                  # Replay execution script.
 ├── reset.py                # Reset script to stop Ray and delete generated artifacts.
+├── common.py               # Shared constants, enums, and dataclasses.
+├── data_preparation.py     # Data loading, validation, aggregation, and baseline computation.
+├── artifacts.py            # Artifact writers - JSON, CSV, summary, and latency log.
+├── scoring_task.py         # Ray remote scoring task for zone snapshots.
 ├── zone_actor.py           # Ray actor implementation for per-zone state management.
 └── replay/
     ├── base.py             # Abstract base class for TLC zone recommendation replay execution.
