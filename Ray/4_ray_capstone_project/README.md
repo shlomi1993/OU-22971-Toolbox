@@ -3,16 +3,11 @@
 A replay-based recommendation system built on [Ray](https://www.ray.io/). The system processes NYC Green Taxi trip data in 15-minute windows (ticks), producing a per-zone demand recommendation (`NEED` or `OK`) at every tick. A blocking baseline and an asynchronous controller run the same replay side by side, exposing how skew, bounded concurrency, timeout-driven fallback, and idempotent actor writes affect latency and output correctness.
 
 
-## Video Walkthrough
-
-[Demo Video](#)
-
-
 ## Table of contents
 
 - [Ray Capstone — TLC-Backed Per-Zone Recommendations Under Skew](#ray-capstone--tlc-backed-per-zone-recommendations-under-skew)
-  - [Video Walkthrough](#video-walkthrough)
   - [Table of contents](#table-of-contents)
+  - [Video Walkthrough](#video-walkthrough)
   - [Project Structure](#project-structure)
   - [Setup](#setup)
   - [Execution](#execution)
@@ -27,6 +22,11 @@ A replay-based recommendation system built on [Ray](https://www.ray.io/). The sy
   - [Docker Cluster](#docker-cluster)
   - [Tests](#tests)
   - [Summary](#summary)
+
+
+## Video Walkthrough
+
+[Demo Video](#)
 
 
 ## Project Structure
@@ -280,7 +280,7 @@ Expected duration: ~2 minutes
 pytest tests --full
 ```
 
-Expected duration: ?
+Expected duration: ~15 minutes
 
 *Note:* Pytest is configured to use `-v` (verbose), `-s` (show print statements), and `--strict-markers` (enforce marker usage) by default.
 
@@ -292,7 +292,7 @@ The repository includes a full-flow shell script that downloads data, prepares a
 bash tests/test_ray_flow.sh
 ```
 
-Expected duration: ?
+Expected duration: ~8.5 minutes
 
 This script validates the complete workflow from data download through all execution modes, ensuring the entire pipeline works correctly.
 
