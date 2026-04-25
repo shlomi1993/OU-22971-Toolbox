@@ -2,7 +2,7 @@
 
 A replay-based recommendation system built on [Ray](https://www.ray.io/). The system processes NYC Green Taxi trip data in 15-minute windows (ticks), producing a per-zone demand recommendation (`NEED` or `OK`) at every tick. A blocking baseline and an asynchronous controller run the same replay side by side, exposing how skew, bounded concurrency, timeout-driven fallback, and idempotent actor writes affect latency and output correctness.
 
-<img width="2816" height="1536" alt="Gemini_Generated_Image_grl1k1grl1k1grl1 (1)" src="https://github.com/user-attachments/assets/c7867af0-e208-4700-8daf-16e56c154c9d" />
+<img width="2816" height="1536" alt="NYC TLC Green Taxi zone illustration" src="https://github.com/user-attachments/assets/c7867af0-e208-4700-8daf-16e56c154c9d" />
 
 ## Table of contents
 
@@ -10,6 +10,7 @@ A replay-based recommendation system built on [Ray](https://www.ray.io/). The sy
   - [Table of contents](#table-of-contents)
   - [Video Walkthrough](#video-walkthrough)
   - [Project Structure](#project-structure)
+  - [Architecture Overview](#architecture-overview)
   - [Setup](#setup)
   - [Execution](#execution)
     - [Step 1 — Prepare Replay Assets](#step-1--prepare-replay-assets)
@@ -59,7 +60,10 @@ environment.yml             # Conda environment definition
 pytest.ini                  # Pytest configuration
 ```
 
-<img width="1672" height="941" alt="ChatGPT Image Apr 25, 2026, 11_38_10 AM" src="https://github.com/user-attachments/assets/c088f9a3-c5ae-4733-8481-1fbe5dcade1c" />
+
+## Architecture Overview
+
+<img width="1672" height="941" alt="System architecture diagram" src="https://github.com/user-attachments/assets/c088f9a3-c5ae-4733-8481-1fbe5dcade1c" />
 
 
 ## Setup
