@@ -1,14 +1,8 @@
 """
-Data preparation module for TLC replay experiments.
+Data preparation script for TLC replay system.
 
-Validates adjacent-month parquet files, selects the n busiest zones, aggregates pickups into 15-minute ticks, builds
-per-zone baseline statistics (mean/std by hour and day of week), and writes prepared assets to disk.
-
-Output artifacts:
-- baseline.parquet: Per-zone baseline statistics
-- replay.parquet: Aggregated replay demand by zone and tick
-- active_zones.json: List of selected zone IDs
-- prep_meta.json: Preparation metadata
+Reads two adjacent-month Green Taxi parquet files (reference + replay), selects the busiest pickup zones, aggregates
+pickups into 15-minute ticks, builds per-zone baseline statistics, and writes prepared asset files.
 """
 
 import argparse

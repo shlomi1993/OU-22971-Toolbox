@@ -1,11 +1,8 @@
 """
-Ray capstone main entry: TLC-backed per-zone recommendations under skew.
-
-CLI entry point for the Ray capstone project.
-Workflow: prepare TLC replay assets -> initialize per-zone actors -> compare blocking and async execution.
+The main entry point for the Ray-based distributed TLC zone recommendation system under skew.
 
 Provides three subcommands:
-- `prepare`: Validate TLC parquet data, select active zones, and build baseline and replay tables.
+- `prepare`: Read TLC parquet files and prepare assets for replay experiments.
 - `run`: Execute blocking, async, or stress mode with Ray distributed actors.
 - `reset`: Stop Ray and delete generated artifacts.
 

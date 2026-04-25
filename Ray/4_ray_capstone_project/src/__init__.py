@@ -1,3 +1,3 @@
 """
-Source code for Ray capstone project on distributed TLC zone recommendation system.
+Source code for Ray-based distributed TLC zone recommendation system.
 """
