@@ -38,19 +38,20 @@ main.py                     # The main entry point for the program.
 src/
 ├── prepare.py              # Data preparation script.
 ├── run.py                  # Replay execution script.
-├── reset.py                # Reset script to stop Ray and delete generated artifacts.
 ├── common.py               # Shared constants, enums, and dataclasses.
 ├── data_preparation.py     # Data loading, validation, aggregation, and baseline computation.
-├── artifacts.py            # Artifact writers - JSON, CSV, summary, and latency log.
 ├── scoring_task.py         # Ray remote scoring task for zone snapshots.
 ├── zone_actor.py           # Ray actor implementation for per-zone state management.
+├── artifacts.py            # Artifact writers - JSON, CSV, summary, and latency log.
+├── logger.py               # Centralized logging configuration with colored output.
 └── replay/
     ├── base.py             # Abstract base class for TLC zone recommendation replay execution.
     ├── blocking.py         # Blocking replay implementation.
     └── asynchronous.py     # Asynchronous replay implementation.
 scripts/
 ├── download_data.sh        # Download TLC parquet files in Linux/macOS environment.
-└── download_data.ps1       # Download TLC parquet files in Windows environment.
+├── download_data.ps1       # Download TLC parquet files in Windows environment.
+└── reset.py                # Reset script to stop Ray and delete generated artifacts.
 tests/
 ├── conftest.py             # Pytest configuration and fixtures.
 ├── helpers.py              # Test helper functions.
@@ -118,7 +119,9 @@ Every command can be invoked in three equivalent ways:
 
 The examples below use the shortest form, but if anything goes wrong once can consider using `python main <cmd> <args>`.
 
-**Note:** If you haven't activated the environment, you can prefix commands with `conda run -n 22971-ray-capstone`.
+*Note:* If you haven't activated the environment, you can prefix commands with `conda run -n 22971-ray-capstone`.
+
+*Note* The run command examples below use `--max-ticks 50` to demonstrate quick runs suitable for testing and exploration. The actual output examples in [output_examples/](output_examples/) were generated from full-month runs without `--max-ticks`, processing all ~2600 ticks for comprehensive results.
 
 
 ### Step 1 - Prepare Replay Assets
@@ -127,16 +130,16 @@ The examples below use the shortest form, but if anything goes wrong once can co
 prepare \
     --ref-parquet data/green_tripdata_2023-01.parquet \
     --replay-parquet data/green_tripdata_2023-02.parquet \
-    --output-dir prepared \
+    --output-dir output/prepared \
     --n-zones 20 \
     --seed 42  # For reproducibility only
 ```
 
-This command read the two adjacent-month parquet files, validates them, identifies the 20 busiest pickup zones from the reference month, aggregates ticks into 15-minute windows, builds per-zone baselines by `(zone_id, hour_of_day, day_of_week)`, and writes the prepared assets to `prepared/`.
+This command read the two adjacent-month parquet files, validates them, identifies the 20 busiest pickup zones from the reference month, aggregates ticks into 15-minute windows, builds per-zone baselines by `(zone_id, hour_of_day, day_of_week)`, and writes the prepared assets to `output/prepared/`.
 
 **Results:**
 
-Prepared assets are written to `prepared/` (examples are available in [output_examples/prepared](output_examples/prepared)):
+Prepared assets are written to `output/prepared/` (examples are available in [output_examples/prepared](output_examples/prepared)):
 - [active_zones.json](output_examples/prepared/active_zones.json) - List of selected zone IDs.
 - [baseline.parquet](output_examples/prepared/baseline.parquet) - Per-zone baseline statistics by `(zone_id, hour_of_day, day_of_week)`.
 - [replay.parquet](output_examples/prepared/replay.parquet) - Replay table with `(zone_id, tick_start, demand)` for all active zones.
@@ -147,8 +150,8 @@ Prepared assets are written to `prepared/` (examples are available in [output_ex
 
 ```bash
 run \
-    --prepared-dir prepared \
-    --output-dir output \
+    --prepared-dir output/prepared \
+    --output-dir output/run \
     --mode blocking \
     --slow-zone-fraction 0.25 \
     --slow-zone-sleep-s 1.0 \
@@ -160,7 +163,7 @@ This command runs the replay in blocking mode with simulated skew (25% slow zone
 
 **Results:**
 
-Blocking run artifacts are written to `output/blocking/` (examples are available in [output_examples/run/blocking](output_examples/run/blocking)):
+Blocking run artifacts are written to `output/run/blocking/` (examples are available in [output_examples/run/blocking](output_examples/run/blocking)):
 - [run_config.json](output_examples/run/blocking/run_config.json) - Runtime configuration used for the run.
 - [metrics.csv](output_examples/run/blocking/metrics.csv) - Per-tick metrics showing latency, completions, fallbacks, and late/duplicate counts.
 - [tick_summary.json](output_examples/run/blocking/tick_summary.json) - Per-tick decisions and metrics for each zone.
@@ -174,8 +177,8 @@ Blocking run artifacts are written to `output/blocking/` (examples are available
 
 ```bash
 run \
-    --prepared-dir prepared \
-    --output-dir output \
+    --prepared-dir output/prepared \
+    --output-dir output/run \
     --mode async \
     --slow-zone-fraction 0.25 \
     --slow-zone-sleep-s 1.0 \
@@ -190,7 +193,7 @@ This command runs the replay in async mode with simulated skew (25% slow zones, 
 
 **Results:**
 
-Run artifacts are written to `output/async/` (examples are available in [output_examples/run/async](output_examples/run/async)):
+Run artifacts are written to `output/run/async/` (examples are available in [output_examples/run/async](output_examples/run/async)):
 - [run_config.json](output_examples/run/async/run_config.json) - Runtime configuration used for the run.
 - [metrics.csv](output_examples/run/async/metrics.csv) - Per-tick metrics showing latency, completions, fallbacks, and late/duplicate counts.
 - [tick_summary.json](output_examples/run/async/tick_summary.json) - Per-tick decisions and metrics for each zone.
@@ -204,8 +207,8 @@ Run artifacts are written to `output/async/` (examples are available in [output_
 
 ```bash
 run \
-    --prepared-dir prepared \
-    --output-dir output \
+    --prepared-dir output/prepared \
+    --output-dir output/run \
     --mode stress \
     --slow-zone-fraction 0.6 \
     --slow-zone-sleep-s 3.0 \
@@ -218,7 +221,7 @@ This command runs both blocking and async modes back-to-back with harsher skew (
 
 **Results:**
 
-Run artifacts are written to `output/stress/` (examples are available in [output_examples/run/stress](output_examples/run/stress)):
+Run artifacts are written to `output/run/stress/` (examples are available in [output_examples/run/stress](output_examples/run/stress)):
 - [blocking/](output_examples/run/stress/blocking) - Full blocking mode artifacts with harsh skew parameters.
 - [async/](output_examples/run/stress/async) - Full async mode artifacts with harsh skew parameters.
 - [comparison.json](output_examples/run/stress/comparison.json) - Side-by-side comparison of blocking vs async metrics.
@@ -229,10 +232,15 @@ Run artifacts are written to `output/stress/` (examples are available in [output
 ### Cleanup
 
 ```bash
-reset
+reset  # Requires activated venv
 ```
 
-Stop Ray if running and delete generated artifact directories (i.e., `prepared/` and `output/` by default).
+Or run the standalone script directly:
+```bash
+python scripts/reset.py
+```
+
+This stops Ray if running and deletes the generated `output/` directory.
 
 
 ## Decision Rule
@@ -257,7 +265,7 @@ Fallback behavior is deterministic (same inputs + seed = same outcomes) and full
 
 ## Output artifacts
 
-Each run mode writes into its own subdirectory under the specified output directory (`output/` by default):
+Each run mode writes into its own subdirectory under the specified output directory (`output/run/` by default):
 
 | File | Content |
 |---|---|
@@ -277,7 +285,7 @@ Submit to a Ray cluster via `ray job submit`:
 ray job submit \
     --address http://<head-node>:8265 \
     --working-dir . \
-    -- python main.py run --prepared-dir prepared --output-dir output --mode blocking --ray-address auto
+    -- python main.py run --prepared-dir output/prepared --output-dir output/run --mode blocking --ray-address auto
 ```
 
 Replace `blocking` with `async` or `stress` for the other run modes.
