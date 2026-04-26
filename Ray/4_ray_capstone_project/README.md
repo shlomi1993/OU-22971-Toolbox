@@ -310,12 +310,15 @@ Expected duration: ~15 minutes
 The repository includes a full-flow shell script that downloads data, prepares assets, and runs all three demo modes:
 
 ```bash
-bash tests/test_ray_flow.sh
+bash tests/test_ray_flow.sh --max-ticks 50
 ```
 
-Expected duration: ~8.5 minutes
-
 This script validates the complete workflow from data download through all execution modes, ensuring the entire pipeline works correctly.
+
+- Use `--max-ticks N` to limit the run (e.g., 5 for a fast test, 500 for more ticks), or omit it to process the full month (~2600 ticks).
+- Add `--keep-artifacts` to preserve output files after the test completes.
+
+Expected duration: ~8.5 minutes for 50 ticks
 
 
 ## Summary
