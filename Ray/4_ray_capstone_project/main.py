@@ -24,7 +24,7 @@ Or via a dedicated command available after installing the package:
 
 import argparse
 
-from scripts.reset import reset
+from scripts.reset import reset, build_reset_parser
 from src.prepare import prepare_assets, build_prepare_parser
 from src.run import run_replay, build_run_parser
 from src.common import ReplayConfig, ReplayMode
@@ -71,6 +71,7 @@ def build_parser() -> argparse.ArgumentParser:
         name="reset",
         help=reset_help,
         description=reset_help,
+        parents=[build_reset_parser()],
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     reset_subparser.set_defaults(handler=handle_reset)
@@ -105,9 +106,9 @@ def handle_reset(args: argparse.Namespace) -> None:
     Handle reset subcommand: stop Ray and clean up artifacts.
 
     Args:
-        args (argparse.Namespace): Parsed command-line arguments (unused for reset).
+        args (argparse.Namespace): Parsed command-line arguments.
     """
-    reset()
+    reset(prepared_dir=args.prepared_dir, output_dir=args.output_dir)
 
 
 def main() -> int:
