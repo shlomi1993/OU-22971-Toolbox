@@ -21,12 +21,12 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["src*"]
+include = ["src*", "scripts*"]
 
 [project.scripts]
 prepare = "src.prepare:main"
 run = "src.run:main"
-reset = "scripts.reset:reset_ray"
+reset = "scripts.reset:reset"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
