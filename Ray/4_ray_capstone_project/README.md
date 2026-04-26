@@ -435,7 +435,7 @@ Expected duration: ~8.5 minutes for 50 ticks
 
 ## Summary
 
-This project demonstrates distributed systems behavior on a **multi-node Ray cluster** deployed via Docker. All three execution modes — blocking, async, and stress — run on a three-node cluster with one head and two workers, where actors and tasks are distributed across containers, exposing real-world challenges like network latency, skew, and fault tolerance.
+This project demonstrates distributed systems behavior on a **multi-node Ray cluster** deployed via Docker. All three execution modes - blocking, async, and stress - run on a three-node cluster with one head and two workers, where actors and tasks are distributed across containers, exposing real-world challenges like network latency, skew, and fault tolerance.
 
 Three runs on the same replay data with identical scoring logic reveal the core tradeoff:
 
@@ -443,7 +443,7 @@ Three runs on the same replay data with identical scoring logic reveal the core 
 
 - **Async** uses bounded concurrency, timeout, and `always_previous` fallback to let ticks close predictably regardless of individual zone delays. The driver polls distributed actors for readiness instead of blocking on slow workers, achieving graceful degradation under skew.
 
-- **Stress** runs the same comparison under harsher conditions—60% slow zones with 3-second delay—confirming that blocking degrades sharply while async maintains controlled behavior even when many workers are slow.
+- **Stress** runs the same comparison under harsher conditions - 60% slow zones with 3 second delay - confirming that blocking degrades sharply while async maintains controlled behavior even when many workers are slow.
 
 **All runs preserve distributed system invariants.** Every write is idempotent, keyed by `zone_id` and `tick_id`, so duplicates and retries never corrupt state. Tasks may complete out of order across workers, but the system never double-counts results. Late reports that arrive after a tick has already closed are logged but ignored. Fallback decisions use deterministic rules that produce identical outputs given identical inputs and seed values, with full tracking in the output artifacts.
 
