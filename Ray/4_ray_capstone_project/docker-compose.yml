@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  ray-head:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ray-capstone-head
+    command: >
+      bash -c "ray start --head 
+      --port=6379 
+      --dashboard-host=0.0.0.0 
+      --dashboard-port=8265 
+      --block"
+    ports:
+      - "8265:8265"   # Ray Dashboard
+      - "10001:10001" # Ray Client
+      - "6379:6379"   # Redis (Ray GCS)
+    volumes:
+      - ./data:/workspace/data
+      - ./output:/workspace/output
+      - ./src:/workspace/src
+      - ./main.py:/workspace/main.py
+    working_dir: /workspace
+    shm_size: 2g
+    environment:
+      - RAY_DISABLE_DOCKER_CPU_WARNING=1
+    networks:
+      - ray-network
+
+  ray-worker-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ray-capstone-worker-1
+    command: >
+      bash -c "ray start 
+      --address=ray-head:6379 
+      --block"
+    depends_on:
+      - ray-head
+    volumes:
+      - ./data:/workspace/data
+      - ./output:/workspace/output
+      - ./src:/workspace/src
+      - ./main.py:/workspace/main.py
+    working_dir: /workspace
+    shm_size: 2g
+    environment:
+      - RAY_DISABLE_DOCKER_CPU_WARNING=1
+    networks:
+      - ray-network
+
+  ray-worker-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ray-capstone-worker-2
+    command: >
+      bash -c "ray start 
+      --address=ray-head:6379 
+      --block"
+    depends_on:
+      - ray-head
+    volumes:
+      - ./data:/workspace/data
+      - ./output:/workspace/output
+      - ./src:/workspace/src
+      - ./main.py:/workspace/main.py
+    working_dir: /workspace
+    shm_size: 2g
+    environment:
+      - RAY_DISABLE_DOCKER_CPU_WARNING=1
+    networks:
+      - ray-network
+
+networks:
+  ray-network:
+    driver: bridge
