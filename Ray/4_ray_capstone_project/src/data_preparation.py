@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import List, Tuple
 
 from src.common import CROSS_CHECK_N_TICKS, DEFAULT_SEED, REQUIRED_PARQUET_COLS, TICK_MINUTES
-from src.logger import logger
+from src.logger import g_logger
 
 
 @dataclass
@@ -72,7 +72,7 @@ def validate_adjacent_months(ref_df: pd.DataFrame, replay_df: pd.DataFrame) -> T
 
     ref_label = f"{ref_year}-{ref_month:02d}"
     replay_label = f"{replay_year}-{replay_month:02d}"
-    logger.info(f"Validated adjacent months: reference={ref_label}, replay={replay_label}")
+    g_logger.info(f"Validated adjacent months: reference={ref_label}, replay={replay_label}")
     return ref_label, replay_label
 
 
@@ -105,7 +105,7 @@ def identify_busiest_zones(ref_df: pd.DataFrame, n_zones: int, seed: int = DEFAU
         selected = top.index.tolist()
     selected.sort()
 
-    logger.info(f"Selected {len(selected)} active zones: {selected}")
+    g_logger.info(f"Selected {len(selected)} active zones: {selected}")
     return selected
 
 
@@ -205,9 +205,9 @@ def cross_check_replay(raw_df: pd.DataFrame, replay_table: pd.DataFrame, active_
 
     match = (merged["demand_direct"] == merged["demand_prepared"]).all()
     if match:
-        logger.info("Cross-check PASSED: prepared replay counts match direct calculation")
+        g_logger.info("Cross-check PASSED: prepared replay counts match direct calculation")
     else:
-        logger.warning("Cross-check FAILED: mismatch between prepared and direct counts")
+        g_logger.warning("Cross-check FAILED: mismatch between prepared and direct counts")
     return bool(match)
 
 

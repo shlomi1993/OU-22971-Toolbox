@@ -14,8 +14,8 @@ TICK_MINUTES = 15  # Duration of each tick in minutes
 DEMAND_WINDOW_SIZE = 6  # Number of recent demand values to track for scoring
 
 # Default directories
-DEFAULT_PREPARED_DIR = "prepared"  # Default directory for prepared assets
-DEFAULT_OUTPUT_DIR = "output"  # Default output directory for run artifacts
+DEFAULT_PREPARED_DIR = "output/prepared"  # Default directory for prepared assets
+DEFAULT_OUTPUT_DIR = "output/run"  # Default output directory for run artifacts
 
 # Default configuration parameters
 DEFAULT_N_ZONES = 20  # Number of active zones to select for the experiment
