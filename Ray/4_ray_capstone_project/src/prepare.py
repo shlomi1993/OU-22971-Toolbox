@@ -6,7 +6,6 @@ pickups into 15-minute ticks, builds per-zone baseline statistics, and writes pr
 """
 
 import argparse
-import logging
 import pandas as pd
 
 from pathlib import Path
@@ -22,10 +21,7 @@ from src.data_preparation import (
     identify_busiest_zones,
     validate_adjacent_months,
 )
-
-
-logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
-logger = logging.getLogger(__name__)
+from src.logger import logger
 
 
 def write_prepared_assets(output_dir: Path, baseline: pd.DataFrame, replay_table: pd.DataFrame, active_zones: list,

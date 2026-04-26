@@ -5,16 +5,13 @@ Provides JSON, CSV, and structured log writers for tick metrics, decisions, and 
 """
 
 import json
-import logging
 import pandas as pd
 
 from pathlib import Path
 from typing import Any, Dict, List
 
 from src.common import TickMetrics
-
-
-logger = logging.getLogger(__name__)
+from src.logger import logger
 
 
 def write_json(data: Any, path: Path) -> None:

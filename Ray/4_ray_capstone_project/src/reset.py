@@ -3,17 +3,13 @@ A reset script to stop Ray and clean up generated artifacts.
 """
 
 import argparse
-import logging
 import shutil
 import subprocess
 
 from pathlib import Path
 
 from src.common import DEFAULT_OUTPUT_DIR, DEFAULT_PREPARED_DIR
-
-
-logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
-logger = logging.getLogger(__name__)
+from src.logger import logger
 
 
 def reset_ray(prepared_dir: Path, output_dir: Path) -> None:
