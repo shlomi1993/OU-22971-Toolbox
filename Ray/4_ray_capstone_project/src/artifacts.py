@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from src.common import TickMetrics
-from src.logger import logger
+from src.logger import g_logger
 
 
 def write_json(data: Any, path: Path) -> None:
@@ -25,7 +25,7 @@ def write_json(data: Any, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as f:
         json.dump(data, f, indent=2, default=str)
-    logger.info(f"Wrote {path}")
+    g_logger.info(f"Wrote {path}")
 
 
 def write_metrics_csv(tick_metrics: List[TickMetrics], path: Path) -> None:
@@ -42,7 +42,7 @@ def write_metrics_csv(tick_metrics: List[TickMetrics], path: Path) -> None:
     df = pd.DataFrame(rows)
     path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(path, index=False)
-    logger.info(f"Wrote {path}")
+    g_logger.info(f"Wrote {path}")
 
 
 def write_tick_summary(tick_metrics: List[TickMetrics], decisions: Dict[int, Dict[int, str]], path: Path) -> None:

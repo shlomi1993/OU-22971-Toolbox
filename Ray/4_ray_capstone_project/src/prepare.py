@@ -21,7 +21,7 @@ from src.data_preparation import (
     identify_busiest_zones,
     validate_adjacent_months,
 )
-from src.logger import logger
+from src.logger import g_logger
 
 
 def write_prepared_assets(output_dir: Path, baseline: pd.DataFrame, replay_table: pd.DataFrame, active_zones: list,
@@ -80,9 +80,9 @@ def prepare_assets(ref_parquet: Path, replay_parquet: Path, output_dir: Path, n_
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Step A - load monthly datasets
-    logger.info(f"Loading reference: {ref_parquet}")
+    g_logger.info(f"Loading reference: {ref_parquet}")
     ref_df = load_parquet(ref_parquet)
-    logger.info(f"Loading replay: {replay_parquet}")
+    g_logger.info(f"Loading replay: {replay_parquet}")
     replay_df = load_parquet(replay_parquet)
     ref_label, replay_label = validate_adjacent_months(ref_df, replay_df)
 
@@ -95,7 +95,7 @@ def prepare_assets(ref_parquet: Path, replay_parquet: Path, output_dir: Path, n_
     cross_check_replay(replay_df, replay_table, active_zones)  # Ensure replay table matches raw replay data for active zones
     write_prepared_assets(output_dir, baseline, replay_table, active_zones, ref_label, replay_label, ref_df, replay_df, seed)
 
-    logger.info(f"Prepared assets written to {output_dir}")
+    g_logger.info(f"Prepared assets written to {output_dir}")
 
 
 def build_prepare_parser() -> argparse.ArgumentParser:

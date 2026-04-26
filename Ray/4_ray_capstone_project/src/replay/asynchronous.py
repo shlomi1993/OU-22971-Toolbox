@@ -11,6 +11,7 @@ import ray
 
 from typing import Dict
 from src.common import TickMetrics, ZoneSnapshot
+from src.logger import g_logger
 from src.replay.base import Replay
 from src.scoring_task import score_zone
 
@@ -92,7 +93,7 @@ class AsyncReplay(Replay):
             # Check if we've hit the timeout with remaining pending tasks
             elapsed = time.time() - tick_start
             if elapsed >= self.config.tick_timeout_s and pending:
-                self.logger.warning(f"[async] tick {tick_id}: timeout after {elapsed:.2f}s, {len(pending)} zones pending")
+                g_logger.warning(f"[async] tick {tick_id}: timeout after {elapsed:.2f}s, {len(pending)} zones pending")
                 break
 
     def _finalize_tick(self, tick_id: int) -> Dict[int, bool]:
@@ -112,7 +113,7 @@ class AsyncReplay(Replay):
             readiness[zone_id] = ray.get(actor.has_decision_for_tick.remote(tick_id))
 
         n_ready = sum(readiness.values())
-        self.logger.info(f"[async] tick {tick_id}: {n_ready}/{len(readiness)} zones ready")
+        g_logger.info(f"[async] tick {tick_id}: {n_ready}/{len(readiness)} zones ready")
 
         return readiness
 
@@ -145,7 +146,7 @@ class AsyncReplay(Replay):
         self.all_decisions[tick_id] = tick_decisions
 
         if n_fallback > 0:
-            self.logger.info(f"[async] tick {tick_id}: {n_fallback} zones used fallback policy")
+            g_logger.info(f"[async] tick {tick_id}: {n_fallback} zones used fallback policy")
 
     def _collect_tick_metrics(self, tick_id: int, readiness: Dict[int, bool],
                              tick_elapsed: float) -> TickMetrics:

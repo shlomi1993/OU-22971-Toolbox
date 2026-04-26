@@ -34,7 +34,7 @@ from src.common import (
     ReplayConfig,
     TickMetrics,
 )
-from src.logger import logger
+from src.logger import g_logger
 from src.replay.blocking import BlockingReplay
 from src.replay.asynchronous import AsyncReplay
 
@@ -98,8 +98,8 @@ def run_stress(prepared_dir: Path, output_dir: Path, config: ReplayConfig) -> Li
         max_ticks=config.max_ticks,
     )
 
-    logger.info("")
-    logger.info("Stress Mode")
+    g_logger.info("")
+    g_logger.info("Stress Mode")
     blocking_metrics = run_blocking(prepared_dir, output_dir / "stress", stress_config)
     async_metrics = run_async(prepared_dir, output_dir / "stress", stress_config)
 
@@ -117,7 +117,7 @@ def run_stress(prepared_dir: Path, output_dir: Path, config: ReplayConfig) -> Li
         },
     }
     write_json(comparison, output_dir / "stress" / "comparison.json")
-    logger.info(f"Stress comparison: {json.dumps(comparison, indent=2)}")
+    g_logger.info(f"Stress comparison: {json.dumps(comparison, indent=2)}")
 
     return async_metrics
 
