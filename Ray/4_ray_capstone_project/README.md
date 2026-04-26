@@ -25,7 +25,6 @@ A replay-based recommendation system built on [Ray](https://www.ray.io/). The sy
   - [Decision Rule](#decision-rule)
   - [Partial-readiness Policy](#partial-readiness-policy)
   - [Output artifacts](#output-artifacts)
-  - [Local Development (Optional)](#local-development-optional)
   - [Tests](#tests)
   - [Summary](#summary)
 
@@ -170,10 +169,10 @@ All execution steps use `ray job submit` to run on the distributed Docker cluste
 
 ### Step 1 - Prepare Replay Assets
 
-Preparation runs locally, not on the cluster, since it's a one-time data processing step:
+Preparation runs locally as a one-time data processing step:
 
 ```bash
-prepare \
+prepare \  # Same as `python main.py prepare` or `python src/prepare.py`
     --ref-parquet data/green_tripdata_2023-01.parquet \
     --replay-parquet data/green_tripdata_2023-02.parquet \
     --output-dir output/prepared \
@@ -194,6 +193,8 @@ Prepared assets are written to `output/prepared/` (examples are available in [ou
 
 ### Step 2 - Blocking Baseline
 
+**Docker cluster:**
+
 ```bash
 ray job submit \
     --address http://localhost:8265 \
@@ -206,10 +207,23 @@ ray job submit \
         --slow-zone-fraction 0.25 \
         --slow-zone-sleep-s 1.0 \
         --seed 42 \
-        --max-ticks 50  # For relatively short run, omit to replay the full month
+        --max-ticks 50
 ```
 
-Runs the replay in blocking mode on the distributed cluster with simulated skew (25% slow zones, 1s delay). Scoring tasks return decisions to the controller. The controller waits for **all** zones before closing each tick and writes accepted decisions into actors.
+**Local execution:**
+
+```bash
+run \  # Same as `python main.py run` or `python src/run.py`
+    --prepared-dir output/prepared \
+    --output-dir output/run \
+    --mode blocking \
+    --slow-zone-fraction 0.25 \
+    --slow-zone-sleep-s 1.0 \
+    --seed 42 \
+    --max-ticks 50
+```
+
+Runs the replay in blocking mode with simulated skew (25% slow zones, 1s delay). Scoring tasks return decisions to the controller. The controller waits for **all** zones before closing each tick and writes accepted decisions into actors.
 
 **Monitor execution:**
 - Ray Dashboard: http://localhost:8265
@@ -230,6 +244,8 @@ Blocking run artifacts are written to `output/run/blocking/` (examples are avail
 
 ### Step 3 - Async Controller
 
+**Docker cluster:**
+
 ```bash
 ray job submit \
     --address http://localhost:8265 \
@@ -248,7 +264,23 @@ ray job submit \
         --max-ticks 50
 ```
 
-Runs the replay in async mode on the distributed cluster with simulated skew (25% slow zones, 1s delay), bounded concurrency (max 4 inflight zones), 2s timeout, and 75% completion threshold. Scoring tasks report decisions directly to actors. The driver polls actor readiness and closes ticks under the configured partial-readiness policy. Late zones receive a deterministic fallback.
+**Local execution:**
+
+```bash
+run \
+    --prepared-dir output/prepared \
+    --output-dir output/run \
+    --mode async \
+    --slow-zone-fraction 0.25 \
+    --slow-zone-sleep-s 1.0 \
+    --tick-timeout-s 2.0 \
+    --completion-fraction 0.75 \
+    --max-inflight-zones 4 \
+    --seed 42 \
+    --max-ticks 50
+```
+
+Runs the replay in async mode with simulated skew (25% slow zones, 1s delay), bounded concurrency (max 4 inflight zones), 2s timeout, and 75% completion threshold. Scoring tasks report decisions directly to actors. The driver polls actor readiness and closes ticks under the configured partial-readiness policy. Late zones receive a deterministic fallback.
 
 **Results:**
 
@@ -263,6 +295,8 @@ Run artifacts are written to `output/run/async/` (examples are available in [out
 
 
 ### Step 4 - Stress Test
+
+**Docker cluster:**
 
 ```bash
 ray job submit \
@@ -280,7 +314,21 @@ ray job submit \
         --max-ticks 50
 ```
 
-Runs both blocking and async modes back-to-back on the distributed cluster with harsher skew (60% slow zones, 3s delay) and writes a side-by-side comparison to evaluate degradation under stress.
+**Local execution:**
+
+```bash
+run \
+    --prepared-dir output/prepared \
+    --output-dir output/run \
+    --mode stress \
+    --slow-zone-fraction 0.6 \
+    --slow-zone-sleep-s 3.0 \
+    --tick-timeout-s 2.0 \
+    --seed 42 \
+    --max-ticks 50
+```
+
+Runs both blocking and async modes back-to-back with harsher skew (60% slow zones, 3s delay) and writes a side-by-side comparison to evaluate degradation under stress.
 
 **Results:**
 
@@ -345,32 +393,6 @@ Each run mode writes into its own subdirectory under the specified output direct
 | `tick_summary.json` | Per-tick decisions and metrics |
 | `actor_counters.json` | Per-zone duplicate/late/fallback counters |
 | `comparison.json` | Blocking vs async comparison (stress mode only) |
-
-
-## Local Development (Optional)
-
-For local development and testing without Docker, you can run commands directly:
-
-```bash
-# Activate environment
-conda activate 22971-ray-capstone
-
-# Prepare assets (same as production)
-prepare \
-    --ref-parquet data/green_tripdata_2023-01.parquet \
-    --replay-parquet data/green_tripdata_2023-02.parquet \
-    --output-dir output/prepared \
-    --n-zones 20
-
-# Run locally (without --ray-address auto)
-run \
-    --prepared-dir output/prepared \
-    --output-dir output/run \
-    --mode blocking \
-    --max-ticks 10
-```
-
-**Note:** Local runs use a single-machine Ray instance. For the required demo, always use the Docker cluster via `ray job submit`
 
 
 ## Tests
