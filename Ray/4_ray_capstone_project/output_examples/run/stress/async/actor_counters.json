@@ -2,121 +2,121 @@
   {
     "zone_id": 7,
     "n_duplicates": 0,
-    "n_late": 49,
-    "n_fallbacks": 50
+    "n_late": 2636,
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 33,
     "n_duplicates": 0,
-    "n_late": 49,
-    "n_fallbacks": 50
+    "n_late": 2636,
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 41,
     "n_duplicates": 0,
-    "n_late": 49,
-    "n_fallbacks": 50
+    "n_late": 2636,
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 42,
     "n_duplicates": 0,
-    "n_late": 49,
-    "n_fallbacks": 50
+    "n_late": 2636,
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 43,
     "n_duplicates": 0,
     "n_late": 0,
-    "n_fallbacks": 50
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 65,
     "n_duplicates": 0,
     "n_late": 0,
-    "n_fallbacks": 50
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 66,
     "n_duplicates": 0,
     "n_late": 0,
-    "n_fallbacks": 50
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 74,
     "n_duplicates": 0,
     "n_late": 0,
-    "n_fallbacks": 50
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 75,
     "n_duplicates": 0,
     "n_late": 0,
-    "n_fallbacks": 50
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 82,
     "n_duplicates": 0,
     "n_late": 0,
-    "n_fallbacks": 50
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 92,
     "n_duplicates": 0,
     "n_late": 0,
-    "n_fallbacks": 50
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 95,
     "n_duplicates": 0,
     "n_late": 0,
-    "n_fallbacks": 50
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 97,
     "n_duplicates": 0,
     "n_late": 0,
-    "n_fallbacks": 50
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 116,
     "n_duplicates": 0,
     "n_late": 0,
-    "n_fallbacks": 50
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 129,
     "n_duplicates": 0,
     "n_late": 0,
-    "n_fallbacks": 50
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 130,
     "n_duplicates": 0,
     "n_late": 0,
-    "n_fallbacks": 50
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 134,
     "n_duplicates": 0,
     "n_late": 0,
-    "n_fallbacks": 50
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 166,
     "n_duplicates": 0,
     "n_late": 0,
-    "n_fallbacks": 50
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 244,
     "n_duplicates": 0,
     "n_late": 0,
-    "n_fallbacks": 50
+    "n_fallbacks": 2637
   },
   {
     "zone_id": 260,
     "n_duplicates": 0,
     "n_late": 0,
-    "n_fallbacks": 50
+    "n_fallbacks": 2637
   }
 ]

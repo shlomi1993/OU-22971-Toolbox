@@ -1,12 +1,12 @@
 {
   "blocking": {
-    "mean_tick_latency": 3.2727323722839357,
-    "max_tick_latency": 8.040754079818726,
+    "mean_tick_latency": 3.1629571798040326,
+    "max_tick_latency": 7.507110118865967,
     "total_fallbacks": 0
   },
   "async": {
-    "mean_tick_latency": 2.4024031257629392,
-    "max_tick_latency": 6.377206087112427,
-    "total_fallbacks": 1000
+    "mean_tick_latency": 2.3425198277606176,
+    "max_tick_latency": 12.669960975646973,
+    "total_fallbacks": 52740
   }
 }
