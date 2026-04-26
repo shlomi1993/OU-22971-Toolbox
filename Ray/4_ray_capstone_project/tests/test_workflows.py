@@ -293,7 +293,7 @@ def test_standalone_scripts(synthetic_parquets: Dict[str, Path], tmp_path: Path)
 
     # Run reset.py
     run_python_script([
-        "src/reset.py",
+        "scripts/reset.py",
         "--prepared-dir", str(prepared_dir),
         "--output-dir", str(output_dir),
     ])
