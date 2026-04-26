@@ -1,41 +1,36 @@
 """
 The main entry point for the Ray-based distributed TLC zone recommendation system under skew.
 
-Provides three subcommands:
+Provides two subcommands:
 - `prepare`: Read TLC parquet files and prepare assets for replay experiments.
 - `run`: Execute blocking, async, or stress mode with Ray distributed actors.
-- `reset`: Stop Ray and delete generated artifacts.
 
 Example usage:
-    python main.py prepare --ref-parquet data/2023-01.parquet --replay-parquet data/2023-02.parquet --output-dir prepared/
-    python main.py run --prepared-dir prepared/ --mode async --output-dir output/
-    python main.py reset
+    python main.py prepare --ref-parquet data/2023-01.parquet --replay-parquet data/2023-02.parquet --output-dir output/prepared/
+    python main.py run --prepared-dir output/prepared/ --mode async --output-dir output/run/
 
 Each subcommand can also be run independently as a standalone script:
-    python src/prepare.py --ref-parquet data/2023-01.parquet --replay-parquet data/2023-02.parquet --output-dir prepared/
-    python src/run.py --prepared-dir prepared/ --mode async --output-dir output/
-    python src/reset.py
+    python src/prepare.py --ref-parquet data/2023-01.parquet --replay-parquet data/2023-02.parquet --output-dir output/prepared/
+    python src/run.py --prepared-dir output/prepared/ --mode async --output-dir output/run/
 
 Or via a dedicated command available after installing the package:
-    prepare --ref-parquet data/2023-01.parquet --replay-parquet data/2023-02.parquet --output-dir prepared/
-    run --prepared-dir prepared/ --mode async --output-dir output/
-    reset
+    prepare --ref-parquet data/2023-01.parquet --replay-parquet data/2023-02.parquet --output-dir output/prepared/
+    run --prepared-dir output/prepared/ --mode async --output-dir output/run/
 """
 
 import argparse
 
 from src.prepare import prepare_assets, build_prepare_parser
-from src.reset import reset_ray, build_reset_parser
 from src.run import run_replay, build_run_parser
 from src.common import ReplayConfig, ReplayMode
 
 
 def build_parser() -> argparse.ArgumentParser:
     """
-    Build main parser with prepare, run, and reset subcommands.
+    Build main parser with prepare and run subcommands.
 
     Returns:
-        argparse.ArgumentParser: Main parser with subcommands for prepare, run, and reset.
+        argparse.ArgumentParser: Main parser with subcommands for prepare and run.
     """
     parser = argparse.ArgumentParser(
         description="TLC-backed per-zone recommendations under skew",
@@ -61,15 +56,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run_subparser.set_defaults(handler=handle_run)
 
-    # Add reset subcommand
-    reset_subparser = subparsers.add_parser(
-        name="reset",
-        help="Stop Ray and remove generated artifacts",
-        parents=[build_reset_parser()],
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    reset_subparser.set_defaults(handler=handle_reset)
-
     return parser
 
 
@@ -93,16 +79,6 @@ def handle_run(args: argparse.Namespace) -> None:
     mode = ReplayMode(args.mode)
     config = ReplayConfig.from_args(args)
     run_replay(args.ray_address, args.prepared_dir, args.output_dir, mode, config)
-
-
-def handle_reset(args: argparse.Namespace) -> None:
-    """
-    Handle reset subcommand: stop Ray and remove generated artifacts.
-
-    Args:
-        args (argparse.Namespace): Parsed command-line arguments.
-    """
-    reset_ray(args.prepared_dir, args.output_dir)
 
 
 def main() -> int:

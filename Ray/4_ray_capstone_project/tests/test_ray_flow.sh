@@ -2,18 +2,18 @@
 # test_ray_flow.sh - Full flow test: downloads data, prepares assets, runs all 3 demo modes.
 #
 # Usage:
-#   ./test_ray_flow.sh [--keep-artifacts|-k] [--max-ticks N]
+#   ./test_ray_flow.sh [--keep-artifacts] [--max-ticks N]
 #
 # Options:
-#   --keep-artifacts, -k    Keep generated artifacts after test completion
-#   --max-ticks N           Number of ticks to run (default: 50)
+#   --keep-artifacts    Keep generated artifacts after test completion
+#   --max-ticks N       Limit number of ticks to run (default: no limit)
 #
 # This file executes:
 #   1. bash scripts/download_data.sh
-#   2. prepare --ref-parquet data/green_tripdata_2023-01.parquet --replay-parquet data/green_tripdata_2023-02.parquet --output-dir prepared --n-zones 20
-#   3. run --prepared-dir prepared --output-dir output --mode blocking --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0
-#   4. run --prepared-dir prepared --output-dir output --mode async --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0 --tick-timeout-s 2.0 --completion-fraction 0.75 --max-inflight-zones 4
-#   5. run --prepared-dir prepared --output-dir output --mode stress --slow-zone-fraction 0.6 --slow-zone-sleep-s 3.0 --tick-timeout-s 2.0
+#   2. prepare --ref-parquet data/green_tripdata_2023-01.parquet --replay-parquet data/green_tripdata_2023-02.parquet --output-dir output/prepared --n-zones 20
+#   3. run --prepared-dir output/prepared --output-dir output/run --mode blocking --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0
+#   4. run --prepared-dir output/prepared --output-dir output/run --mode async --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0 --tick-timeout-s 2.0 --completion-fraction 0.75 --max-inflight-zones 4
+#   5. run --prepared-dir output/prepared --output-dir output/run --mode stress --slow-zone-fraction 0.6 --slow-zone-sleep-s 3.0 --tick-timeout-s 2.0
 #   6. Verify all output artifacts exist (run_config.json, metrics.csv, latency_log.json, tick_summary.json, actor_counters.json, comparison.json)
 
 set -euo pipefail
@@ -62,15 +62,15 @@ format_duration() {
 TOTAL_START=$SECONDS
 
 KEEP_ARTIFACTS=false
-MAX_TICKS=50
+MAX_TICKS_FLAG=""  # Default: no limit (run all ticks)
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --keep-artifacts|-k)
+        --keep-artifacts)
             KEEP_ARTIFACTS=true
             shift
             ;;
         --max-ticks)
-            MAX_TICKS="$2"
+            MAX_TICKS_FLAG="--max-ticks $2"
             shift 2
             ;;
         *)
@@ -84,8 +84,8 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_DIR"
 
 DATA_DIR="$PROJECT_DIR/data"
-PREPARED_DIR="$PROJECT_DIR/prepared"
-OUTPUT_DIR="$PROJECT_DIR/output"
+PREPARED_DIR="$PROJECT_DIR/output/prepared"
+OUTPUT_DIR="$PROJECT_DIR/output/run"
 
 REF_FILE="$DATA_DIR/green_tripdata_2023-01.parquet"
 REPLAY_FILE="$DATA_DIR/green_tripdata_2023-02.parquet"
@@ -123,7 +123,7 @@ log_and_run run \
     --mode blocking \
     --slow-zone-fraction 0.25 \
     --slow-zone-sleep-s 1.0 \
-    --max-ticks "$MAX_TICKS"
+    $MAX_TICKS_FLAG
 echo "Blocking run complete. Artifacts in $OUTPUT_DIR/blocking/"
 echo -e "${GRAY}Step 3 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 
@@ -140,7 +140,7 @@ log_and_run run \
     --tick-timeout-s 2.0 \
     --completion-fraction 0.75 \
     --max-inflight-zones 4 \
-    --max-ticks "$MAX_TICKS"
+    $MAX_TICKS_FLAG
 echo "Async run complete. Artifacts in $OUTPUT_DIR/async/"
 echo -e "${GRAY}Step 4 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 
@@ -155,7 +155,7 @@ log_and_run run \
     --slow-zone-fraction 0.6 \
     --slow-zone-sleep-s 3.0 \
     --tick-timeout-s 2.0 \
-    --max-ticks "$MAX_TICKS"
+    $MAX_TICKS_FLAG
 echo "Stress run complete. Artifacts in $OUTPUT_DIR/stress/"
 echo -e "${GRAY}Step 5 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 
@@ -189,8 +189,8 @@ echo -e "${GRAY}Total elapsed: $(format_duration $((SECONDS - TOTAL_START)))${NC
 echo ""
 if [ "$KEEP_ARTIFACTS" = false ]; then
     echo "Cleaning up generated artifacts"
-    rm -rf "$PREPARED_DIR" "$OUTPUT_DIR"
+    rm -rf "$PROJECT_DIR/output"
 else
     echo "Keeping artifacts:"
-    find "$OUTPUT_DIR" -type f | sort
+    find "$PROJECT_DIR/output" -type f | sort
 fi

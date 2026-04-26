@@ -29,7 +29,6 @@ run \
     --mode blocking \
     --slow-zone-fraction 0.25 \
     --slow-zone-sleep-s 1.0 \
-    --max-ticks 50 \
     --seed 42
 ```
 
@@ -44,7 +43,6 @@ run \
     --tick-timeout-s 2.0 \
     --completion-fraction 0.75 \
     --max-inflight-zones 4 \
-    --max-ticks 50 \
     --seed 42
 ```
 
@@ -57,6 +55,5 @@ run \
     --slow-zone-fraction 0.6 \
     --slow-zone-sleep-s 3.0 \
     --tick-timeout-s 2.0 \
-    --max-ticks 50 \
     --seed 42
 ```
