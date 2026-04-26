@@ -11,6 +11,7 @@ A replay-based recommendation system built on [Ray](https://www.ray.io/). The sy
   - [Video Walkthrough](#video-walkthrough)
   - [Project Structure](#project-structure)
   - [Architecture Overview](#architecture-overview)
+  - [Prerequisites](#prerequisites)
   - [Setup](#setup)
   - [Execution](#execution)
     - [Step 1 - Prepare Replay Assets](#step-1---prepare-replay-assets)
@@ -22,6 +23,12 @@ A replay-based recommendation system built on [Ray](https://www.ray.io/). The sy
   - [Partial-readiness Policy](#partial-readiness-policy)
   - [Output artifacts](#output-artifacts)
   - [Docker Cluster](#docker-cluster)
+    - [Setup the Ray Cluster](#setup-the-ray-cluster)
+    - [Submit Jobs to the Cluster](#submit-jobs-to-the-cluster)
+    - [Monitor Execution](#monitor-execution)
+    - [Cleanup](#cleanup-1)
+    - [Scaling Workers](#scaling-workers)
+    - [Notes](#notes)
   - [Tests](#tests)
   - [Summary](#summary)
 
@@ -58,7 +65,10 @@ tests/
 ├── test_core_logic.py      # Tests for data validation, scoring logic, and artifact verification.
 ├── test_zone_actor.py      # Tests for ZoneActor state management and fault-tolerance.
 ├── test_workflows.py       # Tests for script-level integration and end-to-end workflow.
+├── test_ray_docker.py      # Tests for Docker cluster setup, connectivity, and job submission.
 └── test_ray_flow.sh        # Simple full flow test that downloads data, prepares assets, runs all three demo modes.
+Dockerfile                  # Docker image for Ray cluster nodes
+docker-compose.yml          # Multi-node Ray cluster definition (1 head + 2 workers)
 pyproject.toml              # Package config and console_scripts entry points
 environment.yml             # Conda environment definition
 pytest.ini                  # Pytest configuration
@@ -70,12 +80,18 @@ pytest.ini                  # Pytest configuration
 <img width="1672" height="941" alt="System architecture diagram" src="https://github.com/user-attachments/assets/c088f9a3-c5ae-4733-8481-1fbe5dcade1c" />
 
 
+## Prerequisites
+
+- [Conda](https://docs.conda.io/en/latest/) installed (Miniconda is enough)
+- [Docker](https://docs.docker.com/get-docker/) installed and running
+- [Docker Compose](https://docs.docker.com/compose/install/) installed
+
+
 ## Setup
 
-1. Download and install [Conda](https://docs.conda.io/en/latest/) (Miniconda is enough).
+1. Download and install .
 
 2. Create and activate Conda virtual environment:
-
    ```bash
    conda env create -f environment.yml
    conda activate 22971-ray-capstone
@@ -99,7 +115,6 @@ pytest.ini                  # Pytest configuration
 ## Execution
 
 **Prerequisites:** Ensure the conda environment is activated before running any commands:
-
 ```bash
 conda activate 22971-ray-capstone
 ```
@@ -232,11 +247,10 @@ Run artifacts are written to `output/run/stress/` (examples are available in [ou
 ### Cleanup
 
 ```bash
-reset  # Requires activated venv
-```
+# Requires activated venv
+reset
 
-Or run the standalone script directly:
-```bash
+# Standalone script that doesn't require activated venv
 python scripts/reset.py
 ```
 
@@ -279,16 +293,131 @@ Each run mode writes into its own subdirectory under the specified output direct
 
 ## Docker Cluster
 
-Submit to a Ray cluster via `ray job submit`:
+The project includes a Docker-based Ray cluster setup that demonstrates distributed execution across one head node and two worker nodes.
 
+
+### Setup the Ray Cluster
+
+1. **Build and start the cluster:**
+   ```bash
+   docker-compose up -d
+   ```
+
+   This starts:
+   - `ray-capstone-head` - Ray head node with dashboard on port 8265
+   - `ray-capstone-worker-1` - First worker node
+   - `ray-capstone-worker-2` - Second worker node
+
+2. **Verify the cluster is running:**
+   ```bash
+   docker-compose ps
+   ```
+
+   The dashboard available at http://localhost:8265 shows all connected nodes and active jobs.
+
+3. **View cluster logs:**
+   ```bash
+   # All nodes
+   docker-compose logs -f
+
+   # Specific node
+   docker-compose logs -f ray-head
+   ```
+
+### Submit Jobs to the Cluster
+
+***Note:*** Before submitting jobs to the cluster, ensure prepared assets are located in `output/prepared/` by following [Step 1 - Prepare Replay Assets](#step-1---prepare-replay-assets).
+
+Use `ray job submit` to run jobs on the cluster:
+
+**Blocking mode:**
 ```bash
 ray job submit \
-    --address http://<head-node>:8265 \
+    --address http://localhost:8265 \
     --working-dir . \
-    -- python main.py run --prepared-dir output/prepared --output-dir output/run --mode blocking --ray-address auto
+    -- python main.py run \
+        --prepared-dir output/prepared \
+        --output-dir output/run \
+        --mode blocking \
+        --ray-address auto \
+        --max-ticks 50
 ```
 
-Replace `blocking` with `async` or `stress` for the other run modes.
+**Async mode:**
+```bash
+ray job submit \
+    --address http://localhost:8265 \
+    --working-dir . \
+    -- python main.py run \
+        --prepared-dir output/prepared \
+        --output-dir output/run \
+        --mode async \
+        --tick-timeout-s 2.0 \
+        --completion-fraction 0.75 \
+        --max-inflight-zones 4 \
+        --ray-address auto \
+        --max-ticks 50
+```
+
+**Stress test:**
+```bash
+ray job submit \
+    --address http://localhost:8265 \
+    --working-dir . \
+    -- python main.py run \
+        --prepared-dir output/prepared \
+        --output-dir output/run \
+        --mode stress \
+        --slow-zone-fraction 0.6 \
+        --slow-zone-sleep-s 3.0 \
+        --tick-timeout-s 2.0 \
+        --ray-address auto \
+        --max-ticks 50
+```
+
+### Monitor Execution
+
+- **Ray Dashboard:** http://localhost:8265
+  - View running jobs, task timeline, resource utilization
+  - Monitor worker nodes and actor placement
+
+- **Job logs:**
+  ```bash
+  ray job logs <job-id>
+  ```
+
+- **Container logs:**
+  ```bash
+  docker-compose logs -f
+  ```
+
+### Cleanup
+
+**Stop the cluster:**
+```bash
+docker-compose down
+```
+
+**Remove volumes and images:**
+```bash
+docker-compose down -v
+docker rmi ray-capstone-project-ray-head ray-capstone-project-ray-worker-1 ray-capstone-project-ray-worker-2
+```
+
+### Scaling Workers
+
+To add more worker nodes, edit `docker-compose.yml` and add additional worker services, or use:
+
+```bash
+docker-compose up -d --scale ray-worker-1=3
+```
+
+### Notes
+
+- The `--ray-address auto` flag tells Ray to use the cluster instead of starting a local instance
+- Output artifacts are written to the mounted `output/` directory and accessible from the host
+- The cluster uses shared memory (`shm_size: 2g`) for efficient data transfer between workers
+- All data files and source code are mounted as volumes for live updates
 
 
 ## Tests

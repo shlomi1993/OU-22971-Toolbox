@@ -4,8 +4,10 @@ Helper functions for Ray capstone project tests.
 This module contains utility functions for generating synthetic test data and running subprocess commands.
 """
 
+import requests
 import subprocess
 import sys
+import time
 import numpy as np
 import pandas as pd
 
@@ -15,6 +17,7 @@ from typing import List
 
 RNG_SEED = 42
 PROJECT_DIR = Path(__file__).resolve().parent.parent
+DEFAULT_DOCKER_URL = "http://localhost:8265"
 
 
 def make_trips(year: int, month: int, n_zones: int = 30, base_count: int = 50) -> pd.DataFrame:
@@ -73,9 +76,97 @@ def make_zone_data(zone_id: int = 10, n_ticks: int = 5) -> tuple[pd.DataFrame, p
     return replay, baseline
 
 
-def run_script(args: List[str], timeout: int = 120) -> subprocess.CompletedProcess:
+def wait_for_ray_dashboard(url: str = DEFAULT_DOCKER_URL, timeout: int = 120, expected_nodes: int = 3) -> None:
     """
-    Run a Python script as a subprocess and print its output live.
+    Poll the Ray dashboard until it responds AND all expected nodes are alive.
+
+    Args:
+        url (str): Ray dashboard URL. Default is http://localhost:8265.
+        timeout (int): Maximum seconds to wait. Default is 120.
+        expected_nodes (int): Number of alive nodes to wait for. Default is 3.
+
+    Raises:
+        RuntimeError: If the cluster is not fully ready within the timeout.
+    """
+    deadline = time.monotonic() + timeout
+
+    # Phase 1: wait for dashboard to respond
+    while time.monotonic() < deadline:
+        try:
+            r = requests.get(f"{url}/api/version", timeout=5)
+            if r.status_code == 200:
+                print(f"Ray dashboard is responding at {url}", flush=True)
+                break
+        except requests.ConnectionError:
+            pass
+        time.sleep(3)
+    else:
+        raise RuntimeError(f"Ray dashboard at {url} not ready within {timeout}s")
+
+    # Phase 2: wait for all nodes to register
+    while time.monotonic() < deadline:
+        try:
+            r = requests.get(f"{url}/nodes?view=summary", timeout=5)
+            if r.status_code == 200:
+                data = r.json()
+                nodes = data.get("data", {}).get("summary", [])
+                alive = [n for n in nodes if n.get("raylet", {}).get("state") == "ALIVE"]
+                if len(alive) >= expected_nodes:
+                    print(f"Ray cluster ready: {len(alive)}/{expected_nodes} nodes alive", flush=True)
+                    break
+                print(f"Waiting for nodes: {len(alive)}/{expected_nodes} alive ...", flush=True)
+        except (requests.ConnectionError, ValueError):
+            pass
+        time.sleep(5)
+    else:
+        raise RuntimeError(f"Ray cluster did not reach {expected_nodes} alive nodes within {timeout}s")
+
+    # Phase 3: verify job submission actually works by submitting a trivial job
+    while time.monotonic() < deadline:
+        try:
+            submit_resp = requests.post(
+                f"{url}/api/jobs/",
+                json={"entrypoint": "python -c \"print('ready')\"", "runtime_env": {}},
+                timeout=10,
+            )
+            if submit_resp.status_code == 200:
+                job_id = submit_resp.json().get("job_id", "")
+                print(f"Probe job submitted: {job_id}", flush=True)
+                # Wait for the probe job to finish (SUCCEEDED or FAILED both mean the agent works)
+                while time.monotonic() < deadline:
+                    status_resp = requests.get(f"{url}/api/jobs/{job_id}", timeout=5)
+                    if status_resp.status_code == 200:
+                        status = status_resp.json().get("status", "")
+                        if status in ("SUCCEEDED", "FAILED"):
+                            print(f"Probe job finished with status: {status}", flush=True)
+                            if status == "SUCCEEDED":
+                                return
+                            break  # FAILED - retry outer loop
+                    time.sleep(3)
+        except (requests.ConnectionError, requests.Timeout):
+            pass
+        time.sleep(5)
+    raise RuntimeError(f"Ray job agent not ready within {timeout}s")
+
+
+def run_command(cmd: List[str], timeout: int = 120) -> subprocess.CompletedProcess:
+    """
+    Run a command as a subprocess, log its output live, and return the completed process.
+
+    Args:
+        cmd (List[str]): Command and arguments to run.
+        timeout (int): Maximum execution time in seconds. Default is 120.
+
+    Returns:
+        subprocess.CompletedProcess: CompletedProcess instance with returncode
+    """
+    print(f"\nRunning:\n\033[34m{' '.join(cmd)}\033[0m\n", flush=True)
+    return subprocess.run(cmd, cwd=str(PROJECT_DIR), timeout=timeout)
+
+
+def run_python_script(args: List[str], timeout: int = 120) -> subprocess.CompletedProcess:
+    """
+    Run a Python script as a subprocess, log its output live, and return the completed process.
 
     Args:
         args (List[str]): Command-line arguments (script name and parameters)
@@ -85,9 +176,7 @@ def run_script(args: List[str], timeout: int = 120) -> subprocess.CompletedProce
         subprocess.CompletedProcess: CompletedProcess instance with returncode
     """
     cmd = [sys.executable] + args
-    print(f"\nRunning:\n\033[34m{' '.join(cmd)}\033[0m\n", flush=True)
-    result = subprocess.run(cmd, cwd=str(PROJECT_DIR), timeout=timeout)
-    return result
+    return run_command(cmd, timeout=timeout)
 
 
 def run_prepare_script(ref_parquet: Path, replay_parquet: Path, output_dir: Path, n_zones: int) -> subprocess.CompletedProcess:
@@ -103,7 +192,7 @@ def run_prepare_script(ref_parquet: Path, replay_parquet: Path, output_dir: Path
     Returns:
         subprocess.CompletedProcess: CompletedProcess instance with returncode
     """
-    return run_script([
+    return run_python_script([
         "main.py",
         "prepare",
         "--ref-parquet", str(ref_parquet),

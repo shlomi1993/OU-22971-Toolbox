@@ -15,7 +15,7 @@ import pytest
 from pathlib import Path
 from typing import Dict
 
-from tests.helpers import run_script, run_prepare_script
+from tests.helpers import run_python_script, run_prepare_script
 
 
 os.environ["RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO"] = "0"
@@ -57,7 +57,7 @@ def test_prepare_script(synthetic_parquets: Dict[str, Path], tmp_path: Path, n_z
     if seed is not None:
         args.extend(["--seed", str(seed)])
 
-    result = run_script(args)
+    result = run_python_script(args)
     assert result.returncode == 0, f"main.py prepare --n-zones {n_zones} --seed {seed} failed"
     for fname in ["baseline.parquet", "replay.parquet", "active_zones.json", "prep_meta.json"]:
         assert (out / fname).exists(), f"main.py prepare must produce {fname}"
@@ -98,7 +98,7 @@ def test_run_script(synthetic_parquets: Dict[str, Path], tmp_path: Path, max_tic
 
     # Run the script
     out = tmp_path / "output"
-    result = run_script([
+    result = run_python_script([
         "main.py",
         "run",
         "--prepared-dir", str(prepared_dir),
@@ -130,7 +130,7 @@ def test_run_stress_script(synthetic_parquets: Dict[str, Path], tmp_path: Path, 
 
     # Run stress mode
     out = tmp_path / "output"
-    result = run_script([
+    result = run_python_script([
         "main.py",
         "run",
         "--prepared-dir", str(prepared_dir),
@@ -174,7 +174,7 @@ def test_blocking_workflow(synthetic_parquets: Dict[str, Path], tmp_path: Path, 
 
     # Run blocking mode
     out = tmp_path / "output"
-    result = run_script([
+    result = run_python_script([
         "main.py",
         "run",
         "--prepared-dir", str(prepared_dir),
@@ -203,7 +203,7 @@ def test_async_workflow(synthetic_parquets: Dict[str, Path], tmp_path: Path, max
 
     # Run async mode
     out = tmp_path / "output"
-    result = run_script([
+    result = run_python_script([
         "main.py",
         "run",
         "--prepared-dir", str(prepared_dir),
@@ -235,7 +235,7 @@ def test_stress_workflow(synthetic_parquets: Dict[str, Path], tmp_path: Path, ma
 
     # Run stress mode
     out = tmp_path / "output"
-    result = run_script([
+    result = run_python_script([
         "main.py",
         "run",
         "--prepared-dir", str(prepared_dir),
@@ -271,7 +271,7 @@ def test_standalone_scripts(synthetic_parquets: Dict[str, Path], tmp_path: Path)
     output_dir = tmp_path / "standalone_output"
 
     # Run prepare.py
-    run_script([
+    run_python_script([
         "src/prepare.py",
         "--ref-parquet", str(synthetic_parquets["ref"]),
         "--replay-parquet", str(synthetic_parquets["replay"]),
@@ -281,7 +281,7 @@ def test_standalone_scripts(synthetic_parquets: Dict[str, Path], tmp_path: Path)
     assert prepared_dir.exists(), "Prepared directory should exist after prepare"
 
     # Run run.py
-    run_script([
+    run_python_script([
         "src/run.py",
         "--prepared-dir", str(prepared_dir),
         "--output-dir", str(output_dir),
@@ -292,7 +292,7 @@ def test_standalone_scripts(synthetic_parquets: Dict[str, Path], tmp_path: Path)
     assert output_dir.exists(), "Output directory should exist after run"
 
     # Run reset.py
-    run_script([
+    run_python_script([
         "src/reset.py",
         "--prepared-dir", str(prepared_dir),
         "--output-dir", str(output_dir),
