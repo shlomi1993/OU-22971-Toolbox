@@ -73,7 +73,7 @@ pytest.ini                  # Pytest configuration
 
 ## Architecture Overview
 
-<img width="1672" height="941" alt="System architecture diagram" src="https://github.com/user-attachments/assets/c088f9a3-c5ae-4733-8481-1fbe5dcade1c" />
+<img width="1672" height="941" alt="System architecture diagram" src="https://github.com/user-attachments/assets/05894dea-62b0-48aa-9ac6-149884320ace" />
 
 
 ## Prerequisites
