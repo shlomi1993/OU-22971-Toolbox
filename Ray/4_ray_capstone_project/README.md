@@ -1,4 +1,4 @@
-<img width="1672" height="941" alt="ChatGPT Image Apr 26, 2026, 10_10_34 PM" src="https://github.com/user-attachments/assets/9dc8fb7b-9c02-447e-8a4d-7a45b65334bf" /># Ray Capstone - TLC-Backed Per-Zone Recommendations Under Skew
+# Ray Capstone - TLC-Backed Per-Zone Recommendations Under Skew
 
 A replay-based recommendation system built on [Ray](https://www.ray.io/). The system processes NYC Green Taxi trip data in 15-minute windows (ticks), producing a per-zone demand recommendation (`NEED` or `OK`) at every tick. A blocking baseline and an asynchronous controller run the same replay side by side, exposing how skew, bounded concurrency, timeout-driven fallback, and idempotent actor writes affect latency and output correctness.
 
