@@ -8,5 +8,5 @@
   "slow_zone_sleep_s": 3.0,
   "fallback_policy": "always_previous",
   "seed": 42,
-  "max_ticks": 50
+  "max_ticks": null
 }
