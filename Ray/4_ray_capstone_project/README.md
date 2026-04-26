@@ -177,7 +177,7 @@ prepare \  # Same as `python main.py prepare` or `python src/prepare.py`
     --replay-parquet data/green_tripdata_2023-02.parquet \
     --output-dir output/prepared \
     --n-zones 20 \
-    --seed 42  # For reproducibility only
+    --seed 42  # For reproducibility
 ```
 
 This validates the two adjacent-month parquet files, identifies the 20 busiest pickup zones from the reference month, aggregates ticks into 15-minute windows, builds per-zone baselines by `(zone_id, hour_of_day, day_of_week)`, and writes prepared assets to `output/prepared/`.
@@ -206,8 +206,8 @@ ray job submit \
         --mode blocking \
         --slow-zone-fraction 0.25 \
         --slow-zone-sleep-s 1.0 \
-        --seed 42 \
-        --max-ticks 50
+        --seed 42 \  # For reproducibility
+        --max-ticks 50  # For short runs, omit to process the full month (~2600 ticks)
 ```
 
 **Local execution:**
