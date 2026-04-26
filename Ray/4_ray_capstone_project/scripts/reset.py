@@ -8,7 +8,7 @@ import subprocess
 from pathlib import Path
 
 
-def reset_ray() -> None:
+def reset() -> None:
     """
     Stop Ray and remove output artifacts.
     """
@@ -18,7 +18,8 @@ def reset_ray() -> None:
     if output_dir.exists():
         shutil.rmtree(output_dir)
         print(f"Removed output directory: {output_dir}")
+    print("Reset complete.")
 
 
 if __name__ == "__main__":
-    reset_ray()
+    reset()
