@@ -3,15 +3,10 @@ Core constants, enums, and dataclasses for the Ray-based TLC replay system.
 """
 
 import argparse
-import logging
 
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from typing import Any, Dict, List
-
-
-logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
-logger = logging.getLogger(__name__)
 
 
 # Tick constants

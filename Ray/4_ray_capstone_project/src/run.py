@@ -12,7 +12,6 @@ Execution modes:
 
 import argparse
 import json
-import logging
 import numpy as np
 import ray
 
@@ -35,12 +34,9 @@ from src.common import (
     ReplayConfig,
     TickMetrics,
 )
+from src.logger import logger
 from src.replay.blocking import BlockingReplay
 from src.replay.asynchronous import AsyncReplay
-
-
-logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
-logger = logging.getLogger(__name__)
 
 
 def run_blocking(prepared_dir: Path, output_dir: Path, config: ReplayConfig) -> List[TickMetrics]:

@@ -6,7 +6,6 @@ per-zone baselines, and provides replay table construction and cross-check valid
 """
 
 import json
-import logging
 import numpy as np
 import pandas as pd
 
@@ -15,9 +14,7 @@ from pathlib import Path
 from typing import List, Tuple
 
 from src.common import CROSS_CHECK_N_TICKS, DEFAULT_SEED, REQUIRED_PARQUET_COLS, TICK_MINUTES
-
-
-logger = logging.getLogger(__name__)
+from src.logger import logger
 
 
 @dataclass
