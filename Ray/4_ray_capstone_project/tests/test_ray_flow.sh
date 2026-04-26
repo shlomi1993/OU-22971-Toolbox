@@ -51,6 +51,9 @@ export RAY_DEDUP_LOGS=0
 
 log_and_run() {
     echo -e "${GREEN}$*${NC}"
+    if [ "$KEEP_ARTIFACTS" = true ]; then
+        echo "$*" | sed "s|$PROJECT_DIR/||g" >> "$LOG_FILE"
+    fi
     "$@"
 }
 
@@ -87,10 +90,23 @@ DATA_DIR="$PROJECT_DIR/data"
 PREPARED_DIR="$PROJECT_DIR/output/prepared"
 OUTPUT_DIR="$PROJECT_DIR/output/run"
 
+# Set up logging if keeping artifacts
+if [ "$KEEP_ARTIFACTS" = true ]; then
+    mkdir -p "$PROJECT_DIR/output"
+    LOG_FILE="$PROJECT_DIR/output/test_ray_flow.txt"
+    echo "Date: $(date)" > "$LOG_FILE"
+    echo "" >> "$LOG_FILE"
+fi
+
 REF_FILE="$DATA_DIR/green_tripdata_2023-01.parquet"
 REPLAY_FILE="$DATA_DIR/green_tripdata_2023-02.parquet"
 
 echo ""
+if [ "$KEEP_ARTIFACTS" = true ]; then
+    echo "Log file: $LOG_FILE"
+    echo "Started at: $(date)"
+    echo ""
+fi
 echo -e "${CYAN}Ray Capstone - Full Flow Test${NC}"
 echo -e "${CYAN}=============================${NC}"
 
@@ -187,10 +203,11 @@ echo -e "${GRAY}Total elapsed: $(format_duration $((SECONDS - TOTAL_START)))${NC
 
 # --- Cleanup ---
 echo ""
-if [ "$KEEP_ARTIFACTS" = false ]; then
-    echo "Cleaning up generated artifacts"
-    rm -rf "$PROJECT_DIR/output"
-else
+if [ "$KEEP_ARTIFACTS" = true ]; then
     echo "Keeping artifacts:"
     find "$PROJECT_DIR/output" -type f | sort
+    echo -e "\n${GREEN}Log saved to: $LOG_FILE${NC}"
+else
+    echo "Cleaning up generated artifacts"
+    rm -rf "$PROJECT_DIR/output"
 fi
