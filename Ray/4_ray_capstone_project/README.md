@@ -9,23 +9,26 @@ A replay-based recommendation system built on [Ray](https://www.ray.io/). The sy
 - [Ray Capstone - TLC-Backed Per-Zone Recommendations Under Skew](#ray-capstone---tlc-backed-per-zone-recommendations-under-skew)
   - [Table of contents](#table-of-contents)
   - [Video Walkthrough](#video-walkthrough)
-  - [Project Structure](#project-structure)
   - [Architecture Overview](#architecture-overview)
-  - [Prerequisites](#prerequisites)
+    - [Workflow](#workflow)
+    - [Decision Rule](#decision-rule)
+    - [Partial-readiness Policy](#partial-readiness-policy)
+  - [Project Structure](#project-structure)
   - [Setup](#setup)
-    - [1. Local Environment Setup](#1-local-environment-setup)
-    - [2. Download Data](#2-download-data)
-    - [3. Docker Cluster Setup](#3-docker-cluster-setup)
+    - [1. Prerequisites](#1-prerequisites)
+    - [2. Local Environment Setup](#2-local-environment-setup)
+    - [3. Download Data](#3-download-data)
+    - [4. Docker Cluster Setup](#4-docker-cluster-setup)
   - [Execution](#execution)
     - [Step 1 - Prepare Replay Assets](#step-1---prepare-replay-assets)
     - [Step 2 - Blocking Baseline](#step-2---blocking-baseline)
     - [Step 3 - Async Controller](#step-3---async-controller)
     - [Step 4 - Stress Test](#step-4---stress-test)
+    - [Output Artifacts](#output-artifacts)
     - [Cleanup](#cleanup)
-  - [Decision Rule](#decision-rule)
-  - [Partial-readiness Policy](#partial-readiness-policy)
-  - [Output artifacts](#output-artifacts)
   - [Tests](#tests)
+    - [Pytest](#pytest)
+    - [Demo](#demo)
   - [Troubleshooting](#troubleshooting)
   - [Summary](#summary)
 
@@ -33,6 +36,34 @@ A replay-based recommendation system built on [Ray](https://www.ray.io/). The sy
 ## Video Walkthrough
 
 [Demo Video](#)
+
+
+## Architecture Overview
+
+
+### Workflow
+
+<img width="1672" height="941" alt="System architecture diagram" src="https://github.com/user-attachments/assets/05894dea-62b0-48aa-9ac6-149884320ace" />
+
+
+### Decision Rule
+
+For each zone at each tick, the system compares recent average demand against the historical baseline for that zone's hour-of-day and day-of-week combination.
+
+The zone receives a **NEED** recommendation if recent demand exceeds the baseline threshold: `baseline_mean + max(baseline_std, 1.0)`. Otherwise, the zone receives **OK**.
+
+The baseline statistics are computed from the reference month, grouped by zone, hour-of-day, and day-of-week. This means each zone has different baseline values for each hour and weekday combination. The standard deviation floor of 1.0 ensures the threshold remains meaningful even for low-variance zones. Zones with no historical data default to **OK**.
+
+
+### Partial-readiness Policy
+
+The async controller finalizes each tick using:
+
+- **Bounded concurrency** - `max_inflight_zones` limits simultaneous scoring tasks.
+- **Timeout** - zones still pending after `tick_timeout_s` seconds are considered late.
+- **Fallback** - late zones inherit their previous accepted decision (`always_previous`), and zones without history default to `OK`.
+
+Fallback behavior is deterministic (same inputs + seed = same outcomes) and fully visible in artifacts: `actor_counters.json` tracks `n_fallbacks`, `n_late`, `n_duplicates` per zone; `metrics.csv` tracks `n_zones_fallback` per tick.
 
 
 ## Project Structure
@@ -73,22 +104,17 @@ pytest.ini                  # Pytest configuration
 ```
 
 
-## Architecture Overview
-
-<img width="1672" height="941" alt="System architecture diagram" src="https://github.com/user-attachments/assets/05894dea-62b0-48aa-9ac6-149884320ace" />
+## Setup
 
 
-## Prerequisites
+### 1. Prerequisites
 
 - [Conda](https://docs.conda.io/en/latest/) installed (Miniconda is enough)
 - [Docker](https://docs.docker.com/get-docker/) installed and running
 - [Docker Compose](https://docs.docker.com/compose/install/) installed
 
 
-## Setup
-
-
-### 1. Local Environment Setup
+### 2. Local Environment Setup
 
 Create and activate the Conda virtual environment:
 
@@ -98,7 +124,7 @@ conda activate 22971-ray-capstone
 ```
 
 
-### 2. Download Data
+### 3. Download Data
 
 Download two adjacent monthly Green Taxi parquet files from [TLC](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page):
 
@@ -115,7 +141,7 @@ powershell -File scripts/download_data.ps1
 This downloads `green_tripdata_2023-01.parquet` (reference) and `green_tripdata_2023-02.parquet` (replay) into `data/`.
 
 
-### 3. Docker Cluster Setup
+### 4. Docker Cluster Setup
 
 The project uses a multi-node Ray cluster to simulate distributed deployment. This demonstrates how the system behaves when actors and tasks are distributed across multiple machines, exposing real-world challenges like network latency, skew, and fault tolerance.
 
@@ -153,7 +179,7 @@ docker-compose logs -f ray-head
 
 All execution steps use `ray job submit` to run on the distributed Docker cluster. This ensures the demo simulates real-world distributed deployment where actors and tasks are spread across multiple nodes.
 
-**Prerequisites:**
+**Preliminary:**
 - Ensure the Docker cluster is running (see [Setup §3](#3-docker-cluster-setup))
 - Conda environment activated: `conda activate 22971-ray-capstone`
 
@@ -342,6 +368,20 @@ Run artifacts are written to `output/run/stress/` (examples are available in [ou
 **Takeaway:** Async degrades gracefully with controlled tick completion and more fallbacks. Blocking degrades sharply with mean and max tick latency increasing significantly under harsher skew.
 
 
+### Output Artifacts
+
+Each run mode writes into its own subdirectory under the specified output directory (`output/run/` by default):
+
+| File | Content |
+|---|---|
+| `run_config.json` | Runtime configuration used for the run |
+| `metrics.csv` | Per-tick metrics: latency, completions, fallbacks, late/duplicate counts |
+| `latency_log.json` | Per-zone per-tick latency entries |
+| `tick_summary.json` | Per-tick decisions and metrics |
+| `actor_counters.json` | Per-zone duplicate/late/fallback counters |
+| `comparison.json` | Blocking vs async comparison (stress mode only) |
+
+
 ### Cleanup
 
 **Stop the Docker cluster:**
@@ -356,72 +396,41 @@ docker-compose down
 docker-compose down -v
 ```
 
-**Delete output artifacts:**
+**Verify Ray stopped and delete output artifacts (optional):**
 
 ```bash
 python scripts/reset.py  # Or simply "reset" if venv is activated
 ```
 
 
-## Decision Rule
-
-For each zone at each tick, the system compares recent average demand against the historical baseline for that zone's hour-of-day and day-of-week combination.
-
-The zone receives a **NEED** recommendation if recent demand exceeds the baseline threshold: `baseline_mean + max(baseline_std, 1.0)`. Otherwise, the zone receives **OK**.
-
-The baseline statistics are computed from the reference month, grouped by zone, hour-of-day, and day-of-week. This means each zone has different baseline values for each hour and weekday combination. The standard deviation floor of 1.0 ensures the threshold remains meaningful even for low-variance zones. Zones with no historical data default to **OK**.
-
-
-## Partial-readiness Policy
-
-The async controller finalizes each tick using:
-
-- **Bounded concurrency** - `max_inflight_zones` limits simultaneous scoring tasks.
-- **Timeout** - zones still pending after `tick_timeout_s` seconds are considered late.
-- **Fallback** - late zones inherit their previous accepted decision (`always_previous`), and zones without history default to `OK`.
-
-Fallback behavior is deterministic (same inputs + seed = same outcomes) and fully visible in artifacts: `actor_counters.json` tracks `n_fallbacks`, `n_late`, `n_duplicates` per zone; `metrics.csv` tracks `n_zones_fallback` per tick.
-
-
-## Output artifacts
-
-Each run mode writes into its own subdirectory under the specified output directory (`output/run/` by default):
-
-| File | Content |
-|---|---|
-| `run_config.json` | Runtime configuration used for the run |
-| `metrics.csv` | Per-tick metrics: latency, completions, fallbacks, late/duplicate counts |
-| `latency_log.json` | Per-zone per-tick latency entries |
-| `tick_summary.json` | Per-tick decisions and metrics |
-| `actor_counters.json` | Per-zone duplicate/late/fallback counters |
-| `comparison.json` | Blocking vs async comparison (stress mode only) |
-
-
 ## Tests
+
+
+### Pytest
 
 The project includes comprehensive test coverage for data validation, actor state management, and end-to-end workflows.
 
-**Run quick tests:**
+**Quick tests:**
 
 ```bash
 pytest tests
 ```
+- Runs unit-tests and short integration tests
+- Expected duration: **~2 minutes**
 
-Expected duration: ~2 minutes
-
-**Run all tests:**
+**All tests:**
 
 ```bash
 pytest tests --full
 ```
+- Executes the full test suite, including full integration tests and end-to-end workflows
+- Expected duration: **~15 minutes**
 
-Expected duration: ~15 minutes
+**Note:** Pytest is configured to use `-v` (verbose), `-s` (show print statements), and `--strict-markers` (enforce marker usage) by default.
 
-*Note:* Pytest is configured to use `-v` (verbose), `-s` (show print statements), and `--strict-markers` (enforce marker usage) by default.
+### Demo
 
-**Run a full flow test:**
-
-The repository includes a full-flow shell script that downloads data, prepares assets, and runs all three demo modes:
+The repository includes a full-flow shell script that downloads data, prepares assets, and runs all three demo modes.
 
 ```bash
 bash tests/test_ray_flow.sh --max-ticks 50
@@ -460,36 +469,41 @@ Expected duration: ~8.5 minutes for 50 ticks (local), ~10-12 minutes with Docker
 
 **Interactive demo:**
 
-The repository also includes an interactive demo script in the project root for presentations and walkthroughs:
+The repository includes an interactive demo script (`demo.sh`) optimized for presentations and live demonstrations:
 
 ```bash
-./demo.sh --max-ticks 50
+./demo.sh --max-ticks 50 --docker
 ```
 
-This script provides the same full workflow as `test_ray_flow.sh` but defaults to interactive mode, pausing between each step to allow for explanation and observation. It's ideal for live demonstrations and teaching.
+This script executes the same workflow as `test_ray_flow.sh` but with better defaults for demonstrations: interactive pauses between steps, colored output, and detailed progress tracking.
 
 **Options:**
-- `--max-ticks N` - Limit the run (e.g., 5 for a fast test, 50 for demos), or **omit to process the full month (~2600 ticks)**.
-- `--keep-artifacts` - Preserve output files after completion. Also generates a log file at `output/demo.txt` with command history.
-- `--docker` - Run replay jobs on the Docker cluster instead of local Ray.
-- `--no-wait` - Skip pauses and run continuously (non-interactive mode).
+- `--max-ticks N` - Limit ticks to run (default: full month ~2600 ticks). Use 50 for quick demos.
+- `--keep-artifacts` - Preserve output artifacts and generate command log at `output/demo.txt`
+- `--docker` - Run on Docker cluster (recommended for demonstrations)
+- `--no-wait` - Run continuously without pauses (for automated testing)
 
-**Example - Docker cluster demo with artifacts:**
+**Workflow (Docker mode with --keep-artifacts):**
 
-```bash
-./demo.sh --max-ticks 50 --docker --keep-artifacts
-```
+The script executes these steps, pausing between each for review:
 
-This provides the best demonstration experience:
-1. Downloads TLC data
-2. Starts the Docker cluster and waits for confirmation
-3. Prepares replay assets
-4. Runs blocking baseline (pauses for review)
-5. Runs async controller (pauses for review)
-6. Runs stress test (pauses for review)
-7. Keeps cluster running and preserves all output artifacts for inspection
+1. **Download data** - Fetches TLC parquet files (skips if present)
+2. **Start cluster** - Launches 3-node Docker cluster, waits 10s for readiness
+3. **Prepare assets** - Runs prepare locally, validates 4 required files created
+4. **Sync mounts** - Restarts containers to ensure volume mounts are current
+5. **Blocking run** - Submits job to cluster (25% slow zones, 1s delay)
+6. **Async run** - Submits job with timeout and fallback (2s timeout, 75% threshold)
+7. **Stress test** - Runs both modes with harsh skew (60% slow, 3s delay)
+8. **Preserve state** - Keeps cluster running, saves all artifacts to `output/`
 
-Each step displays colored output, duration tracking, and clear progress indicators. The `--keep-artifacts` flag also creates a timestamped log file documenting all commands executed.
+Each step shows elapsed time and color-coded status. With `--keep-artifacts`, a complete command log is saved for reference.
+
+**Performance:**
+- 10 ticks with Docker: ~2 minutes
+- 50 ticks with Docker: ~5-7 minutes
+- Local (no Docker): ~30% faster
+
+**Important:** Docker mode requires a container restart after prepare (step 4) because macOS Docker Desktop doesn't immediately propagate new directories to running containers. This is handled automatically by the script.
 
 
 ## Troubleshooting
