@@ -429,13 +429,11 @@ pytest tests --full
 
 ### Demo
 
-The repository includes a demo script that executes the full workflow across all modes.
+The repository includes a demo script that executes the complete workflow from data download through asset preparation and replay run across all modes, with interactive pauses.
 
 ```bash
 ./demo.sh --max-ticks 50
 ```
-
-This script executes the complete workflow, from data download through asset preparation and all execution modes, with interactive pauses.
 
 **Options:**
 - `--keep-artifacts` - Preserve output files after the test completes.
@@ -443,7 +441,7 @@ This script executes the complete workflow, from data download through asset pre
 - `--docker` - Run replay jobs on the Docker cluster instead of local Ray.
 - `--no-wait` - Run continuously without interactive pauses.
 
-**Note:** When running in Docker, the script:
+**Docker Flow:** When running in Docker, the script:
 1. Starts the Docker cluster via `docker-compose up -d`
 2. Runs prepare locally
 3. Submits blocking, async, and stress jobs to the cluster via `ray job submit`
@@ -451,7 +449,7 @@ This script executes the complete workflow, from data download through asset pre
 5. Stops the cluster
 
 
-**Important:** Docker mode requires a container restart after prepare (step 4) because macOS Docker Desktop doesn't immediately propagate new directories to running containers. This is handled automatically by the script.
+**Important Note:** Docker mode requires a container restart after prepare (step 4) because macOS Docker Desktop doesn't immediately propagate new directories to running containers. This is handled automatically by the script.
 
 
 ## Troubleshooting
