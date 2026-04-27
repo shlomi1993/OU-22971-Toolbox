@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   ray-head:
     build:
@@ -11,6 +9,7 @@ services:
       --port=6379 
       --dashboard-host=0.0.0.0 
       --dashboard-port=8265 
+      --num-cpus=0 
       --block"
     ports:
       - "8265:8265"   # Ray Dashboard
@@ -23,9 +22,10 @@ services:
       - ./main.py:/workspace/main.py
     working_dir: /workspace
     shm_size: 3g
-    mem_limit: 4g
+    mem_limit: 8g
     environment:
       - RAY_DISABLE_DOCKER_CPU_WARNING=1
+      - RAY_memory_usage_threshold=0.99
     networks:
       - ray-network
 
@@ -47,9 +47,10 @@ services:
       - ./main.py:/workspace/main.py
     working_dir: /workspace
     shm_size: 3g
-    mem_limit: 4g
+    mem_limit: 8g
     environment:
       - RAY_DISABLE_DOCKER_CPU_WARNING=1
+      - RAY_memory_usage_threshold=0.99
     networks:
       - ray-network
 
@@ -71,9 +72,10 @@ services:
       - ./main.py:/workspace/main.py
     working_dir: /workspace
     shm_size: 3g
-    mem_limit: 4g
+    mem_limit: 8g
     environment:
       - RAY_DISABLE_DOCKER_CPU_WARNING=1
+      - RAY_memory_usage_threshold=0.99
     networks:
       - ray-network
 

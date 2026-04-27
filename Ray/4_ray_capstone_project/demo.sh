@@ -137,7 +137,6 @@ fi
 echo ""
 
 # --- Download data ---
-echo ""
 echo -e "${CYAN}Step 1: Download TLC data${NC}"
 STEP_START=$SECONDS
 log_and_run bash "$PROJECT_DIR/scripts/download_data.sh"
