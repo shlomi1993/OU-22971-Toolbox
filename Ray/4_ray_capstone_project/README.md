@@ -70,7 +70,6 @@ Fallback behavior is deterministic (same inputs + seed = same outcomes) and full
 
 ```
 main.py                     # The main entry point for the program.
-demo.sh                     # Interactive demo script for presentations and walkthroughs.
 src/
 ├── prepare.py              # Data preparation script.
 ├── run.py                  # Replay execution script.
@@ -94,8 +93,8 @@ tests/
 ├── test_core_logic.py      # Tests for data validation, scoring logic, and artifact verification.
 ├── test_zone_actor.py      # Tests for ZoneActor state management and fault-tolerance.
 ├── test_workflows.py       # Tests for script-level integration and end-to-end workflow.
-├── test_ray_docker.py      # Tests for Docker cluster setup, connectivity, and job submission.
-└── test_ray_flow.sh        # Full flow test that downloads data, prepares assets, runs all three modes.
+└── test_ray_docker.py      # Tests for Docker cluster setup, connectivity, and job submission.
+demo.sh                     # Interactive demo script for validation and presentations.
 Dockerfile                  # Docker image for Ray cluster nodes
 docker-compose.yml          # Multi-node Ray cluster definition (1 head + 2 workers)
 pyproject.toml              # Package config and console_scripts entry points
@@ -430,78 +429,27 @@ pytest tests --full
 
 ### Demo
 
-The repository includes a full-flow shell script that downloads data, prepares assets, and runs all three demo modes.
+The repository includes a demo script that executes the full workflow across all modes.
 
 ```bash
-bash tests/test_ray_flow.sh --max-ticks 50
+./demo.sh --max-ticks 50
 ```
 
-This script validates the complete workflow from data download through all execution modes, ensuring the entire pipeline works correctly.
+This script executes the complete workflow, from data download through asset preparation and all execution modes, with interactive pauses.
 
 **Options:**
-- `--max-ticks N` - Limit the run (e.g., 5 for a fast test, 500 for more ticks), or **omit to process the full month (~2600 ticks)**.
 - `--keep-artifacts` - Preserve output files after the test completes.
+- `--max-ticks N` - Limit the number of ticks to run (e.g., 5 for a fast test, 500 for a longer one), or **omit to process the full month (~2600 ticks)**.
 - `--docker` - Run replay jobs on the Docker cluster instead of local Ray.
-- `--demo` - Pause between steps and wait for user to press Enter (useful for demonstrations).
+- `--no-wait` - Run continuously without interactive pauses.
 
-**Docker mode:**
-
-```bash
-bash tests/test_ray_flow.sh --max-ticks 50 --docker
-```
-
-With `--docker`, the script:
+**Note:** When running in Docker, the script:
 1. Starts the Docker cluster via `docker-compose up -d`
-2. Runs prepare locally (data processing only)
+2. Runs prepare locally
 3. Submits blocking, async, and stress jobs to the cluster via `ray job submit`
-4. Verifies artifacts (written to local `output/` via volume mount)
-5. Stops the cluster (unless `--keep-artifacts` is set)
+4. Verifies the artifacts written to local `output/` via volume mount
+5. Stops the cluster
 
-**Demo mode:**
-
-```bash
-bash tests/test_ray_flow.sh --max-ticks 50 --demo
-```
-
-With `--demo`, the script pauses between each step and waits for you to press Enter before proceeding. This is useful for live demonstrations where you want to explain what's happening at each stage.
-
-Expected duration: ~8.5 minutes for 50 ticks (local), ~10-12 minutes with Docker overhead
-
-**Interactive demo:**
-
-The repository includes an interactive demo script (`demo.sh`) optimized for presentations and live demonstrations:
-
-```bash
-./demo.sh --max-ticks 50 --docker
-```
-
-This script executes the same workflow as `test_ray_flow.sh` but with better defaults for demonstrations: interactive pauses between steps, colored output, and detailed progress tracking.
-
-**Options:**
-- `--max-ticks N` - Limit ticks to run (default: full month ~2600 ticks). Use 50 for quick demos.
-- `--keep-artifacts` - Preserve output artifacts and generate command log at `output/demo.txt`
-- `--docker` - Run on Docker cluster (recommended for demonstrations)
-- `--no-wait` - Run continuously without pauses (for automated testing)
-
-**Workflow (Docker mode with --keep-artifacts):**
-
-The script executes these steps, pausing between each for review:
-
-1. **Download data** - Fetches TLC parquet files (skips if present)
-2. **Start cluster** - Launches 3-node Docker cluster, waits 10s for readiness
-3. **Prepare assets** - Runs prepare locally, validates 4 required files created
-4. **Sync mounts** - Restarts containers to ensure volume mounts are current
-5. **Blocking run** - Submits job to cluster (25% slow zones, 1s delay)
-6. **Async run** - Submits job with timeout and fallback (2s timeout, 75% threshold)
-7. **Stress test** - Runs both modes with harsh skew (60% slow, 3s delay)
-8. **Preserve state** - Keeps cluster running, saves all artifacts to `output/`
-
-Each step shows elapsed time and color-coded status. With `--keep-artifacts`, a complete command log is saved for reference.
-
-**Performance:**
-- 10 ticks with Docker: ~2 minutes
-- 50 ticks with Docker: ~5-7 minutes
-- Local (no Docker): ~30% faster
 
 **Important:** Docker mode requires a container restart after prepare (step 4) because macOS Docker Desktop doesn't immediately propagate new directories to running containers. This is handled automatically by the script.
 
