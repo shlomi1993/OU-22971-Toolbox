@@ -22,7 +22,8 @@ services:
       - ./src:/workspace/src
       - ./main.py:/workspace/main.py
     working_dir: /workspace
-    shm_size: 2g
+    shm_size: 3g
+    mem_limit: 4g
     environment:
       - RAY_DISABLE_DOCKER_CPU_WARNING=1
     networks:
@@ -45,7 +46,8 @@ services:
       - ./src:/workspace/src
       - ./main.py:/workspace/main.py
     working_dir: /workspace
-    shm_size: 2g
+    shm_size: 3g
+    mem_limit: 4g
     environment:
       - RAY_DISABLE_DOCKER_CPU_WARNING=1
     networks:
@@ -68,7 +70,8 @@ services:
       - ./src:/workspace/src
       - ./main.py:/workspace/main.py
     working_dir: /workspace
-    shm_size: 2g
+    shm_size: 3g
+    mem_limit: 4g
     environment:
       - RAY_DISABLE_DOCKER_CPU_WARNING=1
     networks:
