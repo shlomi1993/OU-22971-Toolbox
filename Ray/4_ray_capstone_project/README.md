@@ -191,7 +191,7 @@ All execution steps use `ray job submit` to run on the distributed Docker cluste
 - The `--ray-address auto` flag tells Ray to use the Docker cluster instead of starting a local instance
 - Output artifacts are written to the mounted `output/` directory and accessible from the host
 - The cluster uses shared memory (`shm_size: 2g`) for efficient data transfer between workers
-- Examples below use `--max-ticks 50` for short runs. Omit to process the full month (~2600 ticks)
+- Examples below use `--max-ticks 20` for short runs. Omit to process the full month (~2600 ticks)
 
 
 ### Step 1 - Prepare Replay Assets
@@ -234,7 +234,7 @@ ray job submit \
         --slow-zone-fraction 0.25 \
         --slow-zone-sleep-s 1.0 \
         --seed 42 \  # For reproducibility
-        --max-ticks 50  # For short runs, omit to process the full month (~2600 ticks)
+        --max-ticks 20  # For short runs, omit to process the full month (~2600 ticks)
 ```
 
 **Local execution:**
@@ -247,7 +247,7 @@ run \  # Same as `python main.py run` or `python src/run.py`
     --slow-zone-fraction 0.25 \
     --slow-zone-sleep-s 1.0 \
     --seed 42 \
-    --max-ticks 50
+    --max-ticks 20
 ```
 
 Runs the replay in blocking mode with simulated skew (25% slow zones, 1s delay). Scoring tasks return decisions to the controller. The controller waits for **all** zones before closing each tick and writes accepted decisions into actors.
@@ -288,7 +288,7 @@ ray job submit \
         --completion-fraction 0.75 \
         --max-inflight-zones 4 \
         --seed 42 \
-        --max-ticks 50
+        --max-ticks 20
 ```
 
 **Local execution:**
@@ -304,7 +304,7 @@ run \
     --completion-fraction 0.75 \
     --max-inflight-zones 4 \
     --seed 42 \
-    --max-ticks 50
+    --max-ticks 20
 ```
 
 Runs the replay in async mode with simulated skew (25% slow zones, 1s delay), bounded concurrency (max 4 inflight zones), 2s timeout, and 75% completion threshold. Scoring tasks report decisions directly to actors. The driver polls actor readiness and closes ticks under the configured partial-readiness policy. Late zones receive a deterministic fallback.
@@ -338,7 +338,7 @@ ray job submit \
         --slow-zone-sleep-s 3.0 \
         --tick-timeout-s 2.0 \
         --seed 42 \
-        --max-ticks 50
+        --max-ticks 20
 ```
 
 **Local execution:**
@@ -352,7 +352,7 @@ run \
     --slow-zone-sleep-s 3.0 \
     --tick-timeout-s 2.0 \
     --seed 42 \
-    --max-ticks 50
+    --max-ticks 20
 ```
 
 Runs both blocking and async modes back-to-back with harsher skew (60% slow zones, 3s delay) and writes a side-by-side comparison to evaluate degradation under stress.
