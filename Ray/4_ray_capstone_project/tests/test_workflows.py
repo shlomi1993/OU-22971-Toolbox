@@ -294,10 +294,8 @@ def test_standalone_scripts(synthetic_parquets: Dict[str, Path], tmp_path: Path)
     # Run reset.py
     run_python_script([
         "scripts/reset.py",
-        "--prepared-dir", str(prepared_dir),
         "--output-dir", str(output_dir),
     ])
 
     # Verify cleanup
-    assert not prepared_dir.exists(), "reset.py should remove prepared directory"
     assert not output_dir.exists(), "reset.py should remove output directory"

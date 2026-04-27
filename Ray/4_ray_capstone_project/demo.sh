@@ -61,6 +61,7 @@ log_and_run() {
     if [ "$KEEP_ARTIFACTS" = true ]; then
         echo "$*" | sed "s|$PROJECT_DIR/||g" >> "$LOG_FILE"
     fi
+    echo "Output:"
     "$@"
 }
 
@@ -123,8 +124,10 @@ REF_FILE="$DATA_DIR/green_tripdata_2023-01.parquet"
 REPLAY_FILE="$DATA_DIR/green_tripdata_2023-02.parquet"
 
 # --- Start of demo ---
+echo ""
+echo -e "${CYAN}===================${NC}"
 echo -e "${CYAN}Ray Capstone - Demo${NC}"
-echo -e "${CYAN}==================${NC}"
+echo -e "${CYAN}===================${NC}"
 echo "Started: $(date)"
 if [ "$USE_DOCKER" = true ]; then
     echo -e "Mode: Docker cluster (Ray Dashboard: $RAY_DASHBOARD_URL)"
@@ -243,8 +246,10 @@ echo -e "${GRAY}Step $((3 + STEP_OFFSET)) completed in $(format_duration $((SECO
 if [ "$NO_WAIT" = false ]; then
     echo ""
     echo "Expected behavior:"
-    echo "  - Tick latency is dominated by the slowest zones"
-    echo "  - Skew hurts visibly"
+    echo "  - Tick latency is dominated by the slowest zones (max_zone_latency_s)"
+    echo "  - Skew hurts visibly, i.e., long tail in tick latency distribution"
+    echo ""
+    echo "Check $OUTPUT_DIR/blocking/tick_summary.json"
     echo ""
     wait_for_user "Run async controller"
 fi
@@ -257,7 +262,7 @@ ASYNC_ARGS="\
     --mode async \
     --slow-zone-fraction 0.25 \
     --slow-zone-sleep-s 1.0 \
-    --tick-timeout-s 2.0 \
+    --tick-timeout-s 0.8 \
     --completion-fraction 0.75 \
     --max-inflight-zones 4 \
     --seed 42"
@@ -283,8 +288,10 @@ echo -e "${GRAY}Step $((4 + STEP_OFFSET)) completed in $(format_duration $((SECO
 if [ "$NO_WAIT" = false ]; then
     echo ""
     echo "Expected behavior:"
-    echo "  - Lower sensitivity to stragglers"
-    echo "  - More controlled tick-completion behavior"
+    echo "  - Lower sensitivity to stragglers (n_zones_fallback > 0 and lower total_tick_latency_s compared to blocking)"
+    echo "  - More controlled tick-completion behavior (tight total_tick_latency_s and stable n_zones_completed)"
+    echo ""
+    echo "Check $OUTPUT_DIR/async/tick_summary.json"
     echo ""
     wait_for_user "Run skew stress test"
 fi
@@ -321,8 +328,10 @@ echo -e "${GRAY}Step $((5 + STEP_OFFSET)) completed in $(format_duration $((SECO
 if [ "$NO_WAIT" = false ]; then
     echo ""
     echo "Expected behavior:"
-    echo "  - Blocking degrades sharply"
-    echo "  - The async controller still progresses cleanly with explicit fallback usage"
+    echo "  - Blocking degrades sharply (high mean_tick_latency and 0 total_fallbacks)"
+    echo "  - The async controller still progresses cleanly with explicit fallback usage (lower mean_tick_latency and total_fallbacks > 0)"
+    echo ""
+    echo "Check $OUTPUT_DIR/stress/comparison.json"
     echo ""
     if [ "$USE_DOCKER" = true ] && [ "$KEEP_ARTIFACTS" = false ]; then
         wait_for_user "Stop Docker cluster"
