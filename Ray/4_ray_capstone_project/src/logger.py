@@ -42,7 +42,7 @@ class ColoredFormatter(logging.Formatter):
         level_color = self.COLORS.get(record.levelname, "")
         colored_level = f"{level_color}{level_name}{self.RESET}"
         message = record.getMessage()
-        log = f"{timestamp} | {colored_level} | {message}"
+        log = f"{timestamp} {colored_level} {message}"
 
         # Add exception info if present
         if record.exc_info:
