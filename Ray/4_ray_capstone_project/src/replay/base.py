@@ -91,7 +91,7 @@ class Replay(ABC):
         rng = np.random.RandomState(self.config.seed)
         n_slow = max(1, int(len(active_zones) * self.config.slow_zone_fraction))
         slow_zones = set(rng.choice(active_zones, size=n_slow, replace=False))
-        g_logger.info(f"Slow zones ({len(slow_zones)}): {sorted(slow_zones)}")
+        g_logger.info(f"Slow zones ({len(slow_zones)}): {sorted(int(z) for z in slow_zones)}")
         return slow_zones
 
     @staticmethod

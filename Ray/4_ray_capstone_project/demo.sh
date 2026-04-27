@@ -362,6 +362,6 @@ echo ""
 if [ "$KEEP_ARTIFACTS" = true ]; then
     echo -e "Artifacts written to: ${GREEN}$PROJECT_DIR/output${NC}"
 else
-    echo "Cleaning up generated artifacts"
     rm -rf "$PROJECT_DIR/output"
+    echo "Removed $PROJECT_DIR/output"
 fi
