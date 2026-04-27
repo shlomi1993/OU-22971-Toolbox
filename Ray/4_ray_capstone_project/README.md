@@ -437,7 +437,7 @@ The repository includes a demo script that executes the complete workflow from d
 
 **Options:**
 - `--keep-artifacts` - Preserve output files after the test completes.
-- `--max-ticks N` - Limit the number of ticks to run. Default is **20 ticks** (~2 minutes). Use `0` or `unlimited` to process the full month (~2600 ticks).
+- `--max-ticks N` - Limit the number of ticks to run. Default is **20 ticks** (~3.5 minutes). Use `0` or `unlimited` to process the full month (~2600 ticks).
 - `--no-docker` - Run replay jobs on local Ray instead of Docker cluster.
 - `--no-wait` - Run continuously without interactive pauses.
 
