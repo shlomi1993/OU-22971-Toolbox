@@ -39,6 +39,7 @@ A replay-based recommendation system built on [Ray](https://www.ray.io/). The sy
 
 ```
 main.py                     # The main entry point for the program.
+demo.sh                     # Interactive demo script for presentations and walkthroughs.
 src/
 ├── prepare.py              # Data preparation script.
 ├── run.py                  # Replay execution script.
@@ -63,7 +64,7 @@ tests/
 ├── test_zone_actor.py      # Tests for ZoneActor state management and fault-tolerance.
 ├── test_workflows.py       # Tests for script-level integration and end-to-end workflow.
 ├── test_ray_docker.py      # Tests for Docker cluster setup, connectivity, and job submission.
-└── test_ray_flow.sh        # Simple full flow test that downloads data, prepares assets, runs all three demo modes.
+└── test_ray_flow.sh        # Full flow test that downloads data, prepares assets, runs all three modes.
 Dockerfile                  # Docker image for Ray cluster nodes
 docker-compose.yml          # Multi-node Ray cluster definition (1 head + 2 workers)
 pyproject.toml              # Package config and console_scripts entry points
@@ -428,10 +429,67 @@ bash tests/test_ray_flow.sh --max-ticks 50
 
 This script validates the complete workflow from data download through all execution modes, ensuring the entire pipeline works correctly.
 
-- Use `--max-ticks N` to limit the run (e.g., 5 for a fast test, 500 for more ticks), or **omit it to process the full month (~2600 ticks)**.
-- Add `--keep-artifacts` to preserve output files after the test completes.
+**Options:**
+- `--max-ticks N` - Limit the run (e.g., 5 for a fast test, 500 for more ticks), or **omit to process the full month (~2600 ticks)**.
+- `--keep-artifacts` - Preserve output files after the test completes.
+- `--docker` - Run replay jobs on the Docker cluster instead of local Ray.
+- `--demo` - Pause between steps and wait for user to press Enter (useful for demonstrations).
 
-Expected duration: ~8.5 minutes for 50 ticks
+**Docker mode:**
+
+```bash
+bash tests/test_ray_flow.sh --max-ticks 50 --docker
+```
+
+With `--docker`, the script:
+1. Starts the Docker cluster via `docker-compose up -d`
+2. Runs prepare locally (data processing only)
+3. Submits blocking, async, and stress jobs to the cluster via `ray job submit`
+4. Verifies artifacts (written to local `output/` via volume mount)
+5. Stops the cluster (unless `--keep-artifacts` is set)
+
+**Demo mode:**
+
+```bash
+bash tests/test_ray_flow.sh --max-ticks 50 --demo
+```
+
+With `--demo`, the script pauses between each step and waits for you to press Enter before proceeding. This is useful for live demonstrations where you want to explain what's happening at each stage.
+
+Expected duration: ~8.5 minutes for 50 ticks (local), ~10-12 minutes with Docker overhead
+
+**Interactive demo:**
+
+The repository also includes an interactive demo script in the project root for presentations and walkthroughs:
+
+```bash
+./demo.sh --max-ticks 50
+```
+
+This script provides the same full workflow as `test_ray_flow.sh` but defaults to interactive mode, pausing between each step to allow for explanation and observation. It's ideal for live demonstrations and teaching.
+
+**Options:**
+- `--max-ticks N` - Limit the run (e.g., 5 for a fast test, 50 for demos), or **omit to process the full month (~2600 ticks)**.
+- `--keep-artifacts` - Preserve output files after completion. Also generates a log file at `output/demo.txt` with command history.
+- `--docker` - Run replay jobs on the Docker cluster instead of local Ray.
+- `--no-wait` - Skip pauses and run continuously (non-interactive mode).
+
+**Example - Docker cluster demo with artifacts:**
+
+```bash
+./demo.sh --max-ticks 50 --docker --keep-artifacts
+```
+
+This provides the best demonstration experience:
+1. Downloads TLC data
+2. Starts the Docker cluster and waits for confirmation
+3. Prepares replay assets
+4. Runs blocking baseline (pauses for review)
+5. Runs async controller (pauses for review)
+6. Runs stress test (pauses for review)
+7. Keeps cluster running and preserves all output artifacts for inspection
+
+Each step displays colored output, duration tracking, and clear progress indicators. The `--keep-artifacts` flag also creates a timestamped log file documenting all commands executed.
 
 
 ## Troubleshooting
