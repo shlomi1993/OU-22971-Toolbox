@@ -160,6 +160,13 @@ fi
 echo ""
 echo -e "${CYAN}Step $((3 - STEP_OFFSET)): Prepare replay assets${NC}"
 STEP_START=$SECONDS
+
+# Clean output directory to ensure fresh prepare
+if [ -d "$OUTPUT_DIR" ]; then
+    echo "Cleaning existing output directory"
+    rm -rf "$OUTPUT_DIR"
+fi
+
 # Use fewer zones for Docker to avoid OOM (7.75GB limit)
 if [ "$USE_DOCKER" = true ]; then
     echo -e "${YELLOW}Warning:${NC} Using fewer zones for Docker mode to reduce memory usage"
@@ -172,7 +179,23 @@ log_and_run prepare \
     --replay-parquet "$REPLAY_FILE" \
     --output-dir "$PREPARED_DIR" \
     --n-zones $N_ZONES
+
+# Verify all required files were created
+REQUIRED_FILES=("replay.parquet" "baseline.parquet" "active_zones.json" "prep_meta.json")
+for file in "${REQUIRED_FILES[@]}"; do
+    if [ ! -f "$PREPARED_DIR/$file" ]; then
+        echo -e "${RED}ERROR: Required file not created: $PREPARED_DIR/$file${NC}"
+        exit 1
+    fi
+done
+
 echo "Prepared assets written to $PREPARED_DIR"
+# Restart Docker containers to ensure volume mounts pick up newly created files
+if [ "$USE_DOCKER" = true ]; then
+    echo "Restarting Docker cluster to sync volume mounts..."
+    log_and_run docker-compose restart
+    sleep 5  # Wait for cluster to be ready
+fi
 echo -e "${GRAY}Step $((3 - STEP_OFFSET)) completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 if [ "$NO_WAIT" = false ]; then
     wait_for_user "Run blocking baseline"
@@ -302,9 +325,7 @@ echo -e "${GRAY}Total elapsed: $(format_duration $((SECONDS - TOTAL_START)))${NC
 # --- Cleanup ---
 echo ""
 if [ "$KEEP_ARTIFACTS" = true ]; then
-    echo "Output artifacts:"
-    find "$PROJECT_DIR/output" -type f | sort
-    echo -e "\n${GREEN}Log saved to: $LOG_FILE${NC}"
+    echo -e "Artifacts written to: ${GREEN}$PROJECT_DIR/output${NC}"
 else
     echo "Cleaning up generated artifacts"
     rm -rf "$PROJECT_DIR/output"
