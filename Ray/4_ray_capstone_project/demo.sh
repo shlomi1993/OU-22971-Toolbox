@@ -17,7 +17,7 @@
 #   4. Run blocking baseline (on cluster)
 #   5. Run async controller (on cluster)
 #   6. Run skew stress test (on cluster)
-#   7. Stop Docker cluster (optional if --keep-artifacts)
+#   7. Stop Docker cluster (unless --keep-artifacts is set)
 #
 # Alternative local execution flow:
 #   1. Download data
@@ -170,7 +170,7 @@ fi
 
 # --- Prepare assets ---
 echo ""
-echo -e "${CYAN}Step $((3 - STEP_OFFSET)): Prepare replay assets${NC}"
+echo -e "${CYAN}Step $((2 + STEP_OFFSET)): Prepare replay assets${NC}"
 STEP_START=$SECONDS
 
 # Clean output directory to ensure fresh prepare
@@ -179,10 +179,10 @@ if [ -d "$OUTPUT_DIR" ]; then
     rm -rf "$OUTPUT_DIR"
 fi
 
-# Use fewer zones for Docker to avoid OOM (7.75GB limit)
+# Use fewer zones for Docker to reduce memory usage
 if [ "$USE_DOCKER" = true ]; then
-    echo -e "${YELLOW}Warning:${NC} Using fewer zones for Docker mode to reduce memory usage"
-    N_ZONES=5
+    echo -e "${YELLOW}Note:${NC} Using 8 zones for Docker mode to balance demo quality and memory usage"
+    N_ZONES=8
 else
     N_ZONES=20
 fi
@@ -208,14 +208,14 @@ if [ "$USE_DOCKER" = true ]; then
     log_and_run docker-compose restart
     sleep 5  # Wait for cluster to be ready
 fi
-echo -e "${GRAY}Step $((3 - STEP_OFFSET)) completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
+echo -e "${GRAY}Step $((2 + STEP_OFFSET)) completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 if [ "$NO_WAIT" = false ]; then
     wait_for_user "Run blocking baseline"
 fi
 
 # --- Run 1: Blocking baseline ---
 echo ""
-echo -e "${CYAN}Step $((4 - STEP_OFFSET)): Run blocking baseline${NC}"
+echo -e "${CYAN}Step $((3 + STEP_OFFSET)): Run blocking baseline${NC}"
 STEP_START=$SECONDS
 BLOCKING_ARGS="\
     --mode blocking \
@@ -240,14 +240,14 @@ else
         $MAX_TICKS_FLAG
 fi
 echo "Blocking run complete. Artifacts in $OUTPUT_DIR/blocking/"
-echo -e "${GRAY}Step $((4 - STEP_OFFSET)) completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
+echo -e "${GRAY}Step $((3 + STEP_OFFSET)) completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 if [ "$NO_WAIT" = false ]; then
     wait_for_user "Run async controller"
 fi
 
 # --- Run 2: Async controller ---
 echo ""
-echo -e "${CYAN}Step $((5 - STEP_OFFSET)): Run async controller${NC}"
+echo -e "${CYAN}Step $((4 + STEP_OFFSET)): Run async controller${NC}"
 STEP_START=$SECONDS
 ASYNC_ARGS="\
     --mode async \
@@ -275,14 +275,14 @@ else
         $MAX_TICKS_FLAG
 fi
 echo "Async run complete. Artifacts in $OUTPUT_DIR/async/"
-echo -e "${GRAY}Step $((5 - STEP_OFFSET)) completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
+echo -e "${GRAY}Step $((4 + STEP_OFFSET)) completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 if [ "$NO_WAIT" = false ]; then
     wait_for_user "Run skew stress test"
 fi
 
 # --- Run 3: Stress test ---
 echo ""
-echo -e "${CYAN}Step $((6 - STEP_OFFSET)): Run skew stress test${NC}"
+echo -e "${CYAN}Step $((5 + STEP_OFFSET)): Run skew stress test${NC}"
 STEP_START=$SECONDS
 STRESS_ARGS="\
     --mode stress \
@@ -308,7 +308,7 @@ else
         $MAX_TICKS_FLAG
 fi
 echo "Stress run complete. Artifacts in $OUTPUT_DIR/stress/"
-echo -e "${GRAY}Step $((6 - STEP_OFFSET)) completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
+echo -e "${GRAY}Step $((5 + STEP_OFFSET)) completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 if [ "$NO_WAIT" = false ]; then
     if [ "$USE_DOCKER" = true ] && [ "$KEEP_ARTIFACTS" = false ]; then
         wait_for_user "Stop Docker cluster"
