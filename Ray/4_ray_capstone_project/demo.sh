@@ -2,25 +2,30 @@
 # demo.sh - Interactive demo that executes the full flow: downloads data, prepares assets, runs all 3 modes.
 #
 # Usage:
-#   ./demo.sh [--keep-artifacts] [--max-ticks N] [--docker] [--no-wait]
+#   ./demo.sh [--keep-artifacts] [--max-ticks N] [--no-docker] [--no-wait]
 #
 # Options:
 #   --keep-artifacts    Keep generated artifacts after demo completion
-#   --max-ticks N       Limit number of ticks to run (default: no limit)
-#   --docker            Run replay on Docker cluster instead of local Ray
+#   --max-ticks N       Limit number of ticks to run (default: 20, use "0" or "unlimited" for full month)
+#   --no-docker         Run replay on local Ray instead of Docker cluster (default: Docker)
 #   --no-wait           Skip pauses between steps (run continuously)
 #
-# This file executes:
-#   1. bash scripts/download_data.sh
-#   2. prepare --ref-parquet data/green_tripdata_2023-01.parquet --replay-parquet data/green_tripdata_2023-02.parquet --output-dir output/prepared --n-zones 20
-#   3. run --prepared-dir output/prepared --output-dir output/run --mode blocking --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0
-#   4. run --prepared-dir output/prepared --output-dir output/run --mode async --slow-zone-fraction 0.25 --slow-zone-sleep-s 1.0 --tick-timeout-s 2.0 --completion-fraction 0.75 --max-inflight-zones 4
-#   5. run --prepared-dir output/prepared --output-dir output/run --mode stress --slow-zone-fraction 0.6 --slow-zone-sleep-s 3.0 --tick-timeout-s 2.0
+# Default Docker execution flow:
+#   1. Download data
+#   2. Start Docker cluster
+#   3. Prepare assets (on host, then restart cluster to sync)
+#   4. Run blocking baseline (on cluster)
+#   5. Run async controller (on cluster)
+#   6. Run skew stress test (on cluster)
+#   7. Stop Docker cluster (optional if --keep-artifacts)
 #
-# With --docker flag:
-#   - Starts Docker cluster via docker-compose up -d
-#   - Runs replay jobs via ray job submit to the cluster
-#   - Stops cluster at the end (unless --keep-artifacts is set)
+# Alternative local execution flow:
+#   1. Download data
+#   2. Prepare assets
+#   3. Run blocking baseline
+#   4. Run async controller
+#   5. Run skew stress test
+
 
 set -euo pipefail
 
@@ -75,18 +80,25 @@ wait_for_user() {
 
 # Parse command-line arguments
 KEEP_ARTIFACTS=false
-USE_DOCKER=false
+USE_DOCKER=true
 NO_WAIT=false
-MAX_TICKS_FLAG=""  # Default: no limit (run all ticks)
+MAX_TICKS="20"  # Default: 20 ticks (use "0" or "unlimited" to run all ticks)
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --keep-artifacts) KEEP_ARTIFACTS=true; shift ;;
-        --max-ticks) MAX_TICKS_FLAG="--max-ticks $2"; shift 2 ;;
-        --docker) USE_DOCKER=true; shift ;;
+        --max-ticks) MAX_TICKS="$2"; shift 2 ;;
+        --no-docker) USE_DOCKER=false; shift ;;
         --no-wait) NO_WAIT=true; shift ;;
         *) shift ;;
     esac
 done
+
+# Build MAX_TICKS_FLAG based on MAX_TICKS value
+if [ "$MAX_TICKS" = "0" ] || [ "$MAX_TICKS" = "unlimited" ]; then
+    MAX_TICKS_FLAG=""
+else
+    MAX_TICKS_FLAG="--max-ticks $MAX_TICKS"
+fi
 
 # Set up directories
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"

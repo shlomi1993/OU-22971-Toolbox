@@ -432,24 +432,40 @@ pytest tests --full
 The repository includes a demo script that executes the complete workflow from data download through asset preparation and replay run across all modes, with interactive pauses.
 
 ```bash
-./demo.sh --max-ticks 50
+./demo.sh
 ```
 
 **Options:**
 - `--keep-artifacts` - Preserve output files after the test completes.
-- `--max-ticks N` - Limit the number of ticks to run (e.g., 5 for a fast test, 500 for a longer one), or **omit to process the full month (~2600 ticks)**.
-- `--docker` - Run replay jobs on the Docker cluster instead of local Ray.
+- `--max-ticks N` - Limit the number of ticks to run. Default is **20 ticks** (~2 minutes). Use `0` or `unlimited` to process the full month (~2600 ticks).
+- `--no-docker` - Run replay jobs on local Ray instead of Docker cluster.
 - `--no-wait` - Run continuously without interactive pauses.
 
-**Docker Flow:** When running in Docker, the script:
+**Examples:**
+```bash
+# Quick demo that runs each replay mode for 20 ticks on a Docker cluster without pauses between steps
+./demo.sh --no-wait
+
+# Longer demo with 100 ticks for each mode, with pauses between steps
+./demo.sh --max-ticks 100
+
+# Full-month runs including all ~2600 ticks
+./demo.sh --max-ticks unlimited
+
+# Run on a local Ray cluster instead of Docker
+./demo.sh --no-docker
+```
+
+**Default behavior:**
+
+The script runs on a Docker cluster by default, executing these steps:
 1. Starts the Docker cluster via `docker-compose up -d`
 2. Runs prepare locally
 3. Submits blocking, async, and stress jobs to the cluster via `ray job submit`
 4. Verifies the artifacts written to local `output/` via volume mount
-5. Stops the cluster
+5. Stops the cluster - unless `--keep-artifacts` is set, assuming the user might want to inspect the Ray Dashboard or explore the cluster state after the demo completes.
 
-
-**Important Note:** Docker mode requires a container restart after prepare (step 4) because macOS Docker Desktop doesn't immediately propagate new directories to running containers. This is handled automatically by the script.
+**Important Note:** Docker mode requires a container restart after prepare because macOS Docker Desktop doesn't immediately propagate new directories to running containers. This is handled automatically by the script.
 
 
 ## Troubleshooting
