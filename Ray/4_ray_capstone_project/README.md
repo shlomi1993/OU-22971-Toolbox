@@ -26,6 +26,7 @@ A replay-based recommendation system built on [Ray](https://www.ray.io/). The sy
   - [Partial-readiness Policy](#partial-readiness-policy)
   - [Output artifacts](#output-artifacts)
   - [Tests](#tests)
+  - [Troubleshooting](#troubleshooting)
   - [Summary](#summary)
 
 
@@ -431,6 +432,29 @@ This script validates the complete workflow from data download through all execu
 - Add `--keep-artifacts` to preserve output files after the test completes.
 
 Expected duration: ~8.5 minutes for 50 ticks
+
+
+## Troubleshooting
+
+**Issue: `python` or `pip` commands use system Python instead of conda environment**
+
+If after setup you see errors like `ModuleNotFoundError: No module named 'ray'` or `externally-managed-environment` when running commands, your shell may have `python` or `pip` aliased to system versions instead of the conda environment.
+
+**Solution:**
+
+```bash
+# Check if python/pip are aliased
+which python
+which pip
+
+# If they point to system Python, unalias them
+unalias python
+unalias pip
+
+# Verify they now use the conda environment
+which python  # Should show /path/to/miniconda3/envs/22971-ray-capstone/bin/python
+which pip     # Should show /path/to/miniconda3/envs/22971-ray-capstone/bin/pip
+```
 
 
 ## Summary
