@@ -241,6 +241,11 @@ fi
 echo "Blocking run complete. Artifacts in $OUTPUT_DIR/blocking/"
 echo -e "${GRAY}Step $((3 + STEP_OFFSET)) completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 if [ "$NO_WAIT" = false ]; then
+    echo ""
+    echo "Expected behavior:"
+    echo "  - Tick latency is dominated by the slowest zones"
+    echo "  - Skew hurts visibly"
+    echo ""
     wait_for_user "Run async controller"
 fi
 
@@ -276,6 +281,11 @@ fi
 echo "Async run complete. Artifacts in $OUTPUT_DIR/async/"
 echo -e "${GRAY}Step $((4 + STEP_OFFSET)) completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 if [ "$NO_WAIT" = false ]; then
+    echo ""
+    echo "Expected behavior:"
+    echo "  - Lower sensitivity to stragglers"
+    echo "  - More controlled tick-completion behavior"
+    echo ""
     wait_for_user "Run skew stress test"
 fi
 
@@ -309,6 +319,11 @@ fi
 echo "Stress run complete. Artifacts in $OUTPUT_DIR/stress/"
 echo -e "${GRAY}Step $((5 + STEP_OFFSET)) completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 if [ "$NO_WAIT" = false ]; then
+    echo ""
+    echo "Expected behavior:"
+    echo "  - Blocking degrades sharply"
+    echo "  - The async controller still progresses cleanly with explicit fallback usage"
+    echo ""
     if [ "$USE_DOCKER" = true ] && [ "$KEEP_ARTIFACTS" = false ]; then
         wait_for_user "Stop Docker cluster"
     else
