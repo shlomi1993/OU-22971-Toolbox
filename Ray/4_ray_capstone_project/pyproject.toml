@@ -26,7 +26,7 @@ include = ["src*", "scripts*"]
 [project.scripts]
 prepare = "src.prepare:main"
 run = "src.run:main"
-reset = "scripts.reset:reset"
+reset = "scripts.reset:main"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
