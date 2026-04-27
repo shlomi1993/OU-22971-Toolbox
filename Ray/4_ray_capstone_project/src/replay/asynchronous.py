@@ -7,6 +7,7 @@ complex coordination and state management.
 """
 
 import time
+import numpy as np
 import ray
 
 from typing import Dict
@@ -185,8 +186,12 @@ class AsyncReplay(Replay):
             n_late_delta = 0
             n_dup_delta = 0
 
-        # Latency tracked in actor for async mode
-        latencies = {zone_id: 0.0 for zone_id in self.actors.keys()}
+        # Collect per-zone latency from actors for zones that reported in
+        latency_refs = {zone_id: actor.get_reported_latency.remote(tick_id) for zone_id, actor in self.actors.items()}
+        latencies = {zone_id: ray.get(ref) for zone_id, ref in latency_refs.items()}
+        reported_latencies = [v for v in latencies.values() if v > 0.0]
+        mean_lat = float(np.mean(reported_latencies)) if reported_latencies else 0.0
+        max_lat = float(np.max(reported_latencies)) if reported_latencies else 0.0
 
         return TickMetrics(
             tick_id=tick_id,
@@ -195,8 +200,8 @@ class AsyncReplay(Replay):
             n_zones_fallback=n_fallback,
             n_late_reports=n_late_delta,
             n_duplicate_reports=n_dup_delta,
-            mean_zone_latency_s=0.0,
-            max_zone_latency_s=0.0,
+            mean_zone_latency_s=mean_lat,
+            max_zone_latency_s=max_lat,
             total_tick_latency_s=tick_elapsed,
             per_zone_latency=latencies,
         )

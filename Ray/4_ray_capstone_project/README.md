@@ -284,7 +284,7 @@ ray job submit \
         --mode async \
         --slow-zone-fraction 0.25 \
         --slow-zone-sleep-s 1.0 \
-        --tick-timeout-s 2.0 \
+        --tick-timeout-s 0.8 \
         --completion-fraction 0.75 \
         --max-inflight-zones 4 \
         --seed 42 \
@@ -300,14 +300,14 @@ run \
     --mode async \
     --slow-zone-fraction 0.25 \
     --slow-zone-sleep-s 1.0 \
-    --tick-timeout-s 2.0 \
+    --tick-timeout-s 0.8 \
     --completion-fraction 0.75 \
     --max-inflight-zones 4 \
     --seed 42 \
     --max-ticks 20
 ```
 
-Runs the replay in async mode with simulated skew (25% slow zones, 1s delay), bounded concurrency (max 4 inflight zones), 2s timeout, and 75% completion threshold. Scoring tasks report decisions directly to actors. The driver polls actor readiness and closes ticks under the configured partial-readiness policy. Late zones receive a deterministic fallback.
+Runs the replay in async mode with simulated skew (25% slow zones, 1s delay), bounded concurrency (max 4 inflight zones), 0.8s timeout, and 75% completion threshold. Scoring tasks report decisions directly to actors. The driver polls actor readiness and closes ticks under the configured partial-readiness policy. Late zones receive a deterministic fallback.
 
 **Results:**
 

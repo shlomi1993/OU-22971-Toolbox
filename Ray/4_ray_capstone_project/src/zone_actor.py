@@ -176,6 +176,20 @@ class ZoneActor:
         """
         return tick_id in self.accepted_decisions or (self.reported_decision is not None and self.reported_decision.tick_id == tick_id)
 
+    def get_reported_latency(self, tick_id: int) -> float:
+        """
+        Async mode: return the task latency for the reported decision on the given tick.
+
+        Args:
+            tick_id (int): The tick to check.
+
+        Returns:
+            float: Task latency in seconds, or 0.0 if no decision was reported for this tick.
+        """
+        if self.reported_decision is not None and self.reported_decision.tick_id == tick_id:
+            return self.reported_decision.task_latency_s
+        return 0.0
+
     def write_decision(self, tick_id: int, decision: str, used_fallback: bool = False) -> str:
         """
         Blocking mode: controller writes an accepted decision. Idempotent by (zone_id, tick_id).
