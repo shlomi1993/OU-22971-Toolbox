@@ -35,7 +35,7 @@ A replay-based recommendation system built on [Ray](https://www.ray.io/). The sy
 
 ## Video Walkthrough
 
-[Demo Video](#)
+[Demo Video](https://drive.google.com/file/d/1poDUbp2wr4XCAV7NgEhq8jXRb2DJdl93/view?usp=sharing)
 
 
 ## Architecture Overview
