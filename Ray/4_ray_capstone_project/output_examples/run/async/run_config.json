@@ -2,7 +2,7 @@
   "n_zones": 20,
   "tick_minutes": 15,
   "max_inflight_zones": 4,
-  "tick_timeout_s": 2.0,
+  "tick_timeout_s": 0.8,
   "completion_fraction": 0.75,
   "slow_zone_fraction": 0.25,
   "slow_zone_sleep_s": 1.0,
