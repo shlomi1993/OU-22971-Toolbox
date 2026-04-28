@@ -190,8 +190,8 @@ All execution steps use `ray job submit` to run on the distributed Docker cluste
 **Notes:**
 - The `--ray-address auto` flag tells Ray to use the Docker cluster instead of starting a local instance
 - Output artifacts are written to the mounted `output/` directory and accessible from the host
-- The cluster uses shared memory (`shm_size: 2g`) for efficient data transfer between workers
-- Examples below use `--max-ticks 20` for short runs. Omit to process the full month (~2600 ticks)
+- The cluster uses shared memory (`shm_size: 3g`) for efficient data transfer between workers
+- Examples below use `--max-ticks 20` for short runs. Omit to process the full month (~2500 ticks)
 
 
 ### Step 1 - Prepare Replay Assets
@@ -203,11 +203,11 @@ prepare \  # Same as `python main.py prepare` or `python src/prepare.py`
     --ref-parquet data/green_tripdata_2023-01.parquet \
     --replay-parquet data/green_tripdata_2023-02.parquet \
     --output-dir output/prepared \
-    --n-zones 20 \
+    --n-zones 8 \
     --seed 42  # For reproducibility
 ```
 
-This validates the two adjacent-month parquet files, identifies the 20 busiest pickup zones from the reference month, aggregates ticks into 15-minute windows, builds per-zone baselines by `(zone_id, hour_of_day, day_of_week)`, and writes prepared assets to `output/prepared/`.
+This validates the two adjacent-month parquet files, identifies the 8 busiest pickup zones from the reference month, aggregates ticks into 15-minute windows, builds per-zone baselines by `(zone_id, hour_of_day, day_of_week)`, and writes prepared assets to `output/prepared/`.
 
 **Results:**
 
@@ -234,7 +234,7 @@ ray job submit \
         --slow-zone-fraction 0.25 \
         --slow-zone-sleep-s 1.0 \
         --seed 42 \  # For reproducibility
-        --max-ticks 20  # For short runs, omit to process the full month (~2600 ticks)
+        --max-ticks 20  # For short runs, omit to process the full month (~2500 ticks)
 ```
 
 **Local execution:**
@@ -437,7 +437,7 @@ The repository includes a demo script that executes the complete workflow from d
 
 **Options:**
 - `--keep-artifacts` - Preserve output files after the test completes.
-- `--max-ticks N` - Limit the number of ticks to run. Default is **20 ticks** (~3.5 minutes). Use `0` or `unlimited` to process the full month (~2600 ticks).
+- `--max-ticks N` - Limit the number of ticks to run. Default is **20 ticks** (~3.5 minutes). Use `0` or `unlimited` to process the full month (~2500 ticks).
 - `--no-docker` - Run replay jobs on local Ray instead of Docker cluster.
 - `--no-wait` - Run continuously without interactive pauses.
 
@@ -449,8 +449,11 @@ The repository includes a demo script that executes the complete workflow from d
 # Longer demo with 100 ticks for each mode, with pauses between steps
 ./demo.sh --max-ticks 100
 
-# Full-month runs including all ~2600 ticks
+# Full-month runs including all ~2500 ticks
 ./demo.sh --max-ticks unlimited
+
+# Full-month runs without pauses - takes ~4:54 hours
+./demo.sh --no-wait --max-ticks 0
 
 # Run on a local Ray cluster instead of Docker
 ./demo.sh --no-docker
