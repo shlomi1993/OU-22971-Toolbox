@@ -1,11 +1,29 @@
-"""Compare synchronous and asynchronous all_reduce under uneven local work."""
+"""
+Compare synchronous and asynchronous all_reduce under uneven local work.
+
+Run:
+
+    torchrun --standalone --nproc_per_node=4 1_collective_communication/8_async_all_reduce_demo.py
+
+Expected result:
+
+- the script runs one synchronous ``all_reduce``, then one ``all_reduce(async_op=True)``
+- both phases also run a fake local function that takes longer on rank ``0``
+- rank ``0`` prints a per-rank timing summary for both phases
+
+What to notice:
+
+- in sync mode, the local work starts only after ``all_reduce`` returns
+- in async mode, ``all_reduce(..., async_op=True)`` returns a ``Work`` handle immediately, so each rank can do
+    independent local work before ``wait()``
+"""
 
 import time
 
 import torch
 import torch.distributed as dist
 
-from _pretty_print import print_block
+from pretty_print import print_block
 
 
 TENSOR_SIZE = 8_000_000
@@ -27,13 +45,13 @@ def gather_metrics(values: list[float]) -> list[list[float]]:
     return [row.tolist() for row in gathered]
 
 
-def print_rank_zero_summary(title: str, rows: list[list[float]], columns: list[str]) -> None:
+def print_rank_zero_summary(title: str, rows: list[list[float]], cols: list[str]) -> None:
     if dist.get_rank() != 0:
         return
 
     lines = []
     for rank, row in enumerate(rows):
-        metrics = ", ".join(f"{name}={value:.2f}s" for name, value in zip(columns, row))
+        metrics = ", ".join(f"{name}={value:.2f}s" for name, value in zip(cols, row))
         lines.append(f"rank {rank}: {metrics}")
     print_block(title, *lines)
 
@@ -51,11 +69,7 @@ def main() -> None:
         local_delay = fake_local_work(rank)
         sync_total = time.perf_counter() - sync_start
         sync_rows = gather_metrics([sync_collective, local_delay, sync_total])
-        print_rank_zero_summary(
-            "sync all_reduce",
-            sync_rows,
-            ["collective", "local_work", "total"],
-        )
+        print_rank_zero_summary(title="sync all_reduce", rows=sync_rows, cols=["collective", "local_work", "total"])
 
         dist.barrier()
 
@@ -71,11 +85,7 @@ def main() -> None:
         async_total = time.perf_counter() - async_start
 
         async_rows = gather_metrics([launch_time, local_delay, wait_time, async_total])
-        print_rank_zero_summary(
-            "async all_reduce",
-            async_rows,
-            ["launch", "local_work", "wait", "total"],
-        )
+        print_rank_zero_summary(title="async all_reduce", rows=async_rows, cols=["launch", "local_work", "wait", "total"])
 
     finally:
         dist.destroy_process_group()
