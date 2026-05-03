@@ -61,24 +61,32 @@ def main() -> None:
     try:
         rank = dist.get_rank()
 
+        # Phase 1: synchronous all_reduce - Every rank blocks here until the reduction finishes across all ranks.
         tensor = torch.full((TENSOR_SIZE,), float(rank + 1), dtype=torch.float32)
         sync_start = time.perf_counter()
-        dist.all_reduce(tensor)
+        dist.all_reduce(tensor)  # blocks until all ranks complete the sum
         sync_collective = time.perf_counter() - sync_start
 
+        # Local work can only begin after the collective returns.
         local_delay = fake_local_work(rank)
         sync_total = time.perf_counter() - sync_start
         sync_rows = gather_metrics([sync_collective, local_delay, sync_total])
         print_rank_zero_summary(title="sync all_reduce", rows=sync_rows, cols=["collective", "local_work", "total"])
 
+        # Align all ranks before starting the async phase.
         dist.barrier()
 
+        # Phase 2: asynchronous all_reduce - The call returns immediately with a Work handle and the reduction proceeds
+        #   in the background while each rank does local work.
         tensor = torch.full((TENSOR_SIZE,), float(rank + 1), dtype=torch.float32)
         async_start = time.perf_counter()
-        work = dist.all_reduce(tensor, async_op=True)
+        work = dist.all_reduce(tensor, async_op=True)  # returns immediately
         launch_time = time.perf_counter() - async_start
 
+        # Overlap: local work runs while the reduction is still in flight.
         local_delay = fake_local_work(rank)
+
+        # wait() blocks until the reduction is done - only then is tensor valid.
         wait_start = time.perf_counter()
         work.wait()
         wait_time = time.perf_counter() - wait_start
