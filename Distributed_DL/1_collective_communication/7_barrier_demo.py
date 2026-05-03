@@ -39,7 +39,7 @@ def sleep_on_slow_rank(rank: int, label: str) -> None:
         time.sleep(DELAY_SECONDS)
 
 
-def main():
+def main() -> None:
     dist.init_process_group(backend="gloo")
     try:
         rank = dist.get_rank()
@@ -52,15 +52,12 @@ def main():
 
         tensor = torch.tensor([99 if rank == 0 else -1], dtype=torch.int64)
         sleep_on_slow_rank(rank, "phase 2")
-        
         broadcast_start = time.perf_counter()
         dist.broadcast(tensor, src=0)
         broadcast_elapsed = time.perf_counter() - broadcast_start
-
         barrier_start = time.perf_counter()
         dist.barrier()
         barrier_elapsed = time.perf_counter() - barrier_start
-        
         print_block(
             f"rank {rank}",
             f"phase 2 broadcast wait: {broadcast_elapsed:.2f}s",
