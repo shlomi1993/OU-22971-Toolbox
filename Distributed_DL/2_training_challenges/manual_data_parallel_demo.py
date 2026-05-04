@@ -44,20 +44,6 @@ NUM_CLASSES = 10
 MAX_CONV_BLOCKS = 6
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Manual data-parallel image step with simple summaries.")
-    parser.add_argument("--batch-size", type=int, default=128)
-    parser.add_argument("--base-channels", type=int, default=48)
-    parser.add_argument("--conv-blocks", type=int, default=5)
-    parser.add_argument("--dataset-size", type=int, default=4096)
-    parser.add_argument("--steps", type=int, default=5)
-    parser.add_argument("--extra-sync-mb", type=float, default=0.0)
-    parser.add_argument("--slow-rank", type=int, default=-1)
-    parser.add_argument("--sleep-before-sync", type=float, default=0.0)
-    parser.add_argument("--seed", type=int, default=7)
-    return parser.parse_args()
-
-
 # region Reporting Helpers: Small reporting helpers keep the end-of-run summary readable.
 def optimizer_state_bytes(optimizer: torch.optim.Optimizer) -> int:
     """
@@ -259,6 +245,20 @@ def train_step(model: nn.Module, optimizer: torch.optim.Optimizer, extra_sync_te
 
     step_time = time.perf_counter() - step_start
     return step_time, float(loss.item())
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Manual data-parallel image step with simple summaries.")
+    parser.add_argument("--batch-size", type=int, default=128)
+    parser.add_argument("--base-channels", type=int, default=48)
+    parser.add_argument("--conv-blocks", type=int, default=5)
+    parser.add_argument("--dataset-size", type=int, default=4096)
+    parser.add_argument("--steps", type=int, default=5)
+    parser.add_argument("--extra-sync-mb", type=float, default=0.0)
+    parser.add_argument("--slow-rank", type=int, default=-1)
+    parser.add_argument("--sleep-before-sync", type=float, default=0.0)
+    parser.add_argument("--seed", type=int, default=7)
+    return parser.parse_args()
 
 
 def main() -> None:
