@@ -1,16 +1,13 @@
-"""Run a toy manual data-parallel image classifier and summarize its costs.
+"""
+Run a toy manual data-parallel image classifier and summarize its costs.
 
-Rank 0 picks one global minibatch of dataset indices and scatters one local
-shard to each rank. Every rank indexes directly into a ``torchvision``
-``FakeData`` dataset of small RGB images, computes forward and backward
-locally, and then synchronizes gradients by hand with ``dist.all_reduce``
-before the optimizer step.
+Rank 0 picks one global minibatch of dataset indices and scatters one local shard to each rank. Every rank indexes
+directly into a ``torchvision`` ``FakeData`` dataset of small RGB images, computes forward and backward locally, and
+then synchronizes gradients by hand with ``dist.all_reduce`` before the optimizer step.
 
-The printed summaries are meant to help connect distributed training behavior
-back to four recurring bottlenecks: compute, memory, communication, and
-waiting. The CLI knobs let you exaggerate one pressure point at a time by
-growing the batch, widening the convnet, adding extra communication, or making
-one rank arrive late to synchronization.
+The printed summaries are meant to help connect distributed training behavior back to four recurring bottlenecks:
+compute, memory, communication, and waiting. The CLI knobs let you exaggerate one pressure point at a time by growing
+the batch, widening the convnet, adding extra communication, or making one rank arrive late to synchronization.
 
 Examples
 --------
@@ -34,11 +31,11 @@ What to look for:
 
 import argparse
 import time
-
 import torch
 import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
+
 from torchvision import datasets, transforms
 
 
@@ -48,9 +45,7 @@ MAX_CONV_BLOCKS = 6
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Manual data-parallel image step with simple summaries."
-    )
+    parser = argparse.ArgumentParser(description="Manual data-parallel image step with simple summaries.")
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--base-channels", type=int, default=48)
     parser.add_argument("--conv-blocks", type=int, default=5)
@@ -63,12 +58,14 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-# region Reporting Helpers
-# Small reporting helpers keep the end-of-run summary readable.
+# region Reporting Helpers: Small reporting helpers keep the end-of-run summary readable.
 def optimizer_state_bytes(optimizer: torch.optim.Optimizer) -> int:
-    """Estimate optimizer-state memory by summing tensor-backed state entries."""
+    """
+    Estimate optimizer-state memory by summing tensor-backed state entries.
+    """
     total = 0
     for state in optimizer.state.values():
+        state: dict[str, object]
         for value in state.values():
             if torch.is_tensor(value):
                 total += value.numel() * value.element_size()
@@ -76,12 +73,16 @@ def optimizer_state_bytes(optimizer: torch.optim.Optimizer) -> int:
 
 
 def model_parameter_bytes(model: nn.Module) -> int:
-    """Estimate how many bytes one model replica uses for parameters."""
+    """
+    Estimate how many bytes one model replica uses for parameters.
+    """
     return sum(param.numel() * param.element_size() for param in model.parameters())
 
 
 def model_gradient_bytes(model: nn.Module) -> int:
-    """Estimate how many bytes the current gradients occupy."""
+    """
+    Estimate how many bytes the current gradients occupy.
+    """
     total = 0
     for param in model.parameters():
         if param.grad is not None:
@@ -90,36 +91,36 @@ def model_gradient_bytes(model: nn.Module) -> int:
 
 
 def format_bytes(num_bytes: int) -> str:
-    """Format a byte count in MiB for the printed summaries."""
+    """
+    Format a byte count in MiB for the printed summaries.
+    """
     return f"{num_bytes / (1024 ** 2):.2f} MiB"
 
 
 def input_batch_bytes(batch_size: int, dtype: torch.dtype = torch.float32) -> int:
-    """Estimate the bytes of one local image batch."""
+    """
+    Estimate the bytes of one local image batch.
+    """
     bytes_per_value = torch.tensor([], dtype=dtype).element_size()
     channels, height, width = IMAGE_SIZE
     return batch_size * channels * height * width * bytes_per_value
 
 
-def gather_summaries_on_rank_zero(
-    local_values: list[float],
-    rank: int,
-    world_size: int,
-) -> list[list[float]] | None:
-    """Gather one small summary vector from every rank onto rank 0 only."""
+def gather_summaries_on_rank_zero(local_values: list[float], rank: int, world_size: int) -> list[list[float]] | None:
+    """
+    Gather one small summary vector from every rank onto rank 0 only.
+    """
     local_tensor = torch.tensor(local_values, dtype=torch.float64)
-    if rank == 0:
-        gathered = [torch.zeros_like(local_tensor) for _ in range(world_size)]
-    else:
-        gathered = None
+    
+    gathered = [torch.zeros_like(local_tensor) for _ in range(world_size)] if rank == 0 else None
     dist.gather(local_tensor, gather_list=gathered, dst=0)
-    if rank == 0:
-        return [row.tolist() for row in gathered]
-    return None
+    return [row.tolist() for row in gathered] if rank == 0 else None
 
 
 def print_section(title: str, *lines: str) -> None:
-    """Print one labeled block so the console output reads like a report."""
+    """
+    Print one labeled block so the console output reads like a report.
+    """
     body = "\n".join([title, *[f"  {line}" for line in lines], ""])
     print(body, flush=True)
 
@@ -128,7 +129,9 @@ def print_section(title: str, *lines: str) -> None:
 
 
 class TinyConvNet(nn.Module):
-    """A small convnet whose width and depth are easy to scale for the demo."""
+    """
+    A small convnet whose width and depth are easy to scale for the demo.
+    """
 
     def __init__(self, base_channels: int, conv_blocks: int) -> None:
         super().__init__()
@@ -138,13 +141,9 @@ class TinyConvNet(nn.Module):
 
         for block_idx in range(conv_blocks):
             out_channels = base_channels * (2 ** block_idx)
-            layers.extend(
-                [
-                    nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
-                    nn.ReLU(),
-                    nn.MaxPool2d(kernel_size=2),
-                ]
-            )
+            layers.extend([nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+                           nn.ReLU(),
+                           nn.MaxPool2d(kernel_size=2)])
             self.block_channels.append(out_channels)
             in_channels = out_channels
 
@@ -158,12 +157,10 @@ class TinyConvNet(nn.Module):
         x = torch.flatten(x, start_dim=1)
         return self.classifier(x)
 
-    def activation_bytes_per_step(
-        self,
-        batch_size: int,
-        dtype: torch.dtype = torch.float32,
-    ) -> int:
-        """Estimate activation memory from the batch size and convnet shape."""
+    def activation_bytes_per_step(self, batch_size: int, dtype: torch.dtype = torch.float32) -> int:
+        """
+        Estimate activation memory from the batch size and convnet shape.
+        """
         bytes_per_value = torch.tensor([], dtype=dtype).element_size()
         height = IMAGE_SIZE[1]
         width = IMAGE_SIZE[2]
@@ -181,11 +178,11 @@ class TinyConvNet(nn.Module):
 
 
 def build_fake_image_dataset(dataset_size: int, seed: int) -> datasets.FakeData:
-    """Build one deterministic fake image dataset per rank.
+    """
+    Build one deterministic fake image dataset per rank.
 
-    ``datasets.FakeData`` is lazy, so it does not materialize every sample up
-    front. Instead, it generates each image/label pair deterministically when
-    that index is requested.
+    ``datasets.FakeData`` is lazy, so it does not materialize every sample up front. Instead, it generates each image or
+    label pair deterministically when that index is requested.
     """
     return datasets.FakeData(
         size=dataset_size,
@@ -196,14 +193,11 @@ def build_fake_image_dataset(dataset_size: int, seed: int) -> datasets.FakeData:
     )
 
 
-def prepare_local_batch(
-    dataset: datasets.FakeData,
-    local_batch_size: int,
-    rank: int,
-    world_size: int,
-    index_generator: torch.Generator | None,
-) -> tuple[torch.Tensor, torch.Tensor]:
-    """Let rank 0 sample global indices, shard them, and materialize one local batch."""
+def prepare_local_batch(dataset: datasets.FakeData, local_batch_size: int, rank: int, world_size: int,
+                        index_generator: torch.Generator | None) -> tuple[torch.Tensor, torch.Tensor]:
+    """
+    Let rank 0 sample global indices, shard them, and materialize one local batch.
+    """
     local_indices = torch.empty(local_batch_size, dtype=torch.int64)
 
     if rank == 0:
@@ -211,11 +205,7 @@ def prepare_local_batch(
         # Teaching shortcut: sample with replacement via randint so the manual
         # data-parallel demo stays simple and avoids the extra full-dataset
         # randperm cost that could skew lightweight profiling.
-        global_indices = torch.randint(
-            high=len(dataset),
-            size=(global_batch_size,),
-            generator=index_generator,
-        )
+        global_indices = torch.randint(high=len(dataset), size=(global_batch_size,), generator=index_generator)
         scatter_list = list(global_indices.chunk(world_size))
     else:
         scatter_list = None
@@ -233,36 +223,23 @@ def prepare_local_batch(
 
 
 def manual_gradient_sync(model: nn.Module, world_size: int) -> None:
-    """Average gradients across ranks so every rank holds the same grads before the optimizer step."""
+    """
+    Average gradients across ranks so every rank holds the same grads before the optimizer step.
+    """
     for param in model.parameters():
-        if param.grad is None:
-            continue
-        dist.all_reduce(param.grad, op=dist.ReduceOp.SUM)
-        param.grad /= world_size
+        if param.grad is not None:
+            dist.all_reduce(param.grad, op=dist.ReduceOp.SUM)
+            param.grad /= world_size
 
 
-def train_step(
-    model: nn.Module,
-    optimizer: torch.optim.Optimizer,
-    extra_sync_tensor: torch.Tensor | None,
-    dataset: datasets.FakeData,
-    local_batch_size: int,
-    rank: int,
-    world_size: int,
-    index_generator: torch.Generator | None,
-    slow_rank: int,
-    sleep_before_sync: float,
-) -> tuple[float, float]:
-    """Run batch prep, local compute, synchronization, and return timing stats."""
+def train_step(model: nn.Module, optimizer: torch.optim.Optimizer, extra_sync_tensor: torch.Tensor | None,
+               dataset: datasets.FakeData, local_batch_size: int, rank: int, world_size: int,
+               index_generator: torch.Generator | None, slow_rank: int, sleep_before_sync: float) -> tuple[float, float]:
+    """
+    Run batch prep, local compute, synchronization, and return timing stats.
+    """
     step_start = time.perf_counter()
-
-    images, targets = prepare_local_batch(
-        dataset=dataset,
-        local_batch_size=local_batch_size,
-        rank=rank,
-        world_size=world_size,
-        index_generator=index_generator,
-    )
+    images, targets = prepare_local_batch(dataset, local_batch_size, rank, world_size, index_generator)
 
     optimizer.zero_grad(set_to_none=True)
 
@@ -293,9 +270,7 @@ def main() -> None:
     if args.conv_blocks < 1:
         raise SystemExit("--conv-blocks must be at least 1.")
     if args.conv_blocks > MAX_CONV_BLOCKS:
-        raise SystemExit(
-            f"--conv-blocks must be at most {MAX_CONV_BLOCKS} for {IMAGE_SIZE[1]}x{IMAGE_SIZE[2]} inputs."
-        )
+        raise SystemExit(f"--conv-blocks must be at most {MAX_CONV_BLOCKS} for {IMAGE_SIZE[1]}x{IMAGE_SIZE[2]} inputs.")
     if args.dataset_size < 1:
         raise SystemExit("--dataset-size must be at least 1.")
     if args.steps < 1:
@@ -308,10 +283,7 @@ def main() -> None:
 
         torch.manual_seed(args.seed)
 
-        dataset = build_fake_image_dataset(
-            dataset_size=args.dataset_size,
-            seed=args.seed,
-        )
+        dataset = build_fake_image_dataset(dataset_size=args.dataset_size, seed=args.seed)
         index_generator = torch.Generator().manual_seed(args.seed) if rank == 0 else None
         model = TinyConvNet(args.base_channels, args.conv_blocks)
         optimizer = torch.optim.SGD(model.parameters(), lr=0.05, momentum=0.9)
@@ -326,29 +298,14 @@ def main() -> None:
         loss_total = 0.0
 
         for _ in range(args.steps):
-
-            step_time, loss_value = train_step(
-                model=model,
-                optimizer=optimizer,
-                extra_sync_tensor=extra_sync_tensor,
-                dataset=dataset,
-                local_batch_size=args.batch_size,
-                rank=rank,
-                world_size=world_size,
-                index_generator=index_generator,
-                slow_rank=args.slow_rank,
-                sleep_before_sync=args.sleep_before_sync,
-            )
+            step_time, loss_value = train_step(model, optimizer, extra_sync_tensor, dataset, args.batch_size, rank,
+                                               world_size, index_generator, args.slow_rank, args.sleep_before_sync)
             step_time_total += step_time
             loss_total += loss_value
 
         avg_step_time = step_time_total / args.steps
         avg_loss = loss_total / args.steps
-        summary_rows = gather_summaries_on_rank_zero(
-            [avg_step_time, avg_loss],
-            rank=rank,
-            world_size=world_size,
-        )
+        summary_rows = gather_summaries_on_rank_zero([avg_step_time, avg_loss], rank=rank, world_size=world_size)
 
         if rank == 0:
             parameter_bytes = model_parameter_bytes(model)
@@ -382,9 +339,7 @@ def main() -> None:
 
             summary_lines = []
             for row_rank, row in enumerate(summary_rows):
-                summary_lines.append(
-                    f"rank {row_rank}: avg_step_time={row[0]:.4f}s, avg_loss={row[1]:.6f}"
-                )
+                summary_lines.append(f"rank {row_rank}: avg_step_time={row[0]:.4f}s, avg_loss={row[1]:.6f}")
             print_section("average step summary", *summary_lines)
 
             print_section(
