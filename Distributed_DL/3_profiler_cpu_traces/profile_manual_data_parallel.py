@@ -27,12 +27,12 @@ What to look for:
 
 import argparse
 import time
-from pathlib import Path
-
 import torch
 import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
+
+from pathlib import Path
 from torch.profiler import ProfilerActivity, profile, record_function
 from torchvision import datasets, transforms
 
@@ -42,30 +42,12 @@ NUM_CLASSES = 10
 MAX_CONV_BLOCKS = 6
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Profile the toy manual data-parallel image step and export CPU traces.")
-    parser.add_argument("--batch-size", type=int, default=128)
-    parser.add_argument("--base-channels", type=int, default=48)
-    parser.add_argument("--conv-blocks", type=int, default=5)
-    parser.add_argument("--dataset-size", type=int, default=4096)
-    parser.add_argument("--steps", type=int, default=5)
-    parser.add_argument("--extra-sync-mb", type=float, default=0.0)
-    parser.add_argument("--slow-rank", type=int, default=-1)
-    parser.add_argument("--sleep-before-sync", type=float, default=0.0)
-    parser.add_argument("--seed", type=int, default=7)
-    parser.add_argument("--trace-dir", type=str, default="3_profiler_cpu_traces/traces")
-    parser.add_argument("--trace-name", type=str, default="baseline")
-    parser.add_argument("--profile-memory", action="store_true")
-    return parser.parse_args()
-
-
 # region Reporting Helpers: Small reporting helpers keep the end-of-run summary readable.
 def gather_summaries_on_rank_zero(local_values: list[float], rank: int, world_size: int) -> list[list[float]] | None:
     """
     Gather one small summary vector from every rank onto rank 0 only.
     """
     local_tensor = torch.tensor(local_values, dtype=torch.float64)
-
     gathered = [torch.zeros_like(local_tensor) for _ in range(world_size)] if rank == 0 else None
     dist.gather(local_tensor, gather_list=gathered, dst=0)
     return [row.tolist() for row in gathered] if rank == 0 else None
@@ -144,10 +126,12 @@ def prepare_local_batch(dataset: datasets.FakeData, local_batch_size: int, rank:
             scatter_list = list(global_indices.chunk(world_size))
         else:
             scatter_list = None
-    #NEW in Unit 3:
+
+    # NEW in Unit 3:
     with record_function("scatter_batch_indices"):
         dist.scatter(local_indices, scatter_list=scatter_list, src=0)
-    #NEW in Unit 3:
+
+    # NEW in Unit 3:
     with record_function("index_batch"):
         images: list[torch.Tensor] = []
         targets: list[int] = []
@@ -174,7 +158,7 @@ def manual_gradient_sync(model: nn.Module, world_size: int) -> None:
 def train_step(model: nn.Module, optimizer: torch.optim.Optimizer, extra_sync_tensor: torch.Tensor | None,
                args: argparse.Namespace, dataset: datasets.FakeData, rank: int, world_size: int,
                index_generator: torch.Generator | None) -> float:
-    #NEW in Unit 3:
+    # NEW in Unit 3:
     with record_function("train_step"):
         with record_function("next_batch"):
             images, targets = prepare_local_batch(dataset, args.batch_size, rank, world_size, index_generator)
@@ -205,6 +189,23 @@ def train_step(model: nn.Module, optimizer: torch.optim.Optimizer, extra_sync_te
             optimizer.step()
 
     return float(loss.item())
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Profile the toy manual data-parallel image step and export CPU traces.")
+    parser.add_argument("--batch-size", type=int, default=128)
+    parser.add_argument("--base-channels", type=int, default=48)
+    parser.add_argument("--conv-blocks", type=int, default=5)
+    parser.add_argument("--dataset-size", type=int, default=4096)
+    parser.add_argument("--steps", type=int, default=5)
+    parser.add_argument("--extra-sync-mb", type=float, default=0.0)
+    parser.add_argument("--slow-rank", type=int, default=-1)
+    parser.add_argument("--sleep-before-sync", type=float, default=0.0)
+    parser.add_argument("--seed", type=int, default=7)
+    parser.add_argument("--trace-dir", type=str, default="3_profiler_cpu_traces/traces")
+    parser.add_argument("--trace-name", type=str, default="baseline")
+    parser.add_argument("--profile-memory", action="store_true")
+    return parser.parse_args()
 
 
 def main() -> None:
@@ -249,11 +250,13 @@ def main() -> None:
 
         for _ in range(warmup_steps):
             loss_value = train_step(model, optimizer, extra_sync_tensor, args, dataset, rank, world_size, index_generator)
-        #NEW in Unit 3:
+
+        # NEW in Unit 3:
         with profile(activities=[ProfilerActivity.CPU], record_shapes=True, profile_memory=args.profile_memory) as prof:
             for _ in range(profiled_steps):
                 loss_value = train_step(model, optimizer, extra_sync_tensor, args, dataset, rank, world_size, index_generator)
-        #NEW in Unit 3:
+
+        # NEW in Unit 3:
         prof.export_chrome_trace(str(trace_path))
 
         summary_rows = gather_summaries_on_rank_zero([loss_value], rank=rank, world_size=world_size)
