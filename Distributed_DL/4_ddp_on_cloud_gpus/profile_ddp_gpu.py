@@ -1,6 +1,8 @@
 """
 Profile the last DDP training steps on GPU and export one trace per rank.
 """
+from __future__ import annotations
+
 import argparse
 import os
 import time
@@ -8,7 +10,6 @@ import torch
 import torch.distributed as dist
 import torch.nn.functional as F
 
-from __future__ import annotations
 from pathlib import Path
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.profiler import ProfilerActivity, profile, record_function
@@ -99,9 +100,9 @@ def main() -> None:
     # Read distributed identity from the environment.
     rank = int(os.environ["RANK"])
     local_rank = int(os.environ["LOCAL_RANK"])
-    local_world_size = int(os.environ.get("LOCAL_WORLD_SIZE", world_size))
     world_size = int(os.environ["WORLD_SIZE"])
     assert_or_exit(world_size >= 1, f"WORLD_SIZE={world_size} is not greater than 1. Launch Unit 4 with torchrun and --nproc_per_node>1.")
+    local_world_size = int(os.environ.get("LOCAL_WORLD_SIZE", world_size))
 
     if args.cpu:
         backend = "gloo"
