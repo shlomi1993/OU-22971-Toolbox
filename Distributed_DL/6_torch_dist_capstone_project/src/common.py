@@ -1,8 +1,9 @@
 """
-Common constants and configuration dataclass for the SimCLR sharded training system.
+Common constants and configuration dataclasses for the SimCLR sharded training system.
 """
 
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 from typing import Optional
 
@@ -33,6 +34,15 @@ DEFAULT_SPLIT_LAYER = "layer2"
 
 # Output
 DEFAULT_OUTPUT_DIR = "output"
+
+
+class Backend(str, Enum):
+    """
+    Distributed communication backend.
+    """
+
+    GLOO = "gloo"
+    NCCL = "nccl"
 
 
 @dataclass
