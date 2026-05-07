@@ -10,13 +10,13 @@ from torchvision.models import resnet18
 from src.common import DEFAULT_PROJECTION_DIM, DEFAULT_PROJECTION_HIDDEN, DEFAULT_SPLIT_LAYER, SPLIT_CHOICES
 
 
-# Output channels at each potential split point in ResNet18.
+# Output channels at each potential split point in ResNet18
 BOUNDARY_CHANNELS = {"layer1": 64, "layer2": 128, "layer3": 256}
 
-# Spatial resolution at each split point (input 224x224).
+# Spatial resolution at each split point (input 224x224)
 BOUNDARY_SPATIAL = {"layer1": 56, "layer2": 28, "layer3": 14}
 
-# ResNet18 feature dimension after avgpool + flatten.
+# ResNet18 feature dimension after avgpool + flatten
 RESNET18_FEATURE_DIM = 512
 
 
@@ -62,14 +62,14 @@ def split_resnet18(split_layer: str = DEFAULT_SPLIT_LAYER, projection_hidden: in
 
     model = resnet18(weights=None)
 
-    # Ordered layer names in ResNet18 backbone (excluding fc).
+    # Ordered layer names in ResNet18 backbone (excluding fc)
     layer_names = ["conv1", "bn1", "relu", "maxpool", "layer1", "layer2", "layer3", "layer4"]
     split_idx = layer_names.index(split_layer) + 1
 
     stage0_layers = [getattr(model, name) for name in layer_names[:split_idx]]
     stage1_layers = [getattr(model, name) for name in layer_names[split_idx:]]
 
-    # Stage 1 ends with avgpool -> flatten -> projection head.
+    # Stage 1 ends with avgpool -> flatten -> projection head
     stage1_layers.extend([
         model.avgpool,
         nn.Flatten(start_dim=1),
