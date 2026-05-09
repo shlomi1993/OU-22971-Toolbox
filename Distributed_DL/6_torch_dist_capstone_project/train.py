@@ -163,7 +163,7 @@ def main() -> None:
     if warmup > 0:
         run_training(0, warmup, groups, stepper)
 
-    # Training loop (profiled portion)
+    # Training loop - the profiled portion
     t_start = time.perf_counter()
     with profiler_context(config, groups.rank):
         times, losses = run_training(warmup, config.num_steps, groups, stepper)
