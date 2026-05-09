@@ -13,9 +13,8 @@ def simclr_loss(local_embeddings: torch.Tensor, all_embeddings: torch.Tensor, lo
     """
     Compute the approximate SimCLR contrastive loss over local embeddings.
 
-    Each even rank produces local_batch_size source images, which are augmented into two views. The views are
-    interleaved so that source image i produces view 2*i (view_1) and view 2*i+1 (view_2). The positive pair for
-    view 2*i is view 2*i+1 and vice versa.
+    Each even rank produces a batch of source images, which are augmented into two views. The views are interleaved so
+    that source image i produces views at indices 2i and 2i+1. The positive pair for view 2i is view 2i+1 and vice versa.
 
     Only loss terms for local embeddings are computed (the ones that are still attached to the local autograd graph).
     Remote embeddings participate as fixed negatives - their gradients are not propagated through the loss.
@@ -32,7 +31,7 @@ def simclr_loss(local_embeddings: torch.Tensor, all_embeddings: torch.Tensor, lo
         local_embeddings (torch.Tensor): Embeddings produced on this rank, shape (2 * local_batch_size, projection_dim).
             Must require grad.
         all_embeddings (torch.Tensor): Concatenation of local (live) and remote (detached) embeddings from all ranks in
-            stage1_group, shape (2 * global_batch_size, projection_dim).
+            the stage-1 group, shape (2 * global_batch_size, projection_dim).
         local_start_idx (int): Start index of this rank's local embeddings within all_embeddings.
         temperature (float, optional): Temperature scaling. Default is 0.5.
 
