@@ -2,7 +2,7 @@
 Common constants and configuration dataclasses for the SimCLR sharded training system.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from enum import Enum
 from pathlib import Path
 from typing import Optional
@@ -66,6 +66,16 @@ class TrainConfig:
     output_dir: str = DEFAULT_OUTPUT_DIR
     overlap: bool = False
     run_name: Optional[str] = None
+
+    def describe(self) -> str:
+        """
+        Multi-line description of all config fields.
+
+        Returns:
+            str: Formatted string like "TrainConfig(\n  field=value\n  ...)".
+        """
+        body = "\n  ".join(f"{f.name}={getattr(self, f.name)}" for f in fields(self))
+        return f"{self.__class__.__name__}(\n  {body}\n)"
 
     @property
     def output_path(self) -> Path:
