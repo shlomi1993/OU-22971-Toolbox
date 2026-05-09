@@ -34,6 +34,8 @@ DEFAULT_SPLIT_LAYER = "layer2"
 
 # Output
 DEFAULT_OUTPUT_DIR = "output"
+ALIGNMENT_CHECK_MAX_STEPS = 20
+DEFAULT_PROFILER_WARMUP_STEPS = 2
 
 
 class Backend(str, Enum):
