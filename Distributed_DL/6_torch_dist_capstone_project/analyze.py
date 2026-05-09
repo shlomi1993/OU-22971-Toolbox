@@ -11,8 +11,10 @@ import csv
 import json
 import sys
 
+from dataclasses import dataclass
 from pathlib import Path
 
+from src.common import CONFIG_FILENAME, METRICS_FILENAME, TRACES_DIR
 from src.logger import g_logger
 
 
@@ -49,9 +51,15 @@ CONFIG_DISPLAY_KEYS = [
     "images_per_sec"
 ]
 
-CONFIG_FILENAME = "run_config.json"
-METRICS_FILENAME = "metrics.csv"
 
+@dataclass
+class TimeBreakdown:
+    """
+    Compute vs communication vs optimizer percentage breakdown.
+    """
+    compute_pct: float  # Percentage of time spent in compute spans (e.g. stage0_forward, loss_calculation).
+    comm_pct: float  # Percentage of time spent in communication spans (e.g. send_boundary, recv_boundary).
+    optimizer_pct: float  # Percentage of time spent in optimizer step spans (optimizer_step).
 
 
 class TraceAnalyzer:
@@ -68,7 +76,7 @@ class TraceAnalyzer:
             run_dir (Path): Path to the run output directory.
         """
         self.run_dir = run_dir
-        self.trace_dir = run_dir / "traces"
+        self.trace_dir = run_dir / TRACES_DIR
         self.summaries: RankSummaries = {}  # Map each rank to its span summary
 
     @staticmethod
@@ -125,41 +133,42 @@ class TraceAnalyzer:
         csv_path = self.run_dir / METRICS_FILENAME
 
         # Log run config
+        lines = ["Run configuration"]
         if config_path.exists():
             with open(config_path) as f:
                 config = json.load(f)
-            g_logger.info("Run configuration")
             for key in CONFIG_DISPLAY_KEYS:
                 if key in config:
-                    g_logger.info(f"  {key:<20s}: {config[key]}")
+                    lines.append(f"  {key:<20s}: {config[key]}")
 
-        # Log mean loss if available
+        # Append mean loss
         if csv_path.exists():
             with open(csv_path) as f:
                 rows = list(csv.DictReader(f))
             losses = [float(r["loss"]) for r in rows if r["loss"]]
             if losses:
-                g_logger.info(f"  {'mean_loss':<20s}: {sum(losses) / len(losses):.4f}")
+                lines.append(f"  {'mean_loss':<20s}: {sum(losses) / len(losses):.4f}")
+
+        if len(lines) > 1:
+            g_logger.info("\n" + "\n".join(lines))
 
     def _log_span_tables(self) -> None:
         """
         Log per-rank span summary tables.
         """
-        for rank in sorted(self.summaries):
-            summary = self.summaries[rank]
+        for rank, summary in self.summaries.items():
             header = f"Rank {rank} span summary"
             lines = [
                 header,
-                f"  {'span':<25s} {'count':>5s} {'total_ms':>10s} {'mean_ms':>10s}",
-                f"  {'-' * 25} {'-' * 5} {'-' * 10} {'-' * 10}"
+                f"  {'span':<25s} {'count':>5s} {'total_ms':>10s} {'mean_ms':>10s}"
             ]
             for name, stats in summary.items():
                 lines.append(f"  {name:<25s} {stats['count']:>5d} "
                              f"{stats['total_us'] / 1000:>10.1f} {stats['mean_us'] / 1000:>10.1f}")
-            g_logger.info("\n".join(lines))
+            g_logger.info("\n" + "\n".join(lines))
 
     @staticmethod
-    def _compute_breakdown(summary: dict[str, dict]) -> dict[str, float]:
+    def compute_breakdown(summary: dict[str, dict]) -> TimeBreakdown:
         """
         Return compute vs communication vs optimizer percentage breakdown based on the span summary.
         """
@@ -167,23 +176,25 @@ class TraceAnalyzer:
         comm_us = sum(s["total_us"] for n, s in summary.items() if n in COMM_SPANS)
         opt_us = sum(s["total_us"] for n, s in summary.items() if n == "optimizer_step")
         total = compute_us + comm_us + opt_us
-        return {"compute_pct": 0, "comm_pct": 0, "optimizer_pct": 0} if total == 0 else {
-            "compute_pct": round(100 * compute_us / total, 1),
-            "comm_pct": round(100 * comm_us / total, 1),
-            "optimizer_pct": round(100 * opt_us / total, 1),
-        }
+        if total == 0:
+            return TimeBreakdown(compute_pct=0, comm_pct=0, optimizer_pct=0)
+        return TimeBreakdown(
+            compute_pct=round(100 * compute_us / total, 1),
+            comm_pct=round(100 * comm_us / total, 1),
+            optimizer_pct=round(100 * opt_us / total, 1),
+        )
 
     def _log_time_breakdown(self) -> None:
         """
         Log compute vs communication vs optimizer time breakdown per rank.
         """
-        g_logger.info("Time breakdown")
-        for rank in sorted(self.summaries):
-            bd = self._compute_breakdown(self.summaries[rank])
-            g_logger.info(f"  Rank {rank}: compute={bd['compute_pct']:.1f}%  "
-                          f"comm={bd['comm_pct']:.1f}%  optimizer={bd['optimizer_pct']:.1f}%")
+        lines = ["Time breakdown"]
+        for rank, summary in self.summaries.items():
+            bd = self.compute_breakdown(summary)
+            lines.append(f"  Rank {rank}: compute={bd.compute_pct:.1f}%  comm={bd.comm_pct:.1f}%  opt={bd.optimizer_pct:.1f}%")
+        g_logger.info("\n" + "\n".join(lines))
 
-    def _mean_span_ms(self, ranks: list[int], span_names: set[str]) -> float:
+    def calc_mean_span_ms(self, ranks: list[int], span_names: set[str]) -> float:
         """
         Average mean duration (ms) of the given span names across the given ranks.
         """
@@ -200,19 +211,23 @@ class TraceAnalyzer:
         """
         Compare stage0 compute (even ranks) vs stage1+loss compute (odd ranks).
         """
-        even_ranks = sorted(r for r in self.summaries if r % 2 == 0)
-        odd_ranks = sorted(r for r in self.summaries if r % 2 == 1)
+        even_ranks, odd_ranks = [], []
+        for rank in self.summaries.keys():
+            if rank % 2 == 0:
+                even_ranks.append(rank)
+            else:
+                odd_ranks.append(rank)
 
-        stage0_ms = self._mean_span_ms(even_ranks, {"stage0_forward", "stage0_backward"})
-        stage1_ms = self._mean_span_ms(odd_ranks, {"stage1_forward", "loss_calculation"})
+        stage0_ms = self.calc_mean_span_ms(even_ranks, {"stage0_forward", "stage0_backward"})
+        stage1_ms = self.calc_mean_span_ms(odd_ranks, {"stage1_forward", "loss_calculation"})
 
         lines = [
-            "Stage imbalance (per-step mean)",
-            f"  Even ranks  (stage0_fwd + stage0_bwd): {stage0_ms:>8.1f} ms",
-            f"  Odd ranks   (stage1_fwd + loss_calc) : {stage1_ms:>8.1f} ms"
+            "Stage imbalance",
+            f"  Stage 0 (even): {stage0_ms:>8.1f} ms",
+            f"  Stage 1 (odd) : {stage1_ms:>8.1f} ms"
         ]
         if stage0_ms > 0:
-            lines.append(f"  Imbalance ratio (odd/even)           : {stage1_ms / stage0_ms:>8.2f}x")
+            lines.append(f"  Ratio         : {stage1_ms / stage0_ms:>8.2f}x")
         g_logger.info("\n".join(lines))
 
     def report(self) -> None:
@@ -248,8 +263,8 @@ def main() -> None:
     run_dir = Path(args.run_dir)
 
     # Check traces directory exists
-    if not (run_dir / "traces").exists():
-        g_logger.error(f"No traces directory found at {run_dir / 'traces'}")
+    if not (run_dir / TRACES_DIR).exists():
+        g_logger.error(f"No traces directory found at {run_dir / TRACES_DIR}")
         sys.exit(1)
 
     # Load traces and report
