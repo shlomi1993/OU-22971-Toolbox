@@ -13,10 +13,10 @@ from src.logger import g_logger
 
 def save_metrics(metrics: list[dict], config: TrainConfig, num_pairs: int, wall_time: float) -> None:
     """
-    Write per-step metrics CSV and run config JSON from rank 0.
+    Write per-step metrics CSV and run configuration JSON from rank 0.
 
     Args:
-        metrics (list[dict]): Per-step dicts with keys: step, loss, step_time_s, rank.
+        metrics (list[dict]): Per-step metric records - one dict per step per rank.
         config (TrainConfig): Training configuration.
         num_pairs (int): Number of model-replica pairs.
         wall_time (float): Total wall-clock training time in seconds.

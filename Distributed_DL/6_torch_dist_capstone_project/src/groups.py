@@ -33,9 +33,9 @@ class CommGroups:
         Flow:
             1. Initialize the default world process group.
             2. Validate that world_size is even and >= 4.
-            3. Create pair_group(k) = (2k, 2k+1) for each pair k.
-            4. Create stage0_group with all even ranks.
-            5. Create stage1_group with all odd ranks.
+            3. Create a pair group for each (even, odd) pair.
+            4. Create a stage group for all even ranks.
+            5. Create a stage group for all odd ranks.
 
         Args:
             backend (Backend, optional): Distributed backend. Default is Backend.GLOO.

@@ -16,7 +16,7 @@ def profiler_context(config: TrainConfig, rank: int) -> Iterator[None]:
     """
     Context manager that wraps a block with the PyTorch profiler when config.profile is True.
 
-    When profiling is enabled, captures CPU activity and exports a chrome trace JSON per rank.
+    When profiling is enabled, captures CPU activity and exports a Chrome trace JSON per rank.
     When disabled, yields immediately with no overhead.
 
     Args:
