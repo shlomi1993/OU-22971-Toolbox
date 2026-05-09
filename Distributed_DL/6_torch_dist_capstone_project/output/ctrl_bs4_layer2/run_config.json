@@ -1,8 +1,8 @@
 {
   "dataset_size": 64,
   "seed": 42,
-  "local_batch_size": 8,
-  "num_steps": 5,
+  "local_batch_size": 4,
+  "num_steps": 3,
   "lr": 0.03,
   "momentum": 0.9,
   "weight_decay": 0.0001,
@@ -12,8 +12,8 @@
   "split_layer": "layer2",
   "profile": true,
   "output_dir": "output",
-  "overlap": true,
-  "run_name": "smoke_overlap",
-  "global_batch_size": 16,
-  "images_per_sec": 2.67
+  "overlap": false,
+  "run_name": "ctrl_bs4_layer2",
+  "global_batch_size": 8,
+  "images_per_sec": 2.96
 }
