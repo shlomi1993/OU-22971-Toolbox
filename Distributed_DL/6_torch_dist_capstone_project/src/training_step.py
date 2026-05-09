@@ -218,7 +218,6 @@ class TrainingStep:
                 dist.all_reduce(p.grad, op=dist.ReduceOp.SUM, group=group)
                 p.grad.div_(self.groups.num_pairs)
 
-
     def step(self, step_idx: int) -> Optional[float]:
         """
         Execute one full distributed training step.

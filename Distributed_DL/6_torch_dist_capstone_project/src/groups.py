@@ -7,6 +7,7 @@ import torch.distributed as dist
 from dataclasses import dataclass
 
 from src.common import Backend
+from src.logger import g_logger
 
 
 @dataclass
@@ -77,9 +78,9 @@ class CommGroups:
             is_even=is_even,
         )
 
-    def print(self) -> None:
+    def log_structure(self) -> None:
         """
-        Print the communication structure once from rank 0.
+        Log the communication structure once from rank 0.
         """
         if self.rank != 0:
             return
@@ -87,12 +88,16 @@ class CommGroups:
         even_ranks = list(range(0, self.world_size, 2))
         odd_ranks = list(range(1, self.world_size, 2))
 
-        print("=" * 50)
-        print("Communication Structure")
-        print("=" * 50)
-        print(f"  world_group  : ranks {list(range(self.world_size))}")
+        lines = [
+            "",
+            "=" * 50,
+            "Communication Structure",
+            "=" * 50,
+            f"  world_group  : ranks {list(range(self.world_size))}",
+        ]
         for k in range(self.num_pairs):
-            print(f"  pair_group({k}): ranks [{2 * k}, {2 * k + 1}]")
-        print(f"  stage0_group : ranks {even_ranks}")
-        print(f"  stage1_group : ranks {odd_ranks}")
-        print("=" * 50)
+            lines.append(f"  pair_group({k}): ranks [{2 * k}, {2 * k + 1}]")
+        lines.append(f"  stage0_group : ranks {even_ranks}")
+        lines.append(f"  stage1_group : ranks {odd_ranks}")
+        lines.append("=" * 50)
+        g_logger.info("\n".join(lines))
