@@ -15,5 +15,5 @@
   "overlap": true,
   "run_name": "smoke_overlap",
   "global_batch_size": 16,
-  "images_per_sec": 2.63
+  "images_per_sec": 2.67
 }
