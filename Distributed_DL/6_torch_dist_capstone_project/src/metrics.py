@@ -11,7 +11,7 @@ from src.common import TrainConfig
 from src.logger import g_logger
 
 
-def save_metrics(metrics: list[dict], config: TrainConfig, num_pairs: int) -> None:
+def save_metrics(metrics: list[dict], config: TrainConfig, num_pairs: int, wall_time: float) -> None:
     """
     Write per-step metrics CSV and run config JSON from rank 0.
 
@@ -19,6 +19,7 @@ def save_metrics(metrics: list[dict], config: TrainConfig, num_pairs: int) -> No
         metrics (list[dict]): Per-step dicts with keys: step, loss, step_time_s, rank.
         config (TrainConfig): Training configuration.
         num_pairs (int): Number of model-replica pairs.
+        wall_time (float): Total wall-clock training time in seconds.
     """
     # Ensure output directory exists
     out = config.output_path
@@ -34,8 +35,8 @@ def save_metrics(metrics: list[dict], config: TrainConfig, num_pairs: int) -> No
 
     # Write run config JSON
     global_batch = config.global_batch_size(num_pairs)
-    total_time = sum(m["step_time_s"] for m in metrics)
-    images_per_sec = (config.num_steps * global_batch) / total_time if total_time > 0 else 0.0
+    num_profiled_steps = len(set(m["step"] for m in metrics))
+    images_per_sec = (num_profiled_steps * global_batch) / wall_time if wall_time > 0 else 0.0
 
     # Build config dict with additional summary fields
     run_config = asdict(config)
