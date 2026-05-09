@@ -7,7 +7,7 @@ from typing import Iterator
 
 from torch.profiler import ProfilerActivity, profile
 
-from src.common import TrainConfig
+from src.common import TRACES_DIR, TrainConfig
 from src.logger import g_logger
 
 
@@ -30,7 +30,7 @@ def profiler_context(config: TrainConfig, rank: int) -> Iterator[None]:
     with profile(activities=[ProfilerActivity.CPU], record_shapes=True) as prof:
         yield
 
-    trace_dir = config.output_path / "traces"
+    trace_dir = config.output_path / TRACES_DIR
     trace_dir.mkdir(parents=True, exist_ok=True)
     trace_path = trace_dir / f"rank{rank}.json"
     prof.export_chrome_trace(str(trace_path))
