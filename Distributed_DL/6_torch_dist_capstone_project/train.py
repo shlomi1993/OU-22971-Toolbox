@@ -33,8 +33,8 @@ def align_replicas(stage0: nn.Sequential, stage1: nn.Sequential, groups: CommGro
     """
     One-time parameter broadcast so all replicas start with identical weights.
 
-    Even ranks broadcast stage0 params within stage0_group.
-    Odd ranks broadcast stage1 params within stage1_group.
+    Even ranks broadcast their stage params within the stage-0 group.
+    Odd ranks broadcast their stage params within the stage-1 group.
 
     Args:
         stage0 (nn.Sequential): Stage 0 model.
@@ -167,6 +167,8 @@ def main() -> None:
     t_start = time.perf_counter()
     with profiler_context(config, groups.rank):
         times, losses = run_training(warmup, config.num_steps, groups, stepper)
+        if config.overlap:
+            stepper.drain_overlap()
     t_total = time.perf_counter() - t_start
 
     # Gather metrics from all ranks - collective
