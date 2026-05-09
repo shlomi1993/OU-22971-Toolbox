@@ -247,9 +247,12 @@ class TrainingStep:
         """
         Overlap-mode step (Stretch A): even ranks pipeline forward and backward across consecutive steps.
 
-        Even ranks do forward(t) then backward(t-1) in the same call, keeping at most two in-flight steps in
-        the state table. The first call (no pending backward) is a "prime" that only does forward. The odd
-        ranks run the standard sequential path unchanged.
+        Even ranks do backward(t-1) then forward(t) in the same call, keeping at most one in-flight step.
+        The first call (no pending backward) is a "prime" that only does forward. After the last step, drain_overlap()
+        processes the final backward. Odd ranks run the standard sequential path unchanged.
+
+        The overlap benefit: while the odd rank processes step t (stage1_forward + loss + backward + send_grad), the
+        even rank is free to do backward(t-1) + sync + optim + forward(t) concurrently.
 
         Args:
             step_idx (int): Current training step index.
@@ -258,16 +261,15 @@ class TrainingStep:
             Optional[float]: Loss value on odd ranks, None on even ranks.
         """
         if self.groups.is_even:
-            # Forward for current step and hand off boundary to paired odd rank
-            self._even_forward(step_idx)
-            self._overlap_state[step_idx] = self._boundary
-
-            # Backward for previous step if one is pending
+            # Backward for previous step if one is pending (recv grad first, then backward + sync + optim)
             if self._overlap_pending is not None:
                 self._boundary = self._overlap_state.pop(self._overlap_pending)
                 self._even_backward()
                 self._sync_and_step()
 
+            # Forward for current step and hand off boundary to paired odd rank
+            self._even_forward(step_idx)
+            self._overlap_state[step_idx] = self._boundary
             self._overlap_pending = step_idx
         else:
             # Odd rank: unchanged sequential processing
