@@ -27,13 +27,13 @@ class TrainingStep:
     Per-step state (boundary activations, loss) is reset on each call to step().
 
     Design doc steps mapping:
-        A: prepare_views           (even only)
-        B: stage0_forward + send   (even only)
-        C: recv + stage1_forward   (odd only)
-        D: gather + loss           (odd only)
-        E: boundary grad return    (odd sends, even receives)
-        F: stage-local grad sync   (stage0_group / stage1_group)
-        G: optimizer step          (all ranks)
+        A: Prepare augmented views         (even only)
+        B: Stage-0 forward + send boundary (even only)
+        C: Receive boundary + stage-1 fwd  (odd only)
+        D: Gather embeddings + loss        (odd only)
+        E: Boundary gradient return        (odd sends, even receives)
+        F: Stage-local gradient sync       (each stage group)
+        G: Optimizer step                  (all ranks)
     """
 
     def __init__(self, dataset: torch.utils.data.Dataset, config: TrainConfig, groups: CommGroups,
@@ -71,6 +71,10 @@ class TrainingStep:
         self._loss: Optional[torch.Tensor] = None
         self.loss_value: Optional[float] = None
 
+        # Overlap state (Stretch A: async forward/backward overlap on even ranks)
+        self._overlap_state: dict[int, torch.Tensor] = {}
+        self._overlap_pending: Optional[int] = None
+
     @staticmethod
     def _assert_finite(tensor: torch.Tensor, label: str) -> None:
         """
@@ -85,7 +89,7 @@ class TrainingStep:
     @staticmethod
     def _interleave_views(view_1: torch.Tensor, view_2: torch.Tensor) -> torch.Tensor:
         """
-        Interleave two view batches so that source image i maps to indices 2i (view_1) and 2i+1 (view_2).
+        Interleave two view batches so that source image i maps to indices 2i and 2i+1.
 
         Args:
             view_1 (torch.Tensor): First augmented view batch, shape (B, C, H, W).
@@ -218,15 +222,86 @@ class TrainingStep:
                 dist.all_reduce(p.grad, op=dist.ReduceOp.SUM, group=group)
                 p.grad.div_(self.groups.num_pairs)
 
+    def _sync_and_step(self) -> None:
+        """
+        Gradient synchronization (Step F) and optimizer step (Step G) with optional alignment check.
+        """
+        if self.groups.is_even:
+            with record_function("grad_sync_stage0"):
+                self._sync_gradients(self._stage0_params, self.groups.stage0_group)
+        else:
+            with record_function("grad_sync_stage1"):
+                self._sync_gradients(self._stage1_params, self.groups.stage1_group)
+
+        with record_function("optimizer_step"):
+            self.optimizer.step()
+            self.optimizer.zero_grad()
+
+        if self.check_alignment:
+            if self.groups.is_even:
+                self._check_replica_alignment(self._stage0_params, self.groups.stage0_group, "stage0")
+            else:
+                self._check_replica_alignment(self._stage1_params, self.groups.stage1_group, "stage1")
+
+    def _step_overlap(self, step_idx: int) -> Optional[float]:
+        """
+        Overlap-mode step (Stretch A): even ranks pipeline forward and backward across consecutive steps.
+
+        Even ranks do forward(t) then backward(t-1) in the same call, keeping at most two in-flight steps in
+        the state table. The first call (no pending backward) is a "prime" that only does forward. The odd
+        ranks run the standard sequential path unchanged.
+
+        Args:
+            step_idx (int): Current training step index.
+
+        Returns:
+            Optional[float]: Loss value on odd ranks, None on even ranks.
+        """
+        if self.groups.is_even:
+            # Forward for current step and hand off boundary to paired odd rank
+            self._even_forward(step_idx)
+            self._overlap_state[step_idx] = self._boundary
+
+            # Backward for previous step if one is pending
+            if self._overlap_pending is not None:
+                self._boundary = self._overlap_state.pop(self._overlap_pending)
+                self._even_backward()
+                self._sync_and_step()
+
+            self._overlap_pending = step_idx
+        else:
+            # Odd rank: unchanged sequential processing
+            self._odd_forward()
+            self._odd_backward()
+            self._sync_and_step()
+
+        return self.loss_value
+
+    def drain_overlap(self) -> Optional[float]:
+        """
+        Drain the overlap pipeline after the last training step.
+
+        On even ranks, processes the final pending backward pass that was deferred by the overlap. On odd
+        ranks and in non-overlap mode, returns None immediately.
+
+        Returns:
+            Optional[float]: Always None (even ranks have no loss).
+        """
+        if not self.config.overlap or not self.groups.is_even or self._overlap_pending is None:
+            return None
+
+        self._boundary = self._overlap_state.pop(self._overlap_pending)
+        self._even_backward()
+        self._sync_and_step()
+        self._overlap_pending = None
+        return self.loss_value
+
     def step(self, step_idx: int) -> Optional[float]:
         """
         Execute one full distributed training step.
 
-        Flow:
-            1. Even ranks: prepare views, run stage 0, send boundary to paired odd rank.
-            2. Odd ranks: receive boundary, run stage 1, all_gather embeddings, compute loss.
-            3. Odd ranks: backward, send boundary grad back. Even ranks: receive and backward stage 0.
-            4. All ranks: sync gradients within stage group, step optimizer.
+        In synchronous mode, runs the standard forward-backward-sync cycle. In overlap mode (Stretch A), even ranks
+        pipeline forward and backward across consecutive steps.
 
         Args:
             step_idx (int): Current training step index (used for dataset offset).
@@ -238,6 +313,9 @@ class TrainingStep:
         self._loss = None
         self.loss_value = None
 
+        if self.config.overlap:
+            return self._step_overlap(step_idx)
+
         if self.groups.is_even:
             self._even_forward(step_idx)
             self._even_backward()
@@ -245,24 +323,5 @@ class TrainingStep:
             self._odd_forward()
             self._odd_backward()
 
-        # Gradient synchronization (Step F)
-        if self.groups.is_even:
-            with record_function("grad_sync_stage0"):
-                self._sync_gradients(self._stage0_params, self.groups.stage0_group)
-        else:
-            with record_function("grad_sync_stage1"):
-                self._sync_gradients(self._stage1_params, self.groups.stage1_group)
-
-        # Optimizer step (Step G)
-        with record_function("optimizer_step"):
-            self.optimizer.step()
-            self.optimizer.zero_grad()
-
-        # Optional replica alignment check
-        if self.check_alignment:
-            if self.groups.is_even:
-                self._check_replica_alignment(self._stage0_params, self.groups.stage0_group, "stage0")
-            else:
-                self._check_replica_alignment(self._stage1_params, self.groups.stage1_group, "stage1")
-
+        self._sync_and_step()
         return self.loss_value
