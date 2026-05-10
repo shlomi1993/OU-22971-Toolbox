@@ -1,0 +1,40 @@
+{
+  "controller_config": {
+    "batch_sizes": [
+      4,
+      8
+    ],
+    "split_layers": [
+      "layer2"
+    ],
+    "num_steps": 3,
+    "dataset_size": 64,
+    "nproc": 4
+  },
+  "runs": [
+    {
+      "run_name": "ctrl_bs4_layer2",
+      "local_batch_size": 4,
+      "split_layer": "layer2",
+      "images_per_sec": 3.04,
+      "comm_pct": 66.55,
+      "stage_imbalance": 0.11599561581220974,
+      "mean_loss": 2.7607975
+    },
+    {
+      "run_name": "ctrl_bs8_layer2",
+      "local_batch_size": 8,
+      "split_layer": "layer2",
+      "images_per_sec": 3.23,
+      "comm_pct": 65.3,
+      "stage_imbalance": 0.12332391281794723,
+      "mean_loss": 3.4509214999999998
+    }
+  ],
+  "best": {
+    "run_name": "ctrl_bs8_layer2",
+    "local_batch_size": 8,
+    "split_layer": "layer2",
+    "images_per_sec": 3.23
+  }
+}

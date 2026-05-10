@@ -1,0 +1,19 @@
+{
+  "dataset_size": 64,
+  "seed": 42,
+  "local_batch_size": 4,
+  "num_steps": 3,
+  "lr": 0.03,
+  "momentum": 0.9,
+  "weight_decay": 0.0001,
+  "temperature": 0.5,
+  "projection_dim": 128,
+  "projection_hidden": 256,
+  "split_layer": "layer2",
+  "profile": true,
+  "output_dir": "/workspace/6_torch_dist_capstone_project/output/test_runs/ctrl",
+  "overlap": false,
+  "run_name": "ctrl_bs4_layer2",
+  "global_batch_size": 8,
+  "images_per_sec": 3.04
+}
