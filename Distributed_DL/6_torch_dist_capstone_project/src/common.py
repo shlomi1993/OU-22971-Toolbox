@@ -77,10 +77,10 @@ class TrainConfig:
         Multi-line description of all config fields.
 
         Returns:
-            str: Formatted string like "TrainConfig(\n  field=value\n  ...)".
+            str: Formatted string like "TrainConfig(\n    field=value\n    ...)".
         """
         body = "\n    ".join(f"{f.name}={getattr(self, f.name)}" for f in fields(self))
-        return f"{self.__class__.__name__}(\n  {body}\n)"
+        return f"{self.__class__.__name__}(\n    {body}\n)"
 
     @property
     def output_path(self) -> Path:
