@@ -88,8 +88,8 @@ def boundary_shape(split_layer: str, batch_size: int) -> tuple[int, ...]:
         batch_size (int): Number of images (views) in the batch.
 
     Returns:
-        tuple[int, ...]: (batch_size, channels, height, width).
+        tuple[int, ...]: Tensor shape at the boundary, in (batch_size, channels, height, width) format.
     """
-    c = BOUNDARY_CHANNELS[split_layer]
-    s = BOUNDARY_SPATIAL[split_layer]
-    return (batch_size, c, s, s)
+    channels = BOUNDARY_CHANNELS[split_layer]
+    spatial = BOUNDARY_SPATIAL[split_layer]
+    return (batch_size, channels, spatial, spatial)
