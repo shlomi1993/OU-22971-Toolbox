@@ -23,7 +23,7 @@ for BS in "${BATCH_SIZES[@]}"; do
     RUN_NAME="sweep_bs${BS}"
     echo ""
     echo "============================================================"
-    echo "  Sweeping local_batch_size=${BS}  run: ${RUN_NAME}"
+    echo "Sweeping local_batch_size=${BS}  run: ${RUN_NAME}"
     echo "============================================================"
 
     torchrun \
@@ -37,10 +37,10 @@ for BS in "${BATCH_SIZES[@]}"; do
 
     echo ""
     echo "Analysis for local_batch_size=${BS}"
-    python "${ANALYZE_PATH}" "${OUTPUT_DIR}/${RUN_NAME}"
+    python "${ANALYZE_PATH}" --run-dir "${OUTPUT_DIR}/${RUN_NAME}"
     echo ""
 done
 
 echo "============================================================"
-echo "  Sweep complete. Results in ${OUTPUT_DIR}/sweep_bs*"
+echo "Sweep complete. Results in ${OUTPUT_DIR}/sweep_bs*"
 echo "============================================================"

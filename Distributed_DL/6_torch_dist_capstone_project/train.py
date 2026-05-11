@@ -131,7 +131,7 @@ def main() -> None:
     # Derive global batch size
     global_batch = config.global_batch_size(groups.num_pairs)
     if groups.rank == 0:
-        g_logger.info(config.describe())
+        g_logger.info(f"Configuration:\n{config.describe()}")
 
     # Set seed for reproducibility
     torch.manual_seed(config.seed + groups.rank)
