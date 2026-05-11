@@ -1,0 +1,133 @@
+graph TB
+    subgraph "Data Source"
+        FAKEDATA[FakeData — synthetic ImageNet<br/>deterministic seed · drop_last]
+    end
+
+    subgraph "Entry Point"
+        TORCHRUN["torchrun --standalone --nproc_per_node=N"]
+        TRAIN[train.py]
+    end
+
+    subgraph "Initialization"
+        CLI[cli.py → TrainConfig]
+        MODEL[model.py → split_resnet18<br/>stage0 · stage1 · ProjectionHead]
+        GROUPS[groups.py → CommGroups<br/>pair_group · stage0_group · stage1_group]
+        AUG[augmentation.py<br/>SimCLR transform]
+    end
+
+    subgraph "Distributed Training Loop"
+        TSTEP[training_step.py → TrainingStep]
+
+        subgraph "Forward Pass (per step)"
+            VIEWS[prepare_views<br/>augment ×2 → interleave]
+            S0FWD[stage0_forward<br/>conv1→bn1→relu→maxpool→layer1→layer2]
+            SEND_B[send_boundary<br/>activation to odd rank]
+            RECV_B[recv_boundary<br/>odd rank receives]
+            S1FWD[stage1_forward<br/>layer3→layer4→avgpool→flatten→ProjectionHead]
+            GATHER[gather_embeddings<br/>all_gather across stage1_group]
+            LOSS[contrastive_loss.py<br/>SimCLR loss on local embeds vs all]
+        end
+
+        subgraph "Backward Pass"
+            S1BWD[loss.backward]
+            SEND_G[send_boundary_grad<br/>odd → even]
+            S0BWD[stage0_backward<br/>boundary.backward·grad·]
+        end
+
+        subgraph "Sync & Update"
+            GSYNC0[grad_sync_stage0<br/>all_reduce in stage0_group]
+            GSYNC1[grad_sync_stage1<br/>all_reduce in stage1_group]
+            OPT[optimizer_step<br/>SGD on all ranks]
+        end
+    end
+
+    subgraph "Profiling & Output"
+        PROF[profiling.py<br/>PyTorch profiler context]
+        METRICS[metrics.py<br/>metrics writer]
+    end
+
+    subgraph "Output Artifacts"
+        TRACES[traces/rank0..N.json<br/>Chrome trace per rank]
+        CSV[metrics.csv<br/>per-step loss · timing]
+        CONFIG[run_config.json<br/>config + images/s]
+    end
+
+    subgraph "Analysis"
+        ANALYZE[analyze.py → TraceAnalyzer<br/>span tables · time breakdown · stage imbalance]
+    end
+
+    subgraph "Automation"
+        CONTROLLER[controller.py → Controller<br/>sweep batch sizes × split layers<br/>pick best config by images/s]
+        CTRLLOG[controller_log.json<br/>decision log]
+    end
+
+    %% Entry flow
+    TORCHRUN --> TRAIN
+    TRAIN --> CLI
+    CLI --> MODEL & GROUPS & AUG
+
+    %% Init → training loop
+    FAKEDATA --> VIEWS
+    MODEL --> TSTEP
+    GROUPS --> TSTEP
+    AUG --> TSTEP
+
+    %% Forward flow
+    TSTEP --> VIEWS
+    VIEWS -->|even ranks| S0FWD
+    S0FWD --> SEND_B
+    SEND_B -->|pair_group p2p| RECV_B
+    RECV_B -->|odd ranks| S1FWD
+    S1FWD --> GATHER
+    GATHER --> LOSS
+
+    %% Backward flow
+    LOSS --> S1BWD
+    S1BWD --> SEND_G
+    SEND_G -->|pair_group p2p| S0BWD
+
+    %% Sync flow
+    S0BWD --> GSYNC0
+    S1BWD --> GSYNC1
+    GSYNC0 --> OPT
+    GSYNC1 --> OPT
+
+    %% Profiling & output
+    TSTEP --> PROF
+    PROF --> TRACES
+    TSTEP --> METRICS
+    METRICS --> CSV
+    METRICS --> CONFIG
+
+    %% Analysis
+    TRACES --> ANALYZE
+    CSV --> ANALYZE
+    CONFIG --> ANALYZE
+
+    %% Automation
+    CONTROLLER -->|launches torchrun| TRAIN
+    CONTROLLER --> ANALYZE
+    CONTROLLER --> CTRLLOG
+
+    %% Styling
+    classDef data fill:#e1f5ff,stroke:#0288d1,stroke-width:2px
+    classDef entry fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef init fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    classDef forward fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    classDef backward fill:#fce4ec,stroke:#c62828,stroke-width:2px
+    classDef sync fill:#ede7f6,stroke:#512da8,stroke-width:2px
+    classDef profiling fill:#e0f7fa,stroke:#00838f,stroke-width:2px
+    classDef artifact fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef analysis fill:#e8eaf6,stroke:#283593,stroke-width:2px
+    classDef automation fill:#fbe9e7,stroke:#bf360c,stroke-width:2px
+
+    class FAKEDATA data
+    class TORCHRUN,TRAIN entry
+    class CLI,MODEL,GROUPS,AUG init
+    class TSTEP,VIEWS,S0FWD,SEND_B,RECV_B,S1FWD,GATHER,LOSS forward
+    class S1BWD,SEND_G,S0BWD backward
+    class GSYNC0,GSYNC1,OPT sync
+    class PROF,METRICS profiling
+    class TRACES,CSV,CONFIG,CTRLLOG artifact
+    class ANALYZE analysis
+    class CONTROLLER automation
