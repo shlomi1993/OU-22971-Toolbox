@@ -4,29 +4,16 @@ Communication group setup for the two-stage sharded training system.
 
 import torch.distributed as dist
 
-from dataclasses import dataclass
-
 from src.common import Backend
 from src.logger import g_logger
 
 
-@dataclass
 class CommGroups:
     """
     Holds all communication group handles and rank metadata.
     """
-    rank: int  # Global rank of this process
-    world_size: int  # Total number of ranks
-    pair_group: dist.ProcessGroup  # This rank's (even, odd) pair group
-    stage0_group: dist.ProcessGroup  # All even ranks (stage-0 owners)
-    stage1_group: dist.ProcessGroup  # All odd ranks (stage-1 owners)
-    pair_rank: int  # Global rank of the paired partner
-    pair_id: int  # Index of this rank's pair (rank // 2)
-    num_pairs: int  # Total number of rank pairs (world_size // 2)
-    is_even: bool  # True if this rank owns stage 0
 
-    @classmethod
-    def create(cls, backend: Backend = Backend.GLOO) -> "CommGroups":
+    def __init__(self, backend: Backend = Backend.GLOO) -> None:
         """
         Initialize torch.distributed and create the required communication groups.
 
@@ -39,44 +26,30 @@ class CommGroups:
 
         Args:
             backend (Backend, optional): Distributed backend. Default is Backend.GLOO.
-
-        Returns:
-            CommGroups: Populated communication groups and rank metadata.
         """
         dist.init_process_group(backend=backend.value)
-        rank = dist.get_rank()
-        world_size = dist.get_world_size()
-        if world_size < 4 or world_size % 2 != 0:
-            raise ValueError(f"world_size must be even and >= 4, got {world_size}")
+        self.rank = dist.get_rank()
+        self.world_size = dist.get_world_size()
 
-        num_pairs = world_size // 2
-        pair_id = rank // 2
-        is_even = rank % 2 == 0
-        pair_rank = rank + 1 if is_even else rank - 1
+        if self.world_size < 4 or self.world_size % 2 != 0:
+            raise ValueError(f"world_size must be even and >= 4, got {self.world_size}")
+
+        self.num_pairs = self.world_size // 2
+        self.pair_id = self.rank // 2
+        self.is_even = self.rank % 2 == 0
+        self.pair_rank = self.rank + 1 if self.is_even else self.rank - 1
 
         # Create one pair group per (even, odd) pair; keep the one this rank belongs to
-        my_pair_group = None
-        for k in range(num_pairs):
+        self.pair_group = None
+        for k in range(self.num_pairs):
             group = dist.new_group(ranks=[2 * k, 2 * k + 1])
-            if k == pair_id:
-                my_pair_group = group
+            if k == self.pair_id:
+                self.pair_group = group
 
-        even_ranks = list(range(0, world_size, 2))
-        odd_ranks = list(range(1, world_size, 2))
-        stage0_group = dist.new_group(ranks=even_ranks)
-        stage1_group = dist.new_group(ranks=odd_ranks)
-
-        return cls(
-            rank=rank,
-            world_size=world_size,
-            pair_group=my_pair_group,
-            stage0_group=stage0_group,
-            stage1_group=stage1_group,
-            pair_rank=pair_rank,
-            pair_id=pair_id,
-            num_pairs=num_pairs,
-            is_even=is_even,
-        )
+        even_ranks = list(range(0, self.world_size, 2))
+        odd_ranks = list(range(1, self.world_size, 2))
+        self.stage0_group = dist.new_group(ranks=even_ranks)
+        self.stage1_group = dist.new_group(ranks=odd_ranks)
 
     def log_structure(self) -> None:
         """
