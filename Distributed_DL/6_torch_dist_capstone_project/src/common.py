@@ -79,7 +79,7 @@ class TrainConfig:
         Returns:
             str: Formatted string like "TrainConfig(\n  field=value\n  ...)".
         """
-        body = "\n  ".join(f"{f.name}={getattr(self, f.name)}" for f in fields(self))
+        body = "\n    ".join(f"{f.name}={getattr(self, f.name)}" for f in fields(self))
         return f"{self.__class__.__name__}(\n  {body}\n)"
 
     @property
