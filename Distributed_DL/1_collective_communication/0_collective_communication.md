@@ -28,16 +28,28 @@ Complete [Dev Container Setup](../0_devcontainer_setup/0_devcontainer_setup.md) 
 
 ## Why `torch.distributed`?
 
-Ray is excellent for orchestration and general distributed Python workloads, but deep learning training has a narrower requirement: workers must exchange tensors quickly and predictably.
+Ray is excellent for orchestration and general distributed Python workloads, but it has a pain point: data moves only through the object store.
+
+![Ray pain point: object store hop](object_store.png)
+
+This is unsuitable for DL training because nodes must exchange tensors quickly.
 
 `torch.distributed` exists for that job:
 
-- it is built around training-oriented communication patterns
-- it makes data movement and synchronization explicit
-- it is the communication layer underneath tools like DDP
+- it is built around training-oriented, fast low-level communication patterns with *distributed tensors*
+- data movement and process synchronization become explicit
+   - good for runtime optimization
+   - bad for code simplicity
+
+![torch.distributed: low-level communication](process_groups.png)
 
 In this unit we use the CPU-friendly `gloo` backend.
 Later GPU sections reuse the same mental model with faster GPU-oriented communication backends.
+
+**Divison of labor:**
+
+![torch.distributed says “mutate tensor X on every rank”; Gloo does the actual message-passing/reduction that makes each local X become X′.](td_vs_gloo.png)
+
 
 ---
 
@@ -83,6 +95,55 @@ Later, the same idea extends to multiple nodes: each node contributes more ranks
 
 ---
 
+## Hello Ranks
+
+Run:
+
+```bash
+torchrun --standalone --nproc_per_node=4 1_collective_communication/1_hello_ranks.py
+```
+
+Expected result:
+
+- four worker processes start
+- every process prints the same `world_size`
+- every process prints a different `rank`
+- every process prints its own local tensor
+
+What to notice:
+
+- we launched one Python file
+- `torchrun` launched four workers
+- each worker ran the same code with different process-local state
+- `LOCAL_RANK` and `rank` are related, but they are not always the same in multi-node jobs
+- the code is shared, but each rank has its own local state and data
+
+---
+
+## Point-to-point with `send` and `recv`
+
+Before collectives, it helps to see the most direct communication pattern.
+
+Run:
+
+```bash
+torchrun --standalone --nproc_per_node=2 1_collective_communication/2_send_recv_demo.py
+```
+
+Expected result:
+
+- rank `0` sends a tensor with value `1.0`
+- rank `1` receives that tensor
+
+What to notice:
+
+- one `send` matches one `recv`
+- both sides block by default until the transfer is complete
+- if ranks disagree on the order or count of sends and receives, they can hang
+
+
+---
+
 ## Collective communication cheat sheet
 
 | Operation | What it does | Common use in a training loop |
@@ -104,6 +165,9 @@ What to notice:
 See the diagrams in the [PyTorch tutorial](https://docs.pytorch.org/tutorials/intermediate/dist_tuto.html#collective-communication).
 
 ---
+## Basic distributed training loop (data parallelism)
+
+![Three-rank distributed training loop showing local forward/loss/backward/optimizer steps, with scatter, all_reduce, gather, rank-0 checkpoint save, and final barrier() sync.](td_ddp_loop.png)
 
 ## Contract of collectives
 

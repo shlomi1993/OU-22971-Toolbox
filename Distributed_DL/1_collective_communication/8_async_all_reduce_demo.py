@@ -19,7 +19,6 @@ What to notice:
 """
 
 import time
-
 import torch
 import torch.distributed as dist
 
@@ -40,18 +39,15 @@ def fake_local_work(rank: int) -> float:
 
 def gather_metrics(values: list[float]) -> list[list[float]]:
     local = torch.tensor(values, dtype=torch.float64)
-    gathered = [torch.zeros_like(local) for _ in range(dist.get_world_size())]
-    dist.all_gather(gathered, local)
-    return [row.tolist() for row in gathered]
+    gathered = [torch.zeros_like(local) for _ in range(dist.get_world_size())] if dist.get_rank() == 0 else None
+    dist.gather(local, gather_list=gathered, dst=0)
+    return [row.tolist() for row in gathered] if gathered is not None else []
 
 
-def print_rank_zero_summary(title: str, rows: list[list[float]], cols: list[str]) -> None:
-    if dist.get_rank() != 0:
-        return
-
+def print_summary(title: str, rows: list[list[float]], columns: list[str]) -> None:
     lines = []
     for rank, row in enumerate(rows):
-        metrics = ", ".join(f"{name}={value:.2f}s" for name, value in zip(cols, row))
+        metrics = ", ".join(f"{name}={value:.2f}s" for name, value in zip(columns, row))
         lines.append(f"rank {rank}: {metrics}")
     print_block(title, *lines)
 
@@ -65,13 +61,14 @@ def main() -> None:
         tensor = torch.full((TENSOR_SIZE,), float(rank + 1), dtype=torch.float32)
         sync_start = time.perf_counter()
         dist.all_reduce(tensor)  # blocks until all ranks complete the sum
-        sync_collective = time.perf_counter() - sync_start
+        collective = time.perf_counter() - sync_start
 
         # Local work can only begin after the collective returns.
-        local_delay = fake_local_work(rank)
-        sync_total = time.perf_counter() - sync_start
-        sync_rows = gather_metrics([sync_collective, local_delay, sync_total])
-        print_rank_zero_summary(title="sync all_reduce", rows=sync_rows, cols=["collective", "local_work", "total"])
+        local_work = fake_local_work(rank)
+        total = time.perf_counter() - sync_start
+        sync_rows = gather_metrics([collective, local_work, total])
+        if rank == 0:
+            print_summary(title="sync all_reduce", rows=sync_rows, columns=["collective", "local_work", "total"])
 
         # Align all ranks before starting the async phase.
         dist.barrier()
@@ -81,19 +78,20 @@ def main() -> None:
         tensor = torch.full((TENSOR_SIZE,), float(rank + 1), dtype=torch.float32)
         async_start = time.perf_counter()
         work = dist.all_reduce(tensor, async_op=True)  # returns immediately
-        launch_time = time.perf_counter() - async_start
+        launch = time.perf_counter() - async_start
 
         # Overlap: local work runs while the reduction is still in flight.
-        local_delay = fake_local_work(rank)
+        local_work = fake_local_work(rank)
 
         # wait() blocks until the reduction is done - only then is tensor valid.
         wait_start = time.perf_counter()
         work.wait()
-        wait_time = time.perf_counter() - wait_start
-        async_total = time.perf_counter() - async_start
+        wait = time.perf_counter() - wait_start
+        total = time.perf_counter() - async_start
 
-        async_rows = gather_metrics([launch_time, local_delay, wait_time, async_total])
-        print_rank_zero_summary(title="async all_reduce", rows=async_rows, cols=["launch", "local_work", "wait", "total"])
+        async_rows = gather_metrics([launch, local_work, wait, total])
+        if rank == 0:
+            print_summary(title="async all_reduce", rows=async_rows, columns=["launch", "local_work", "wait", "total"])
 
     finally:
         dist.destroy_process_group()
