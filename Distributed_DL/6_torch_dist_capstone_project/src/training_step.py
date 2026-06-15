@@ -104,6 +104,29 @@ class TrainingStep:
         interleaved[1::2] = view_2
         return interleaved
 
+    def _local_source_indices(self, step_idx: int) -> list[int]:
+        """
+        Return the source-image indices owned by this pair for a fixed-shape global batch.
+
+        This mirrors DataLoader(drop_last=True) behavior without using DistributedSampler: each model replica gets a
+        distinct contiguous slice inside the global source batch, and any tail smaller than one global batch is dropped.
+
+        Args:
+            step_idx (int): Training step index used to advance through the deterministic dataset.
+
+        Returns:
+            list[int]: Dataset indices for this rank pair's local source-image batch.
+        """
+        dataset_size = len(self.dataset)
+        global_batch = self.config.local_batch_size * self.groups.num_pairs
+        usable_size = dataset_size - (dataset_size % global_batch)
+        assert usable_size >= global_batch, \
+            f"Dataset size ({dataset_size}) is too small for global batch size of {global_batch}"
+
+        global_start = (step_idx * global_batch) % usable_size
+        local_start = global_start + self.groups.pair_id * self.config.local_batch_size
+        return list(range(local_start, local_start + self.config.local_batch_size))
+
     @staticmethod
     def _check_replica_alignment(params: list[nn.Parameter], group: dist.ProcessGroup, label: str) -> None:
         """
@@ -131,9 +154,8 @@ class TrainingStep:
         """
         # Step A: Prepare local views
         with record_function("prepare_views"):
-            n = len(self.dataset)
-            start = (step_idx * self.config.local_batch_size) % n
-            images = torch.stack([self.dataset[(start + i) % n][0] for i in range(self.config.local_batch_size)])
+            indices = self._local_source_indices(step_idx)
+            images = torch.stack([self.dataset[i][0] for i in indices])
             view_1, view_2 = create_paired_views(images, self.transform)
             views = self._interleave_views(view_1, view_2)
 

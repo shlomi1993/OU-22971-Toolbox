@@ -6,6 +6,7 @@ set -euo pipefail
 
 SCRIPT_PATH="train.py"
 ANALYZE_PATH="analyze.py"
+SUMMARY_PATH="summarize_sweep.py"
 OUTPUT_DIR="output"
 NUM_STEPS=10
 DATASET_SIZE=2048
@@ -42,5 +43,12 @@ for BS in "${BATCH_SIZES[@]}"; do
 done
 
 echo "============================================================"
+echo "Writing manual sweep summary and diagnosis"
+echo "============================================================"
+python "${SUMMARY_PATH}" --output-dir "${OUTPUT_DIR}" --pattern "sweep_bs*"
+
+echo "============================================================"
 echo "Sweep complete. Results in ${OUTPUT_DIR}/sweep_bs*"
+echo "Summary: ${OUTPUT_DIR}/manual_sweep_summary.csv"
+echo "Diagnosis: ${OUTPUT_DIR}/diagnosis_summary.md"
 echo "============================================================"
