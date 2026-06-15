@@ -30,8 +30,8 @@ Watch the complete demo walkthrough: [MLOps Capstone Demo](https://drive.google.
 
 3. **Place data files** (parquet) under `TLC_data/`:
    - [`green_tripdata_2020-01.parquet`](https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2020-01.parquet) (used for reference and baseline batch)
-   - [`green_tripdata_2020-04.parquet`](https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2020-04.parquet) (Run 2 — triggers retrain due to COVID-19 shift)
-   - [`green_tripdata_2020-08.parquet`](https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2020-08.parquet) (Run 3 — for resume demo)
+   - [`green_tripdata_2020-04.parquet`](https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2020-04.parquet) (Run 2 - triggers retrain due to COVID-19 shift)
+   - [`green_tripdata_2020-08.parquet`](https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2020-08.parquet) (Run 3 - for resume demo)
 
    Or download from: https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page
 
@@ -214,7 +214,7 @@ Implementation: See [capstone_flow.py](capstone_flow.py) `retrain` and `promotio
 
 ## Flow Execution
 
-### Run 1 — Baseline
+### Run 1 - Baseline
 
 This is the initial run that bootstraps the champion model and compares January 2020 to itself by using the same data for both reference and batch. With identical data distributions, no drift or degradation is detected, and no retraining is triggered, and hence no promotion.
 
@@ -229,7 +229,7 @@ In MLflow UI, verify:
 4. `decision.json` artifacts explain outcomes like `action=batch_accepted` and `action=no_retrain`
 5. No `retrain` or `promotion_gate` runs since no action is needed
 
-### Run 2 — Retrain & Promotion
+### Run 2 - Retrain & Promotion
 
 This run uses the April 2020 batch, which exhibits COVID-19 related distribution shifts like fewer trips and different patterns. The model performance degrades beyond the acceptable threshold, triggering automatic retraining. A new candidate model is trained and compared to the champion. If better, it gets promoted to production via the `@champion` alias.
 
@@ -245,7 +245,7 @@ In MLflow UI, verify:
 - `promotion_gate` run includes decision tags and `decision.json` justifying the promotion
 - Model Registry shows `green_taxi_tip_model` with a new model version registered and `@champion` alias updated
 
-### Run 3 — Post Failure Resumption
+### Run 3 - Post Failure Resumption
 
 This run demonstrates Metaflow's checkpointing and resume capability. By intentionally failing the flow mid-execution and then resuming, you'll see that completed steps are skipped and only the failed step and downstream steps are re-executed. This is critical for production pipelines with expensive computations.
 
@@ -335,7 +335,7 @@ After the pipeline promotes a new champion:
 | [design_doc.md](design_doc.md) | Full project specification |
 | [reset.sh](reset.sh) | Cleanup script that kills MLflow server and removes tracking artifacts |
 
-## MLflow UI — what to look for
+## MLflow UI - what to look for
 
 - **Experiment:** `08_capstone_green_taxi`
 - **Runs per flow execution:** `integrity_gate`, `feature_engineering`, `bootstrap_train` (first run only), `model_gate`, `retrain` (conditional), `promotion_gate` (conditional; only after retrain)
