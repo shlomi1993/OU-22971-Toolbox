@@ -1,11 +1,15 @@
-# ---- IDE / editor ----
+# IDE / editor
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# ---- Python ----
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Python
 **/__pycache__/
 **/*.py[cod]
 *.pyo
@@ -14,25 +18,24 @@
 dist/
 build/
 .eggs/
+.dist/
 
-# ---- Jupyter ----
+# Jupyter
 **/.ipynb_checkpoints/
 
-# ---- Conda / venv ----
+# Conda / venv
 .conda/
 .venv/
 venv/
 
-# ---- MLflow (local tracking stores) ----
+# Local tracking stores
 **/mlflow_tracking/
 **/mlruns/
 **/mlartifacts/
 **/mlflow.db
-
-# ---- Metaflow (local run metadata) ----
 .metaflow/
 
-# ---- Generated artifacts and runs ----
+# Generated artifacts and run output
 **/runs/
 **/artifacts/
 **/outputs/
@@ -46,8 +49,10 @@ venv/
 **/meta.txt
 **/*.log
 **/run_logs
+exam_prep/
+test_logs/
 
-# ---- Data directories ----
+# Data directories and local datasets
 **/data*/
 **/*_data/
 *.parquet
@@ -65,20 +70,14 @@ Ray/.tmp-ray-host/
 Ray/1_cluster_setup/head_workspace/*
 !Ray/1_cluster_setup/head_workspace/.gitkeep
 
-# ---- OS junk ----
-.DS_Store
-Thumbs.db
-
-# ---- Build artifacts ----
-.dist/
-
-# Maintainer smoke-test logs
-test_logs/
-
 # Live unit material
-/Distributed_DL/5_parallelism_strategies/*
-!/Distributed_DL/5_parallelism_strategies/README.md
+/Distributed_DL/5_scaling_strategies/*
+!/Distributed_DL/5_scaling_strategies/README.md
 
-# Preserve bundled teaching assets and reference outputs.
-!Distributed_DL/4_ddp_on_cloud_gpus/runpod_output/*
-!Distributed_DL/4_ddp_on_cloud_gpus/colab_output/*
+# Preserve cloud GPU output logs while ignoring logs everywhere else.
+!Distributed_DL/4_ddp_on_cloud_gpus/runpod_output/
+!Distributed_DL/4_ddp_on_cloud_gpus/runpod_output/**/
+!Distributed_DL/4_ddp_on_cloud_gpus/runpod_output/**/*.log
+!Distributed_DL/4_ddp_on_cloud_gpus/colab_output/
+!Distributed_DL/4_ddp_on_cloud_gpus/colab_output/**/
+!Distributed_DL/4_ddp_on_cloud_gpus/colab_output/**/*.log
