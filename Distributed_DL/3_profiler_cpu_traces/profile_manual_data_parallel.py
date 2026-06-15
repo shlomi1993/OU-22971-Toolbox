@@ -1,11 +1,13 @@
-"""
-Profile the manual data-parallel image step and export CPU trace files.
+"""Profile the manual data-parallel image step and export CPU trace files.
 
-Rank 0 picks one global minibatch of dataset indices and scatters one local shard to each rank. Every rank indexes
-directly into a ``torchvision`` ``FakeData`` dataset, computes forward and backward locally, and then synchronizes
-gradients by hand with ``dist.all_reduce`` before the optimizer step.
+Rank 0 picks one global minibatch of dataset indices and scatters one local
+shard to each rank. Every rank indexes directly into a ``torchvision``
+``FakeData`` dataset, computes forward and backward locally, and then
+synchronizes gradients by hand with ``dist.all_reduce`` before the optimizer
+step.
 
-This profiler version keeps that same Unit 2 training step logic, but wraps it with the PyTorch profiler.
+This profiler version keeps that same Unit 2 training step logic, but wraps it
+with the PyTorch profiler.
 
 Examples
 --------
@@ -27,12 +29,12 @@ What to look for:
 
 import argparse
 import time
+from pathlib import Path
+
 import torch
 import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
-
-from pathlib import Path
 from torch.profiler import ProfilerActivity, profile, record_function
 from torchvision import datasets, transforms
 
@@ -42,21 +44,46 @@ NUM_CLASSES = 10
 MAX_CONV_BLOCKS = 6
 
 
-# region Reporting Helpers: Small reporting helpers keep the end-of-run summary readable.
-def gather_summaries_on_rank_zero(local_values: list[float], rank: int, world_size: int) -> list[list[float]] | None:
-    """
-    Gather one small summary vector from every rank onto rank 0 only.
-    """
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Profile the toy manual data-parallel image step and export CPU traces."
+    )
+    parser.add_argument("--batch-size", type=int, default=128)
+    parser.add_argument("--base-channels", type=int, default=48)
+    parser.add_argument("--conv-blocks", type=int, default=5)
+    parser.add_argument("--dataset-size", type=int, default=4096)
+    parser.add_argument("--steps", type=int, default=5)
+    parser.add_argument("--extra-sync-mb", type=float, default=0.0)
+    parser.add_argument("--slow-rank", type=int, default=-1)
+    parser.add_argument("--sleep-before-sync", type=float, default=0.0)
+    parser.add_argument("--seed", type=int, default=7)
+    parser.add_argument("--trace-dir", type=str, default="3_profiler_cpu_traces/traces")
+    parser.add_argument("--trace-name", type=str, default="baseline")
+    parser.add_argument("--profile-memory", action="store_true")
+    return parser.parse_args()
+
+
+# region Reporting Helpers
+# Small reporting helpers keep the end-of-run summary readable.
+def gather_summaries_on_rank_zero(
+    local_values: list[float],
+    rank: int,
+    world_size: int,
+) -> list[list[float]] | None:
+    """Gather one small summary vector from every rank onto rank 0 only."""
     local_tensor = torch.tensor(local_values, dtype=torch.float64)
-    gathered = [torch.zeros_like(local_tensor) for _ in range(world_size)] if rank == 0 else None
+    if rank == 0:
+        gathered = [torch.zeros_like(local_tensor) for _ in range(world_size)]
+    else:
+        gathered = None
     dist.gather(local_tensor, gather_list=gathered, dst=0)
-    return [row.tolist() for row in gathered] if rank == 0 else None
+    if rank == 0:
+        return [row.tolist() for row in gathered]
+    return None
 
 
 def print_section(title: str, *lines: str) -> None:
-    """
-    Print one labeled block so the console output reads like a report.
-    """
+    """Print one labeled block so the console output reads like a report."""
     body = "\n".join([title, *[f"  {line}" for line in lines], ""])
     print(body, flush=True)
 
@@ -66,9 +93,7 @@ def print_section(title: str, *lines: str) -> None:
 
 # region Same DL logic as in Unit 2
 class TinyConvNet(nn.Module):
-    """
-    A small convnet whose width and depth are easy to scale for the demo.
-    """
+    """A small convnet whose width and depth are easy to scale for the demo."""
 
     def __init__(self, base_channels: int, conv_blocks: int) -> None:
         super().__init__()
@@ -77,9 +102,13 @@ class TinyConvNet(nn.Module):
 
         for block_idx in range(conv_blocks):
             out_channels = base_channels * (2 ** block_idx)
-            layers.extend([nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
-                           nn.ReLU(),
-                           nn.MaxPool2d(kernel_size=2)])
+            layers.extend(
+                [
+                    nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+                    nn.ReLU(),
+                    nn.MaxPool2d(kernel_size=2),
+                ]
+            )
             in_channels = out_channels
 
         self.features = nn.Sequential(*layers)
@@ -94,11 +123,11 @@ class TinyConvNet(nn.Module):
 
 
 def build_fake_image_dataset(dataset_size: int, seed: int) -> datasets.FakeData:
-    """
-    Build one deterministic fake image dataset per rank.
+    """Build one deterministic fake image dataset per rank.
 
-    ``datasets.FakeData`` is lazy, so it does not materialize every sample up front. Instead, it generates each image or
-    label pair deterministically when that index is requested.
+    ``datasets.FakeData`` is lazy, so it does not materialize every sample up
+    front. Instead, it generates each image/label pair deterministically when
+    that index is requested.
     """
     return datasets.FakeData(
         size=dataset_size,
@@ -109,11 +138,14 @@ def build_fake_image_dataset(dataset_size: int, seed: int) -> datasets.FakeData:
     )
 
 
-def prepare_local_batch(dataset: datasets.FakeData, local_batch_size: int, rank: int, world_size: int,
-                        index_generator: torch.Generator | None) -> tuple[torch.Tensor, torch.Tensor]:
-    """
-    Let rank 0 sample a global minibatch, shard it, and materialize one local batch.
-    """
+def prepare_local_batch(
+    dataset: datasets.FakeData,
+    local_batch_size: int,
+    rank: int,
+    world_size: int,
+    index_generator: torch.Generator | None,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Let rank 0 sample a global minibatch, shard it, and materialize one local batch."""
     with record_function("plan_batch_indices"):
         local_indices = torch.empty(local_batch_size, dtype=torch.int64)
 
@@ -122,16 +154,18 @@ def prepare_local_batch(dataset: datasets.FakeData, local_batch_size: int, rank:
             # Teaching shortcut: sample with replacement via randint so the manual
             # data-parallel demo stays simple and avoids the extra full-dataset
             # randperm cost that could skew lightweight profiling.
-            global_indices = torch.randint(high=len(dataset), size=(global_batch_size,), generator=index_generator)
+            global_indices = torch.randint(
+                high=len(dataset),
+                size=(global_batch_size,),
+                generator=index_generator,
+            )
             scatter_list = list(global_indices.chunk(world_size))
         else:
             scatter_list = None
-
-    # NEW in Unit 3:
+    #NEW in Unit 3:
     with record_function("scatter_batch_indices"):
         dist.scatter(local_indices, scatter_list=scatter_list, src=0)
-
-    # NEW in Unit 3:
+    #NEW in Unit 3:
     with record_function("index_batch"):
         images: list[torch.Tensor] = []
         targets: list[int] = []
@@ -143,25 +177,37 @@ def prepare_local_batch(dataset: datasets.FakeData, local_batch_size: int, rank:
 
 
 def manual_gradient_sync(model: nn.Module, world_size: int) -> None:
-    """
-    Average gradients across ranks so every rank holds the same grads before the optimizer step.
-    """
+    """Average gradients across ranks so every rank holds the same grads before the optimizer step."""
     for param in model.parameters():
-        if param.grad is not None:
-            dist.all_reduce(param.grad, op=dist.ReduceOp.SUM)
-            param.grad /= world_size
+        if param.grad is None:
+            continue
+        dist.all_reduce(param.grad, op=dist.ReduceOp.SUM)
+        param.grad /= world_size
 
 
 # endregion
 
 
-def train_step(model: nn.Module, optimizer: torch.optim.Optimizer, extra_sync_tensor: torch.Tensor | None,
-               args: argparse.Namespace, dataset: datasets.FakeData, rank: int, world_size: int,
-               index_generator: torch.Generator | None) -> float:
-    # NEW in Unit 3:
+def train_step(
+    model: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    extra_sync_tensor: torch.Tensor | None,
+    args: argparse.Namespace,
+    dataset: datasets.FakeData,
+    rank: int,
+    world_size: int,
+    index_generator: torch.Generator | None,
+) -> float:
+    #NEW in Unit 3:
     with record_function("train_step"):
         with record_function("next_batch"):
-            images, targets = prepare_local_batch(dataset, args.batch_size, rank, world_size, index_generator)
+            images, targets = prepare_local_batch(
+                dataset=dataset,
+                local_batch_size=args.batch_size,
+                rank=rank,
+                world_size=world_size,
+                index_generator=index_generator,
+            )
 
         optimizer.zero_grad(set_to_none=True)
 
@@ -191,23 +237,6 @@ def train_step(model: nn.Module, optimizer: torch.optim.Optimizer, extra_sync_te
     return float(loss.item())
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Profile the toy manual data-parallel image step and export CPU traces.")
-    parser.add_argument("--batch-size", type=int, default=128)
-    parser.add_argument("--base-channels", type=int, default=48)
-    parser.add_argument("--conv-blocks", type=int, default=5)
-    parser.add_argument("--dataset-size", type=int, default=4096)
-    parser.add_argument("--steps", type=int, default=5)
-    parser.add_argument("--extra-sync-mb", type=float, default=0.0)
-    parser.add_argument("--slow-rank", type=int, default=-1)
-    parser.add_argument("--sleep-before-sync", type=float, default=0.0)
-    parser.add_argument("--seed", type=int, default=7)
-    parser.add_argument("--trace-dir", type=str, default="3_profiler_cpu_traces/traces")
-    parser.add_argument("--trace-name", type=str, default="baseline")
-    parser.add_argument("--profile-memory", action="store_true")
-    return parser.parse_args()
-
-
 def main() -> None:
     args = parse_args()
     if args.batch_size < 1:
@@ -217,7 +246,9 @@ def main() -> None:
     if args.conv_blocks < 1:
         raise SystemExit("--conv-blocks must be at least 1.")
     if args.conv_blocks > MAX_CONV_BLOCKS:
-        raise SystemExit(f"--conv-blocks must be at most {MAX_CONV_BLOCKS} for {IMAGE_SIZE[1]}x{IMAGE_SIZE[2]} inputs.")
+        raise SystemExit(
+            f"--conv-blocks must be at most {MAX_CONV_BLOCKS} for {IMAGE_SIZE[1]}x{IMAGE_SIZE[2]} inputs."
+        )
     if args.dataset_size < 1:
         raise SystemExit("--dataset-size must be at least 1.")
     if args.steps < 1:
@@ -230,7 +261,10 @@ def main() -> None:
 
         torch.manual_seed(args.seed)
 
-        dataset = build_fake_image_dataset(dataset_size=args.dataset_size, seed=args.seed)
+        dataset = build_fake_image_dataset(
+            dataset_size=args.dataset_size,
+            seed=args.seed,
+        )
         index_generator = torch.Generator().manual_seed(args.seed) if rank == 0 else None
         model = TinyConvNet(args.base_channels, args.conv_blocks)
         optimizer = torch.optim.SGD(model.parameters(), lr=0.05, momentum=0.9)
@@ -249,17 +283,41 @@ def main() -> None:
         loss_value = 0.0
 
         for _ in range(warmup_steps):
-            loss_value = train_step(model, optimizer, extra_sync_tensor, args, dataset, rank, world_size, index_generator)
-
-        # NEW in Unit 3:
-        with profile(activities=[ProfilerActivity.CPU], record_shapes=True, profile_memory=args.profile_memory) as prof:
+            loss_value = train_step(
+                model=model,
+                optimizer=optimizer,
+                extra_sync_tensor=extra_sync_tensor,
+                args=args,
+                dataset=dataset,
+                rank=rank,
+                world_size=world_size,
+                index_generator=index_generator,
+            )
+        #NEW in Unit 3:
+        with profile(
+            activities=[ProfilerActivity.CPU],
+            record_shapes=True,
+            profile_memory=args.profile_memory,
+        ) as prof:
             for _ in range(profiled_steps):
-                loss_value = train_step(model, optimizer, extra_sync_tensor, args, dataset, rank, world_size, index_generator)
-
-        # NEW in Unit 3:
+                loss_value = train_step(
+                    model=model,
+                    optimizer=optimizer,
+                    extra_sync_tensor=extra_sync_tensor,
+                    args=args,
+                    dataset=dataset,
+                    rank=rank,
+                    world_size=world_size,
+                    index_generator=index_generator,
+                )
+        #NEW in Unit 3:
         prof.export_chrome_trace(str(trace_path))
 
-        summary_rows = gather_summaries_on_rank_zero([loss_value], rank=rank, world_size=world_size)
+        summary_rows = gather_summaries_on_rank_zero(
+            [loss_value],
+            rank=rank,
+            world_size=world_size,
+        )
 
         if rank == 0:
             print_section(

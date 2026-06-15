@@ -30,7 +30,7 @@ Complete [Dev Container Setup](../0_devcontainer_setup/0_devcontainer_setup.md) 
 
 Ray is excellent for orchestration and general distributed Python workloads, but it has a pain point: data moves only through the object store.
 
-![Ray pain point: object store hop](object_store.png)
+![Ray pain point: object store hop](images/object_store.png)
 
 This is unsuitable for DL training because nodes must exchange tensors quickly.
 
@@ -41,14 +41,14 @@ This is unsuitable for DL training because nodes must exchange tensors quickly.
    - good for runtime optimization
    - bad for code simplicity
 
-![torch.distributed: low-level communication](process_groups.png)
+![torch.distributed: low-level communication](images/process_groups.png)
 
 In this unit we use the CPU-friendly `gloo` backend.
 Later GPU sections reuse the same mental model with faster GPU-oriented communication backends.
 
 **Divison of labor:**
 
-![torch.distributed says “mutate tensor X on every rank”; Gloo does the actual message-passing/reduction that makes each local X become X′.](td_vs_gloo.png)
+![torch.distributed says “mutate tensor X on every rank”; Gloo does the actual message-passing/reduction that makes each local X become X′.](images/td_vs_gloo.png)
 
 
 ---
@@ -95,7 +95,7 @@ Later, the same idea extends to multiple nodes: each node contributes more ranks
 
 ---
 
-## Hello Ranks
+## Hello ranks
 
 Run:
 
@@ -167,7 +167,153 @@ See the diagrams in the [PyTorch tutorial](https://docs.pytorch.org/tutorials/in
 ---
 ## Basic distributed training loop (data parallelism)
 
-![Three-rank distributed training loop showing local forward/loss/backward/optimizer steps, with scatter, all_reduce, gather, rank-0 checkpoint save, and final barrier() sync.](td_ddp_loop.png)
+![Three-rank distributed training loop showing local forward/loss/backward/optimizer steps, with scatter, all_reduce, gather, rank-0 checkpoint save, and final barrier() sync.](images/td_ddp_loop.png)
+
+## `broadcast`
+
+Run:
+
+```bash
+torchrun --standalone --nproc_per_node=4 1_collective_communication/3_broadcast_demo.py
+```
+
+Expected result:
+
+- rank `0` starts with `[42]`
+- the other ranks start with `[-1]`
+- after the broadcast, all ranks hold `[42]`
+
+What to notice:
+
+- rank `0` is the source of truth for this operation
+- the receiving ranks must already have a compatible destination tensor
+- after the call returns, every rank holds the same value
+
+Training loop connection:
+Use broadcast for sharing state from one rank to the rest of the job.
+
+---
+
+## `reduce` vs `all_reduce`
+
+Run:
+
+```bash
+torchrun --standalone --nproc_per_node=4 1_collective_communication/4_reduce_all_reduce_demo.py
+```
+
+Expected result:
+
+- for `reduce`, only rank `0` is guaranteed to finish with `[10]`
+- on the other ranks, the local tensor may contain backend-specific intermediate results, but those values are unspecified
+- for `all_reduce`, every rank finishes with `[10]`
+
+What to notice:
+
+- `reduce` is root-heavy: one rank owns the final answer
+- `all_reduce` is symmetric: every rank receives the same final answer
+
+Training loop connection:
+Use `reduce` when only rank `0` needs a final scalar; use `all_reduce` for synching gradients before the next optimizer step.
+
+---
+
+## `gather` vs `all_gather`
+
+Run:
+
+```bash
+torchrun --standalone --nproc_per_node=4 1_collective_communication/5_gather_all_gather_demo.py
+```
+
+Expected result:
+
+- for `gather`, rank `0` receives `[[0], [1], [2], [3]]`
+- for `all_gather`, every rank receives `[[0], [1], [2], [3]]`
+
+What to notice:
+
+- `gather` is root-heavy: only the destination rank allocates the full output
+- `all_gather` is symmetric: every rank allocates and receives the full output
+
+
+Training loop connection:
+Use `gather` for rank-0-only reporting and `all_gather` when every worker needs the global view before continuing.
+
+---
+
+## `scatter`
+
+Run:
+
+```bash
+torchrun --standalone --nproc_per_node=4 1_collective_communication/6_scatter_demo.py
+```
+
+Expected result:
+
+- rank `0` receives `[10]`
+- rank `1` receives `[20]`
+- rank `2` receives `[30]`
+- rank `3` receives `[40]`
+
+What to notice:
+
+- rank `0` prepares one input tensor per worker
+- each rank blocks in the same `scatter` call
+- `scatter` is the opposite of `gather`
+
+Training loop connection:
+Scatter is a simple model for handing out one per-rank shard of work from a central source.
+
+---
+
+## `barrier`
+
+Run:
+
+```bash
+torchrun --standalone --nproc_per_node=4 1_collective_communication/7_barrier_demo.py
+```
+
+Expected result:
+
+- in phase 1, rank `0` sleeps before entering `barrier()`
+- the other ranks reach `barrier()` first and wait there
+- once rank `0` enters, everyone is released
+- in phase 2, rank `0` sleeps before a `broadcast`, and the other ranks wait inside `broadcast` instead
+- the script then runs one final `barrier()` after the broadcast; that wait should be small because the broadcast already aligned the ranks
+
+What to notice:
+
+- `barrier` does not move useful model data; it synchronizes control flow
+- if the previous or next line is already a blocking collective such as `broadcast`, an extra `barrier` is often redundant
+- `barrier` is most useful around non-collective work such as checkpoint I/O, setup, teardown, or debugging
+
+---
+
+## Async vs sync collectives
+
+Run:
+
+```bash
+torchrun --standalone --nproc_per_node=4 1_collective_communication/8_async_all_reduce_demo.py
+```
+
+Expected result:
+
+- the script runs one synchronous `all_reduce`, then one `all_reduce(async_op=True)`
+- both phases also run a fake local function that takes longer on rank `0`
+- rank `0` prints a per-rank timing summary for both phases
+
+What to notice:
+
+- in sync mode, the local work starts only after `all_reduce` returns
+- in async mode, `all_reduce(..., async_op=True)` returns a `Work` handle immediately, so each rank can do independent local work before `wait()`
+
+
+
+---
 
 ## Contract of collectives
 
