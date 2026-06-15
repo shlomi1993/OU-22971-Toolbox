@@ -132,7 +132,7 @@ class MLFlowCapstoneFlow(FlowSpec):
         """
         Perform integrity checks on the reference and batch datasets.
         - Layer 1: hard rules (missing columns, invalid datetimes, negative durations, range violations) - "reject_batch" if any fail
-        - Layer 2: NannyML soft checks (missingness drift, unseen categoricals) — sets integrity_warn tag
+        - Layer 2: NannyML soft checks (missingness drift, unseen categoricals) - sets integrity_warn tag
         """
         self.init_mlflow()
 

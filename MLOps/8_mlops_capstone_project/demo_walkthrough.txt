@@ -13,7 +13,7 @@ EXPOSITION (~10 sec)
  במסגרת הפרק על אמ אל אופס בקורס ארגז הכלים ללמידת מכונה וניתוח נתוני עתק
 
 
-PART 1 — CODE WALKTHROUGH (~3 min)
+PART 1 - CODE WALKTHROUGH (~3 min)
 SHOW FILES:
 □ README.md - brief
 □ environment.yml - venv already activated
@@ -25,7 +25,7 @@ SHOW FILES:
 □ capstone_lib.py - highlight key functions in parallel to capstone_flow.py
 
 
-PART 2 — RUN 1: BASELINE (~2 min)
+PART 2 - RUN 1: BASELINE (~2 min)
 □ Show server was executed on terminal 1
 □ Show first run on terminal 2: python capstone_flow.py run --batch-path TLC_data/green_tripdata_2020-01.parquet
 □ Review interesting logs in the terminal
@@ -50,7 +50,7 @@ PART 2 — RUN 1: BASELINE (~2 min)
 □  Review models: Models → green_taxi_tip_model → Version 1 with @champion alias
 
 
-PART 3 — RUN 2: RETRAIN + PROMOTION (~2 min)
+PART 3 - RUN 2: RETRAIN + PROMOTION (~2 min)
 □ Show second run on terminal 2: python capstone_flow.py run --ref-path TLC_data/green_tripdata_2020-01.parquet --batch-path TLC_data/green_tripdata_2020-04.parquet
 □ Review interesting logs in the terminal
 □ Go to browser http://localhost:5001, refresh experiment "08_capstone_green_taxi"
@@ -79,7 +79,7 @@ PART 3 — RUN 2: RETRAIN + PROMOTION (~2 min)
 □ Review models: Models → green_taxi_tip_model → Version 2 with @champion alias (Version 1 = previous_champion)
 
 
-PART 4 — RUN 3: FAILURE + RESUME (~2 min)
+PART 4 - RUN 3: FAILURE + RESUME (~2 min)
 □ Inject failure: Add at capstone_flow.py:line 326 (retrain method): raise RuntimeError("Simulated failure for demo")
 □ Show third run on terminal 2: python capstone_flow.py run --ref-path TLC_data/green_tripdata_2020-04.parquet --batch-path TLC_data/green_tripdata_2020-08.parquet
 □ Watch it fail at retrain step in the terminal logs
@@ -101,7 +101,7 @@ PART 4 — RUN 3: FAILURE + RESUME (~2 min)
 □ Review models: Models → green_taxi_tip_model → Version 3 with @champion alias (if promoted)
 
 
-PART 5 — SUMMARY (~1 min)
+PART 5 - SUMMARY (~1 min)
 ✓ Run 1: Baseline - January batch - no retrain (showed predictions.parquet in model_gate)
 ✓ Run 2: Retrain + promotion - April batch - degradation detected (showed predictions.parquet in retrain)
 ✓ Run 3: Failure recovery - August batch - showing Metaflow checkpointing
