@@ -2,7 +2,7 @@
 
 A distributed contrastive-learning training system that manually shards a ResNet18 across device pairs, trains with a SimCLR-like objective on synthetic ImageNet data, captures per-rank profiler traces, and supports batch-size and split-layer tuning through manual analysis or an automated controller sweep.
 
-The implementation uses only raw `torch.distributed` primitives — no `DistributedDataParallel`, `DistributedSampler`, or pipeline helpers.
+The implementation uses only raw `torch.distributed` primitives - no `DistributedDataParallel`, `DistributedSampler`, or pipeline helpers.
 
 Training is orchestrated by the `TrainRunner` class (`train.py`), which encapsulates model construction, replica alignment, the training loop, metric gathering, and persistence. Communication groups are managed by the `CommGroups` class (`src/groups.py`).
 
@@ -47,18 +47,18 @@ The system requires an even number of ranks (minimum 4). Ranks are paired into m
 
 Each training step follows this sequence:
 
-1. **Prepare views** — even ranks create two augmented views per source image (positive pairs)
-2. **Stage-0 forward** — even ranks run the front half of ResNet18
-3. **Send boundary** — even ranks send boundary activations to their paired odd rank
-4. **Receive boundary** — odd ranks receive the boundary tensor and mark it as requiring gradients
-5. **Stage-1 forward** — odd ranks run the back half of ResNet18 + projection head
-6. **Gather embeddings** — odd ranks `all_gather` embeddings across `stage1_group`
-7. **Compute loss** — odd ranks compute the approximate SimCLR contrastive loss
-8. **Backward** — odd ranks run `loss.backward()` and extract the boundary gradient
-9. **Send boundary grad** — odd ranks send the boundary gradient back to the even rank
-10. **Receive boundary grad** — even ranks receive and continue stage-0 backward
-11. **Sync gradients** — `all_reduce` within `stage0_group` and `stage1_group` independently
-12. **Optimizer step** — each rank steps its local optimizer
+1. **Prepare views** - even ranks create two augmented views per source image (positive pairs)
+2. **Stage-0 forward** - even ranks run the front half of ResNet18
+3. **Send boundary** - even ranks send boundary activations to their paired odd rank
+4. **Receive boundary** - odd ranks receive the boundary tensor and mark it as requiring gradients
+5. **Stage-1 forward** - odd ranks run the back half of ResNet18 + projection head
+6. **Gather embeddings** - odd ranks `all_gather` embeddings across `stage1_group`
+7. **Compute loss** - odd ranks compute the approximate SimCLR contrastive loss
+8. **Backward** - odd ranks run `loss.backward()` and extract the boundary gradient
+9. **Send boundary grad** - odd ranks send the boundary gradient back to the even rank
+10. **Receive boundary grad** - even ranks receive and continue stage-0 backward
+11. **Sync gradients** - `all_reduce` within `stage0_group` and `stage1_group` independently
+12. **Optimizer step** - each rank steps its local optimizer
 
 
 ### Loss Calculation
@@ -83,7 +83,7 @@ Computing exact gradients through the `all_gather` would require differentiable 
 ```
 train.py                        # Distributed training entry point (TrainRunner class, launched via torchrun)
 analyze.py                      # Post-hoc trace analysis and metrics reporting
-controller.py                   # Load-balancing controller — automated sweep (Stretch B)
+controller.py                   # Load-balancing controller - automated sweep (Stretch B)
 demo.sh                         # Interactive demo script for the required demo pattern
 architecture.mmd                # Mermaid architecture diagram
 design_doc.md                   # Full project specification
@@ -95,7 +95,7 @@ src/
 ├── logger.py                   # Colored logging singleton
 ├── model.py                    # ResNet18 stage splitting and projection head
 ├── augmentation.py             # SimCLR augmentation pipeline and paired-view creation
-├── groups.py                   # CommGroups class — communication group setup (pair, stage0, stage1)
+├── groups.py                   # CommGroups class - communication group setup (pair, stage0, stage1)
 ├── contrastive_loss.py         # SimCLR contrastive loss with XOR positive-pair targets
 ├── training_step.py            # Single training step orchestration with record_function spans
 ├── profiling.py                # Profiler context manager exporting Chrome traces
@@ -242,8 +242,8 @@ Tests cover training correctness, trace analysis, and controller logic.
 
 The trace analysis reveals these bottleneck categories (vocabulary from Units 2-3):
 
-- **Compute** — `stage0_forward`, `stage1_forward`, `loss_calculation`, `stage0_backward`, `prepare_views`
-- **Communication** — `send_boundary`, `recv_boundary`, `gather_embeddings`, `send_boundary_grad`, `recv_boundary_grad`, `grad_sync_stage0`, `grad_sync_stage1`
-- **Optimizer** — `optimizer_step`
+- **Compute** - `stage0_forward`, `stage1_forward`, `loss_calculation`, `stage0_backward`, `prepare_views`
+- **Communication** - `send_boundary`, `recv_boundary`, `gather_embeddings`, `send_boundary_grad`, `recv_boundary_grad`, `grad_sync_stage0`, `grad_sync_stage1`
+- **Optimizer** - `optimizer_step`
 
 Stage imbalance manifests when one stage's compute time dominates the other, causing the faster stage to idle on boundary transfers. The split-layer choice (`--split-layer`) controls this balance. Communication overhead scales with batch size through larger boundary tensors and embedding gathers.

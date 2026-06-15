@@ -15,5 +15,5 @@
   "overlap": false,
   "run_name": "demo_baseline",
   "global_batch_size": 16,
-  "images_per_sec": 3.28
+  "images_per_sec": 3.44
 }

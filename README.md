@@ -2,7 +2,7 @@
 
 This repository contains course materials for **Course 22971** at the **Open University of Israel**.
 
-## Course Goals
+## Course goals
 
 The course is designed to give students hands-on control of modern technical tools for common ML engineering tasks:
 
@@ -13,7 +13,7 @@ The course is designed to give students hands-on control of modern technical too
 
 The emphasis is practical engineering ability, with supporting theoretical understanding through system architecture concepts.
 
-## Course Content
+## Course content
 
 ### Part 1: [MLOps with MLflow](MLOps/README.md)
 
@@ -22,7 +22,7 @@ The emphasis is practical engineering ability, with supporting theoretical under
 - hyperparameter optimization with Optuna integration
 - deployment and monitoring
 
-### Part 2: [Distributed Computing with Ray](Ray/README.md)
+### Part 2: [Distributed computing with Ray](Ray/README.md)
 
 - async execution, scalability, load management, fault tolerance
 - remote functions and distributed state
@@ -31,14 +31,14 @@ The emphasis is practical engineering ability, with supporting theoretical under
 - distributed model training
 - Ray Data for parallel and sharded data processing
 
-### Part 3: [Distributed Deep Learning with PyTorch Distributed](Distributed_DL/README.md)
+### Part 3: [Distributed deep learning with PyTorch Distributed](Distributed_DL/README.md)
 
 - dev container setup for torchrun
 - collective communication: broadcast, reduce, gather, scatter
 - parallel training challenges: compute, memory, communication
 - performance analysis with PyTorch Profiler and Perfetto or Chrome trace viewing
 - distributed GPU training on managed cloud images
-- five parallelism dimensions: data, tensor, pipeline, context, expert
+- scaling strategies beyond DDP: data, tensor, pipeline, context, and expert parallelism
 
 
 ## Extra resources
@@ -50,4 +50,4 @@ The emphasis is practical engineering ability, with supporting theoretical under
 
 ## Maintenance
 
-Repo-wide maintenance scripts and helper runners live under [repo_maintenance/](repo_maintenance/README.md).
+Repo-wide maintenance tooling lives under [repo_maintenance/](repo_maintenance/README.md), including smoke-test validation, ignored-artifact cleanup, reproducible notebook HTML rendering, helper runners, and the grading Docker environment.
