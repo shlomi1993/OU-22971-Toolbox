@@ -66,6 +66,40 @@ cd "${PROJECT_DIR}"
 OUTPUT_DIR="output"
 BASELINE_RUN="demo_baseline"
 FOLLOWUP_RUN="demo_followup"
+CONDA_ENV="22971-td"
+
+activate_conda_env_if_needed() {
+    if [ "${CONDA_DEFAULT_ENV:-}" = "${CONDA_ENV}" ]; then
+        return
+    fi
+
+    local conda_base=""
+    if command -v conda >/dev/null 2>&1; then
+        conda_base="$(conda info --base 2>/dev/null || true)"
+    elif [ -n "${CONDA_EXE:-}" ]; then
+        conda_base="$(${CONDA_EXE} info --base 2>/dev/null || true)"
+    elif [ -d "/opt/conda" ]; then
+        conda_base="/opt/conda"
+    fi
+
+    if [ -z "${conda_base}" ] || [ ! -f "${conda_base}/etc/profile.d/conda.sh" ]; then
+        return
+    fi
+
+    # shellcheck source=/dev/null
+    source "${conda_base}/etc/profile.d/conda.sh"
+    if conda env list | awk '{print $1}' | grep -qx "${CONDA_ENV}"; then
+        echo -e "${GRAY}Activating conda env: ${CONDA_ENV}${NC}"
+        conda activate "${CONDA_ENV}"
+    fi
+}
+
+activate_conda_env_if_needed
+
+if ! command -v torchrun >/dev/null 2>&1; then
+    echo -e "${RED}ERROR: torchrun not found. Activate conda env ${CONDA_ENV} or install PyTorch with distributed support.${NC}" >&2
+    exit 1
+fi
 
 export KMP_DUPLICATE_LIB_OK=TRUE
 
