@@ -25,25 +25,32 @@ def save_metrics(metrics: list[dict], config: TrainConfig, num_pairs: int, wall_
     out = config.output_path
     out.mkdir(parents=True, exist_ok=True)
 
-    # Write metrics CSV
-    csv_path = out / "metrics.csv"
-    fieldnames = ["step", "loss", "step_time_s", "rank"]
-    with open(csv_path, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(metrics)
-
-    # Write run config JSON
+    # Compute compact run-level summary values.
     global_batch = config.global_batch_size(num_pairs)
     num_profiled_steps = len(set(m["step"] for m in metrics))
     images_per_sec = (num_profiled_steps * global_batch) / wall_time if wall_time > 0 else 0.0
 
-    # Build config dict with additional summary fields
+    # Write metrics CSV, repeating run-level summary fields so the CSV is self-contained.
+    csv_path = out / "metrics.csv"
+    fieldnames = ["step", "rank", "local_batch_size", "global_batch_size", "images_per_sec", "step_time_s", "loss"]
+    enriched_metrics = []
+    for row in metrics:
+        enriched = dict(row)
+        enriched["local_batch_size"] = config.local_batch_size
+        enriched["global_batch_size"] = global_batch
+        enriched["images_per_sec"] = round(images_per_sec, 2)
+        enriched_metrics.append(enriched)
+
+    with open(csv_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(enriched_metrics)
+
+    # Write run config JSON with additional summary fields.
     run_config = asdict(config)
     run_config["global_batch_size"] = global_batch
     run_config["images_per_sec"] = round(images_per_sec, 2)
 
-    # Write config JSON
     json_path = out / "run_config.json"
     with open(json_path, "w") as f:
         json.dump(run_config, f, indent=2)

@@ -1,0 +1,3 @@
+run_name,local_batch_size,global_batch_size,images_per_sec,split_layer,comm_pct,stage0_ms,stage1_loss_ms,stage_imbalance,gather_ms,loss_ms
+ctrl_bs4_layer2,4,8,2.96,layer2,66.05,1402.17,163.69,0.117,2.09,0.39
+ctrl_bs8_layer2,8,16,3.36,layer2,64.17,2672.96,310.55,0.116,2.36,0.7
