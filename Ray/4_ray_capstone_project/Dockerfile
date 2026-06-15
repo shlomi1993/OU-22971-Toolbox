@@ -7,7 +7,7 @@ WORKDIR /workspace
 # Compose builds from the Ray part root, so this copies the part-local env spec.
 COPY environment.yml /tmp/environment.yml
 
-# Strip the editable-install line — the project is installed separately below.
+# Strip the editable-install line - the project is installed separately below.
 RUN sed -i '/-e \./d' /tmp/environment.yml
 
 # Create a full conda environment inside the image.
