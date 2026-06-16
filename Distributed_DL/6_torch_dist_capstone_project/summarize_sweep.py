@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Optional
 
 from analyze import TraceAnalyzer
-from src.common import CONFIG_FILENAME, TRACES_DIR
+from src.common import CONFIG_FILENAME, TRACES_DIR, mean_or_zero
 from src.logger import g_logger
 
 
@@ -39,19 +39,6 @@ class SweepRow:
     stage_imbalance: float
     gather_ms: float
     loss_ms: float
-
-
-def mean(values: list[float]) -> float:
-    """
-    Return the arithmetic mean of a list, or 0.0 for an empty list.
-
-    Args:
-        values (list[float]): Numeric values to average.
-
-    Returns:
-        float: Arithmetic mean, or 0.0 when values is empty.
-    """
-    return sum(values) / len(values) if values else 0.0
 
 
 def summarize_run(run_dir: Path) -> Optional[SweepRow]:
@@ -80,7 +67,7 @@ def summarize_run(run_dir: Path) -> Optional[SweepRow]:
 
     even_ranks = [r for r in analyzer.summaries if r % 2 == 0]
     odd_ranks = [r for r in analyzer.summaries if r % 2 == 1]
-    comm_pct = mean([analyzer.compute_breakdown(s).comm_pct for s in analyzer.summaries.values()])
+    comm_pct = mean_or_zero([analyzer.compute_breakdown(s).comm_pct for s in analyzer.summaries.values()])
     stage0_ms = analyzer.calc_mean_span_ms(even_ranks, {"stage0_forward", "stage0_backward"})
     stage1_loss_ms = analyzer.calc_mean_span_ms(odd_ranks, {"stage1_forward", "loss_calculation"})
     gather_ms = analyzer.calc_mean_span_ms(odd_ranks, {"gather_embeddings"})

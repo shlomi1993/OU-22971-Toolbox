@@ -1,8 +1,11 @@
 """
 Load-balancing controller (Stretch B).
 
-Automates batch-size and split-layer sweeps. Runs training, analyzes traces, picks the next configuration based on
-images/s, communication overhead, and stage imbalance, then reruns and compares.
+Automates batch-size and split-layer sweeps. For each configuration it launches a profiled training run, analyzes the
+exported traces, and records images/s alongside the design-doc heuristics: the stage-0 (even) versus stage-1-plus-loss
+(odd) compute times and the fraction of each step spent in activation transfer, embedding gather, other communication,
+and waiting. The best configuration is chosen primarily by images/s, with communication-heaviness and stage imbalance
+as secondary tie-breakers.
 
 Usage:
     python controller.py
@@ -11,17 +14,17 @@ Usage:
 """
 
 import argparse
-import csv
 import json
 import subprocess
 import sys
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Optional
 
-from src.common import CONFIG_FILENAME, DEFAULT_DATASET_SIZE, DEFAULT_NUM_STEPS, DEFAULT_OUTPUT_DIR, DEFAULT_SEED, SPLIT_CHOICES
-from src.logger import g_logger
 from analyze import TraceAnalyzer
+from src.common import CONFIG_FILENAME, DEFAULT_DATASET_SIZE, DEFAULT_NUM_STEPS, DEFAULT_OUTPUT_DIR, DEFAULT_SEED, SPLIT_CHOICES, mean_or_zero
+from src.logger import g_logger
 
 
 DEFAULT_BATCH_SIZES = [4, 8, 16, 32, 64]
@@ -29,19 +32,33 @@ DEFAULT_SPLIT_LAYERS = ["layer1", "layer2", "layer3"]
 DEFAULT_NPROC = 4
 CONTROLLER_LOG = "controller_log.json"
 
+# Prefer shard boundaries that leave the odd ranks somewhat lighter, since they also own the contrastive-loss path.
+ODD_LIGHTER_TARGET = 0.8
+
+# Trace span groups for the design-doc per-step breakdown.
+ACTIVATION_TRANSFER_SPANS = {"send_boundary", "send_boundary_grad"}
+WAITING_SPANS = {"recv_boundary", "recv_boundary_grad"}
+GATHER_SPANS = {"gather_embeddings"}
+OTHER_COMM_SPANS = {"grad_sync_stage0", "grad_sync_stage1"}
+
 
 @dataclass
 class RunResult:
     """
-    Metrics extracted from a single training run.
+    Throughput and trace-derived metrics for a single sweep run.
     """
+    run_name: str  # Run name (subdirectory under output_dir)
     local_batch_size: int  # Local batch size used in the run
     split_layer: str  # Split layer name
-    images_per_sec: float  # Images/s
+    images_per_sec: float  # Global throughput (primary selection metric)
     comm_pct: float  # Communication percentage of total step time
+    activation_transfer_pct: float  # Boundary activation/gradient send percentage
+    gather_pct: float  # Embedding all_gather percentage
+    other_comm_pct: float  # Gradient-sync percentage
+    waiting_pct: float  # Blocking-receive percentage (waiting proxy)
+    stage0_ms: float  # Mean even-rank stage-0 compute time
+    stage1_loss_ms: float  # Mean odd-rank stage-1 plus loss time
     stage_imbalance: float  # Stage imbalance ratio (odd/even compute time)
-    run_name: str  # Run name (subdirectory under output_dir)
-    mean_loss: float = 0.0  # Mean loss across profiled steps (odd ranks only)
 
 
 class Controller:
@@ -58,7 +75,7 @@ class Controller:
         Args:
             batch_sizes (list[int], optional): Local batch sizes to sweep. Defaults to DEFAULT_BATCH_SIZES.
             split_layers (list[str], optional): Split layer names to sweep. Defaults to DEFAULT_SPLIT_LAYERS.
-            num_steps (int, optional): Training steps per run. Defaults to DEFAULT_N_STEPS.
+            num_steps (int, optional): Training steps per run. Defaults to DEFAULT_NUM_STEPS.
             dataset_size (int, optional): Synthetic dataset size. Defaults to DEFAULT_DATASET_SIZE.
             seed (int, optional): Random seed for reproducibility. Defaults to DEFAULT_SEED.
             output_dir (str, optional): Base output directory for all runs. Defaults to DEFAULT_OUTPUT_DIR.
@@ -105,61 +122,74 @@ class Controller:
         return run_name
 
     @staticmethod
-    def _analyze_traces(run_dir: Path) -> tuple[float, float]:
+    def _span_pct(summary: dict[str, dict], span_names: set[str]) -> float:
         """
-        Compute mean communication percentage and stage imbalance ratio from traces.
+        Compute the percentage of annotated trace time spent in the requested spans.
+
+        Args:
+            summary (dict[str, dict]): Span summary for one rank.
+            span_names (set[str]): Span names to include in the numerator.
+
+        Returns:
+            float: Percentage of annotated time spent in the requested spans.
+        """
+        total_us = sum(stats["total_us"] for stats in summary.values())
+        span_us = sum(stats["total_us"] for name, stats in summary.items() if name in span_names)
+        return 100 * span_us / total_us if total_us > 0 else 0.0
+
+    @classmethod
+    def _analyze_traces(cls, run_dir: Path) -> dict[str, float]:
+        """
+        Compute communication, waiting, and stage-balance metrics from rank traces.
+
+        The returned keys match the trace-derived fields of RunResult, so the result can be spread directly into the
+        dataclass constructor.
 
         Args:
             run_dir (Path): Directory containing trace files for a single run.
 
         Returns:
-            tuple[float, float]: Mean communication percentage and imbalance ratio.
+            dict[str, float]: Trace-derived percentages and stage timing metrics.
         """
         analyzer = TraceAnalyzer(run_dir)
         analyzer.load()
 
-        # Mean comm percentage across all ranks
-        comm_pcts = [analyzer.compute_breakdown(s).comm_pct for s in analyzer.summaries.values()]
-        mean_comm = sum(comm_pcts) / len(comm_pcts) if comm_pcts else 0.0
-
-        # Stage imbalance
-        even_ranks = []
-        odd_ranks = []
-        for rank in analyzer.summaries.keys():
-            if rank % 2 == 0:
-                even_ranks.append(rank)
-            else:
-                odd_ranks.append(rank)
-
-        # Stage imbalance ratio
+        summaries = list(analyzer.summaries.values())
+        even_ranks = [rank for rank in analyzer.summaries if rank % 2 == 0]
+        odd_ranks = [rank for rank in analyzer.summaries if rank % 2 == 1]
         stage0_ms = analyzer.calc_mean_span_ms(even_ranks, {"stage0_forward", "stage0_backward"})
-        stage1_ms = analyzer.calc_mean_span_ms(odd_ranks, {"stage1_forward", "loss_calculation"})
-        imbalance = stage1_ms / stage0_ms if stage0_ms > 0 else 1.0
+        stage1_loss_ms = analyzer.calc_mean_span_ms(odd_ranks, {"stage1_forward", "loss_calculation"})
 
-        return mean_comm, imbalance
+        return {
+            "comm_pct": round(mean_or_zero([analyzer.compute_breakdown(s).comm_pct for s in summaries]), 2),
+            "activation_transfer_pct": round(mean_or_zero([cls._span_pct(s, ACTIVATION_TRANSFER_SPANS) for s in summaries]), 2),
+            "gather_pct": round(mean_or_zero([cls._span_pct(s, GATHER_SPANS) for s in summaries]), 2),
+            "other_comm_pct": round(mean_or_zero([cls._span_pct(s, OTHER_COMM_SPANS) for s in summaries]), 2),
+            "waiting_pct": round(mean_or_zero([cls._span_pct(s, WAITING_SPANS) for s in summaries]), 2),
+            "stage0_ms": round(stage0_ms, 2),
+            "stage1_loss_ms": round(stage1_loss_ms, 2),
+            "stage_imbalance": round(stage1_loss_ms / stage0_ms if stage0_ms > 0 else 1.0, 4),
+        }
 
     @staticmethod
-    def _extract_mean_loss(run_dir: Path) -> float:
+    def _selection_key(result: RunResult) -> tuple[float, float, float]:
         """
-        Extract mean loss from the metrics file (odd-rank rows only).
+        Rank runs primarily by images/s, then by the design-doc secondary heuristics.
+
+        Ties are broken toward lower communication-plus-waiting and a stage imbalance near ODD_LIGHTER_TARGET, which
+        keeps the odd ranks (which also own the contrastive loss) somewhat lighter than the even ranks.
 
         Args:
-            run_dir (Path): Directory containing the metrics file.
+            result (RunResult): Completed run metrics.
 
         Returns:
-            float: Mean training loss across profiled steps, or 0.0 if the metrics file is missing.
+            tuple[float, float, float]: Sort key where higher is better.
         """
-        csv_path = run_dir / "metrics.csv"
-        if not csv_path.exists():
-            return 0.0
+        comm_heavy = result.comm_pct + result.waiting_pct
+        imbalance_distance = abs(result.stage_imbalance - ODD_LIGHTER_TARGET)
+        return (result.images_per_sec, -comm_heavy, -imbalance_distance)
 
-        with open(csv_path) as f:
-            rows = list(csv.DictReader(f))
-
-        losses = [float(r["loss"]) for r in rows if r["loss"]]
-        return sum(losses) / len(losses) if losses else 0.0
-
-    def _extract_result(self, run_name: str) -> RunResult:
+    def _extract_result(self, run_name: str) -> Optional[RunResult]:
         """
         Extract metrics from a completed run's output artifacts.
 
@@ -167,10 +197,9 @@ class Controller:
             run_name (str): Name of the run subdirectory.
 
         Returns:
-            RunResult | None: Extracted metrics, or None if artifacts are missing.
+            Optional[RunResult]: Extracted metrics, or None if the run config is missing.
         """
         run_dir = Path(self.output_dir) / run_name
-
         config_path = run_dir / CONFIG_FILENAME
         if not config_path.exists():
             g_logger.warning(f"No config file in {run_dir}")
@@ -179,17 +208,12 @@ class Controller:
         with open(config_path) as f:
             run_config: dict = json.load(f)
 
-        comm_pct, imbalance = self._analyze_traces(run_dir)
-        mean_loss = self._extract_mean_loss(run_dir)
-
         return RunResult(
+            run_name=run_name,
             local_batch_size=run_config.get("local_batch_size", 0),
             split_layer=run_config.get("split_layer", ""),
             images_per_sec=run_config.get("images_per_sec", 0.0),
-            comm_pct=comm_pct,
-            stage_imbalance=imbalance,
-            run_name=run_name,
-            mean_loss=mean_loss,
+            **self._analyze_traces(run_dir),
         )
 
     def _log_summary(self, best: RunResult) -> None:
@@ -199,16 +223,17 @@ class Controller:
         Args:
             best (RunResult): The best run result to highlight in the table.
         """
-        header = (f"  {'batch_size':>10s} {'split_layer':>12s} {'images/s':>10s} "
-                  f"{'comm%':>7s} {'imbalance':>10s} {'loss':>8s}")
-        separator = f"  {'-' * 10} {'-' * 12} {'-' * 10} {'-' * 7} {'-' * 10} {'-' * 8}"
+        header = (f"  {'batch_size':>10s} {'split_layer':>12s} {'images/s':>10s} {'comm%':>7s} "
+                  f"{'wait%':>7s} {'gather%':>8s} {'imbalance':>10s}")
+        separator = f"  {'-' * 10} {'-' * 12} {'-' * 10} {'-' * 7} {'-' * 7} {'-' * 8} {'-' * 10}"
 
         lines = ["Sweep results", header, separator]
-        for r in sorted(self.results, key=lambda x: -x.images_per_sec):
+        for r in sorted(self.results, key=self._selection_key, reverse=True):
             marker = " <-- best" if r.run_name == best.run_name else ""
             lines.append(
                 f"  {r.local_batch_size:>10d} {r.split_layer:>12s} {r.images_per_sec:>10.1f} "
-                f"{r.comm_pct:>6.1f}% {r.stage_imbalance:>10.2f}x {r.mean_loss:>8.4f}{marker}"
+                f"{r.comm_pct:>6.1f}% {r.waiting_pct:>6.1f}% {r.gather_pct:>7.1f}% "
+                f"{r.stage_imbalance:>10.2f}x{marker}"
             )
         g_logger.info("\n".join(lines))
 
@@ -227,23 +252,10 @@ class Controller:
                 "dataset_size": self.dataset_size,
                 "nproc": self.nproc,
             },
-            "runs": [
-                {
-                    "run_name": r.run_name,
-                    "local_batch_size": r.local_batch_size,
-                    "split_layer": r.split_layer,
-                    "images_per_sec": r.images_per_sec,
-                    "comm_pct": r.comm_pct,
-                    "stage_imbalance": r.stage_imbalance,
-                    "mean_loss": r.mean_loss,
-                }
-                for r in self.results
-            ],
+            "runs": [asdict(r) for r in self.results],
             "best": {
-                "run_name": best.run_name,
-                "local_batch_size": best.local_batch_size,
-                "split_layer": best.split_layer,
-                "images_per_sec": best.images_per_sec,
+                **asdict(best),
+                "selection_rule": "maximize images_per_sec; break ties with lower communication/waiting and stage imbalance near 0.8x",
             },
         }
 
@@ -270,13 +282,17 @@ class Controller:
                     continue
 
                 self.results.append(result)
-                g_logger.info(f"  => {result.images_per_sec:.1f} img/s, comm={result.comm_pct:.1f}%, imbalance={result.stage_imbalance:.2f}x")
+                g_logger.info(
+                    f"  => {result.images_per_sec:.1f} img/s, comm={result.comm_pct:.1f}%, "
+                    f"wait={result.waiting_pct:.1f}%, gather={result.gather_pct:.1f}%, "
+                    f"imbalance={result.stage_imbalance:.2f}x"
+                )
 
         if not self.results:
             g_logger.error("No successful runs. Exiting.")
             sys.exit(1)
 
-        best = max(self.results, key=lambda r: r.images_per_sec)  # Pick the best config by images/s
+        best = max(self.results, key=self._selection_key)
         self._log_summary(best)
         self._save_decision_log(best)
 
