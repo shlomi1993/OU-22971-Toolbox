@@ -69,6 +69,7 @@ class TrainingStep:
         # Per-step state, reset in step()
         self._boundary: Optional[torch.Tensor] = None
         self._loss: Optional[torch.Tensor] = None
+        self._received_step_idx: Optional[int] = None
         self.loss_value: Optional[float] = None
 
         # Overlap state (Stretch A: async forward/backward overlap on even ranks)
@@ -128,6 +129,35 @@ class TrainingStep:
         return list(range(local_start, local_start + self.config.local_batch_size))
 
     @staticmethod
+    def _step_id_tensor(step_idx: int) -> torch.Tensor:
+        """
+        Build the fixed-shape tensor used to tag pair-local activation and gradient messages.
+
+        Args:
+            step_idx (int): Training step index to send through the pair protocol.
+
+        Returns:
+            torch.Tensor: A one-element int64 tensor containing the step index.
+        """
+        return torch.tensor([step_idx], dtype=torch.int64)
+
+    @staticmethod
+    def _recv_step_id(src: int, group: dist.ProcessGroup) -> int:
+        """
+        Receive a step id from the paired rank.
+
+        Args:
+            src (int): Global source rank.
+            group (dist.ProcessGroup): Pair-local process group.
+
+        Returns:
+            int: Received training step index.
+        """
+        step_tensor = torch.empty(1, dtype=torch.int64)
+        dist.recv(step_tensor, src=src, group=group)
+        return int(step_tensor.item())
+
+    @staticmethod
     def _check_replica_alignment(params: list[nn.Parameter], group: dist.ProcessGroup, label: str) -> None:
         """
         Verify that the first parameter is identical across replicas within a stage group.
@@ -167,16 +197,18 @@ class TrainingStep:
         self._assert_finite(boundary, "stage0 output")
         self._boundary = boundary
 
-        # Send boundary to paired odd rank
+        # Send the step id and boundary to the paired odd rank.
         with record_function("send_boundary"):
+            dist.send(self._step_id_tensor(step_idx), dst=self.groups.pair_rank, group=self.groups.pair_group)
             dist.send(boundary.detach().contiguous(), dst=self.groups.pair_rank, group=self.groups.pair_group)
 
     def _odd_forward(self) -> None:
         """
         Odd-rank forward: receive boundary (Step C), run stage 1, gather embeddings, compute loss (Step D).
         """
-        # Step C: Receive boundary activation
+        # Step C: Receive the step id and boundary activation.
         with record_function("recv_boundary"):
+            self._received_step_idx = self._recv_step_id(self.groups.pair_rank, self.groups.pair_group)
             boundary_recv = torch.empty(self._bshape)
             dist.recv(boundary_recv, src=self.groups.pair_rank, group=self.groups.pair_group)
 
@@ -213,16 +245,23 @@ class TrainingStep:
         """
         Odd-rank backward: run loss.backward(), send boundary gradient back to even rank (Step E).
         """
+        assert self._received_step_idx is not None, "Missing received step id for boundary gradient return"
         self._loss.backward()
         self._assert_finite(self._boundary.grad, "boundary gradient")
         with record_function("send_boundary_grad"):
+            dist.send(self._step_id_tensor(self._received_step_idx), dst=self.groups.pair_rank, group=self.groups.pair_group)
             dist.send(self._boundary.grad.contiguous(), dst=self.groups.pair_rank, group=self.groups.pair_group)
 
-    def _even_backward(self) -> None:
+    def _even_backward(self, expected_step_idx: int) -> None:
         """
         Even-rank backward: receive boundary gradient, run stage 0 backward (Step E continued).
+
+        Args:
+            expected_step_idx (int): Step id expected for the returned boundary gradient.
         """
         with record_function("recv_boundary_grad"):
+            returned_step_idx = self._recv_step_id(self.groups.pair_rank, self.groups.pair_group)
+            assert returned_step_idx == expected_step_idx, f"Returned boundary gradient step id {returned_step_idx} != expected {expected_step_idx}"
             boundary_grad = torch.empty(self._bshape)
             dist.recv(boundary_grad, src=self.groups.pair_rank, group=self.groups.pair_group)
 
@@ -271,7 +310,8 @@ class TrainingStep:
 
         Even ranks do backward(t-1) then forward(t) in the same call, keeping at most one in-flight step.
         The first call (no pending backward) is a "prime" that only does forward. After the last step, drain_overlap()
-        processes the final backward. Odd ranks run the standard sequential path unchanged.
+        processes the final backward. Pair-local handoff messages include explicit step ids so the returned boundary
+        gradient is matched with the saved forward state. Odd ranks run the standard sequential path unchanged.
 
         The overlap benefit: while the odd rank processes step t (stage1_forward + loss + backward + send_grad), the
         even rank is free to do backward(t-1) + sync + optim + forward(t) concurrently.
@@ -285,8 +325,9 @@ class TrainingStep:
         if self.groups.is_even:
             # Backward for previous step if one is pending (recv grad first, then backward + sync + optim)
             if self._overlap_pending is not None:
-                self._boundary = self._overlap_state.pop(self._overlap_pending)
-                self._even_backward()
+                pending_step_idx = self._overlap_pending
+                self._boundary = self._overlap_state.pop(pending_step_idx)
+                self._even_backward(pending_step_idx)
                 self._sync_and_step()
 
             # Forward for current step and hand off boundary to paired odd rank
@@ -314,8 +355,9 @@ class TrainingStep:
         if not self.config.overlap or not self.groups.is_even or self._overlap_pending is None:
             return None
 
-        self._boundary = self._overlap_state.pop(self._overlap_pending)
-        self._even_backward()
+        pending_step_idx = self._overlap_pending
+        self._boundary = self._overlap_state.pop(pending_step_idx)
+        self._even_backward(pending_step_idx)
         self._sync_and_step()
         self._overlap_pending = None
         return self.loss_value
@@ -335,6 +377,7 @@ class TrainingStep:
         """
         self._boundary = None
         self._loss = None
+        self._received_step_idx = None
         self.loss_value = None
 
         if self.config.overlap:
@@ -342,7 +385,7 @@ class TrainingStep:
 
         if self.groups.is_even:
             self._even_forward(step_idx)
-            self._even_backward()
+            self._even_backward(step_idx)
         else:
             self._odd_forward()
             self._odd_backward()
