@@ -20,7 +20,11 @@ Training is orchestrated by the `TrainRunner` class (`train.py`), which encapsul
 
 ## Architecture Overview
 
-Two Mermaid diagrams accompany this section: [`architecture.mmd`](architecture.mmd) shows the module/component view, and [`workflow.mmd`](workflow.mmd) shows the end-to-end project flow (setup → distributed training step → trace capture → analysis → manual tuning and rerun).
+This section describes how the system **behaves at runtime** - the rank layout, communication groups, the training step, and the loss. The companion [`workflow.mmd`](workflow.mmd) diagram visualizes this end-to-end flow through setup → distributed training step → trace capture → analysis → manual tuning and rerun.
+
+![End-to-end project workflow rendered from workflow.mmd](workflow.png)
+<!-- Placeholder: replace workflow.png with the image rendered from workflow.mmd -->
+
 
 
 ### Rank Layout
@@ -82,14 +86,16 @@ Computing exact gradients through the `all_gather` would require differentiable 
 
 ## Project Structure
 
+This section describes how the **code is organized on disk**. The companion [`architecture.mmd`](architecture.mmd) diagram shows these same modules and how they depend on each other.
+
 ```
 train.py                        # Distributed training entry point (TrainRunner class, launched via torchrun)
 analyze.py                      # Post-hoc trace analysis and metrics reporting
 summarize_sweep.py              # Writes manual sweep summary table and diagnosis artifacts
 controller.py                   # Load-balancing controller - automated sweep (Stretch B)
 demo.sh                         # Interactive demo script for the required demo pattern
-architecture.mmd                # Mermaid project architecture diagram
-workflow.mmd                    # Mermaid project workflow diagram (end-to-end project flow)
+architecture.mmd                # Project architecture diagram
+workflow.mmd                    # Project end-to-end workflow diagram
 design_doc.md                   # Full project specification
 pytest.ini                      # Pytest configuration
 src/
