@@ -120,6 +120,8 @@ tests/
 
 **Create and activate the environment:**
 
+The required environment file is `Distributed_DL/6_torch_dist_capstone_project/environment.yml`. Run the commands below from the `6_torch_dist_capstone_project` directory so the correct file is picked up. It creates the `22971-td` conda environment.
+
 ```bash
 conda env create -f environment.yml
 conda activate 22971-td
