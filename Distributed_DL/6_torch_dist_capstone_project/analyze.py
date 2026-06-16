@@ -1,9 +1,5 @@
 """
 Post-hoc analysis of profiler traces and metrics from a training run.
-
-Usage:
-    python analyze.py output/smoke
-    python analyze.py output/baseline
 """
 
 import argparse
@@ -157,14 +153,12 @@ class TraceAnalyzer:
         Log per-rank span summary tables.
         """
         for rank, summary in self.summaries.items():
-            header = f"Rank {rank} span summary"
             lines = [
-                header,
+                f"Rank {rank} span summary",
                 f"  {'span':<25s} {'count':>5s} {'total_ms':>10s} {'mean_ms':>10s}"
             ]
             for name, stats in summary.items():
-                lines.append(f"  {name:<25s} {stats['count']:>5d} "
-                             f"{stats['total_us'] / 1000:>10.1f} {stats['mean_us'] / 1000:>10.1f}")
+                lines.append(f"  {name:<25s} {stats['count']:>5d} {stats['total_us'] / 1000:>10.1f} {stats['mean_us'] / 1000:>10.1f}")
             g_logger.info("\n" + "\n".join(lines))
 
     @staticmethod

@@ -1,0 +1,118 @@
+%% Distributed DL Capstone - SimCLR training with manual ResNet18 sharding
+%% End-to-end project workflow (Stretch A "overlap" and Stretch B "controller" excluded)
+flowchart TD
+
+    %% ============ 1. LAUNCH & SETUP ============
+    subgraph SETUP["1 - Launch and Setup"]
+        direction TB
+        TORCHRUN["torchrun --standalone --nproc_per_node=N<br/>(N even, >= 4)"]
+        SPAWN["Spawn N ranks<br/>and init torch.distributed"]
+        GROUPS["Build communication groups<br/>world_group<br/>pair_group(k) = (2k, 2k+1)<br/>stage0_group = even ranks<br/>stage1_group = odd ranks"]
+        SPLIT["Build ResNet18 and split into 2 stages<br/>stage 0: conv1..layer2<br/>stage 1: layer3..avgpool + projection head"]
+        ALIGN["Align replicas (one-time)<br/>broadcast stage-0 weights in stage0_group<br/>broadcast stage-1 weights in stage1_group"]
+        BUILD["Per rank: FakeData dataset, SGD optimizer,<br/>SimCLR augmentation transform"]
+        TORCHRUN --> SPAWN --> GROUPS --> SPLIT --> ALIGN --> BUILD
+    end
+
+    %% ============ 2. TRAINING LOOP ============
+    subgraph LOOP["2 - Distributed Training Loop (per step, repeated num_steps)"]
+        direction TB
+        WARMUP["Warmup steps run outside profiler"]
+
+        subgraph EVEN["EVEN ranks - Stage 0 owner"]
+            direction TB
+            A_VIEWS["A. prepare_views<br/>load source batch,<br/>make 2 augmented views (positive pair)"]
+            B_S0FWD["B. stage0_forward<br/>run front half of ResNet18"]
+            B_SEND["send_boundary<br/>boundary activation + step id"]
+            E_RECVG["recv_boundary_grad<br/>receive boundary gradient + verify step id"]
+            E_S0BWD["stage0_backward<br/>boundary.backward(grad)"]
+            F_SYNC0["F. grad_sync_stage0<br/>all_reduce in stage0_group"]
+        end
+
+        subgraph ODD["ODD ranks - Stage 1 + loss owner"]
+            direction TB
+            C_RECV["C. recv_boundary<br/>receive activation,<br/>set requires_grad = True"]
+            C_S1FWD["stage1_forward<br/>run back half + projection head"]
+            C_GATHER["gather_embeddings<br/>all_gather across stage1_group"]
+            D_LOSS["D. loss_calculation<br/>approx SimCLR contrastive loss<br/>(local embeds live, remote detached)"]
+            E_S1BWD["E. loss.backward()"]
+            E_SENDG["send_boundary_grad<br/>boundary gradient + step id"]
+            F_SYNC1["F. grad_sync_stage1<br/>all_reduce in stage1_group"]
+        end
+
+        OPT["G. optimizer_step<br/>SGD step + zero_grad on every rank"]
+
+        WARMUP --> A_VIEWS
+        A_VIEWS --> B_S0FWD --> B_SEND
+        B_SEND -->|"pair_group point-to-point"| C_RECV
+        C_RECV --> C_S1FWD --> C_GATHER --> D_LOSS --> E_S1BWD
+        E_S1BWD --> E_SENDG
+        E_SENDG -->|"pair_group point-to-point"| E_RECVG
+        E_RECVG --> E_S0BWD --> F_SYNC0
+        E_S1BWD --> F_SYNC1
+        F_SYNC0 --> OPT
+        F_SYNC1 --> OPT
+    end
+
+    %% ============ 3. CAPTURE ARTIFACTS ============
+    subgraph CAPTURE["3 - Capture Artifacts"]
+        direction TB
+        TRACES["traces/rank{N}.json<br/>per-rank Chrome profiler trace"]
+        CSV["metrics.csv<br/>per-step, per-rank loss + timing"]
+        CONFIG["run_config.json<br/>config + images/s throughput"]
+    end
+
+    %% ============ 4. ANALYZE ============
+    subgraph ANALYSIS["4 - Manual Analysis (analyze.py)"]
+        direction TB
+        ANALYZE["TraceAnalyzer<br/>per-rank span tables<br/>compute / comm / optimizer breakdown<br/>stage imbalance ratio"]
+        DIAGNOSE["Diagnose bottleneck<br/>compute vs communication vs waiting<br/>stage0 vs stage1+loss"]
+        ANALYZE --> DIAGNOSE
+    end
+
+    %% ============ 5. TUNE & RERUN ============
+    subgraph TUNE["5 - Manual Tuning and Comparison"]
+        direction TB
+        DECIDE["Choose next local_batch_size<br/>(maximize global images/s)"]
+        RERUN["Follow-up run with new batch size"]
+        COMPARE["Compare baseline vs follow-up<br/>traces and images/s"]
+        DECIDE --> RERUN --> COMPARE
+    end
+
+    %% ============ 6. MANUAL SWEEP (optional) ============
+    subgraph SWEEP["6 - Manual Batch-Size Sweep (optional)"]
+        direction TB
+        SWEEPSH["scripts/sweep.sh<br/>batch sizes 4..128, analyze each"]
+        SUMMARIZE["summarize_sweep.py"]
+        SWEEPOUT["manual_sweep_summary.csv<br/>diagnosis_summary.md"]
+        SWEEPSH --> SUMMARIZE --> SWEEPOUT
+    end
+
+    %% ============ TOP-LEVEL FLOW ============
+    SETUP --> LOOP
+    OPT -.->|"next step"| WARMUP
+    LOOP --> CAPTURE
+    CAPTURE --> ANALYSIS
+    ANALYSIS --> TUNE
+    RERUN -.->|"re-launch training"| SETUP
+    DIAGNOSE -.-> SWEEPSH
+    SWEEPSH -.->|"re-launch training per batch size"| SETUP
+
+    %% ============ STYLING ============
+    classDef setup fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef even fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    classDef odd fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#000
+    classDef opt fill:#ede7f6,stroke:#5e35b1,stroke-width:2px,color:#000
+    classDef artifact fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef analysis fill:#e8eaf6,stroke:#283593,stroke-width:2px,color:#000
+    classDef tune fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
+    classDef sweep fill:#fffde7,stroke:#f9a825,stroke-width:2px,color:#000
+
+    class TORCHRUN,SPAWN,GROUPS,SPLIT,ALIGN,BUILD setup
+    class WARMUP,A_VIEWS,B_S0FWD,B_SEND,E_RECVG,E_S0BWD,F_SYNC0 even
+    class C_RECV,C_S1FWD,C_GATHER,D_LOSS,E_S1BWD,E_SENDG,F_SYNC1 odd
+    class OPT opt
+    class TRACES,CSV,CONFIG artifact
+    class ANALYZE,DIAGNOSE analysis
+    class DECIDE,RERUN,COMPARE tune
+    class SWEEPSH,SUMMARIZE,SWEEPOUT sweep

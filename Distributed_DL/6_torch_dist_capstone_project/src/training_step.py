@@ -1,6 +1,7 @@
 """
 Single distributed training step for the two-stage sharded SimCLR system.
 """
+
 import torch
 import torch.distributed as dist
 import torch.nn as nn

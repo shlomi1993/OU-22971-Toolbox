@@ -6,11 +6,6 @@ exported traces, and records images/s alongside the design-doc heuristics: the s
 (odd) compute times and the fraction of each step spent in activation transfer, embedding gather, other communication,
 and waiting. The best configuration is chosen primarily by images/s, with communication-heaviness and stage imbalance
 as secondary tie-breakers.
-
-Usage:
-    python controller.py
-    python controller.py --num-steps 10 --dataset-size 2048
-    python controller.py --batch-sizes 4 8 16 32 --split-layers layer1 layer2
 """
 
 import argparse

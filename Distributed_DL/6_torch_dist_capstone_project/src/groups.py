@@ -46,10 +46,10 @@ class CommGroups:
             if k == self.pair_id:
                 self.pair_group = group
 
-        even_ranks = list(range(0, self.world_size, 2))
-        odd_ranks = list(range(1, self.world_size, 2))
-        self.stage0_group = dist.new_group(ranks=even_ranks)
-        self.stage1_group = dist.new_group(ranks=odd_ranks)
+        self.even_ranks = list(range(0, self.world_size, 2))
+        self.odd_ranks = list(range(1, self.world_size, 2))
+        self.stage0_group = dist.new_group(ranks=self.even_ranks)
+        self.stage1_group = dist.new_group(ranks=self.odd_ranks)
 
     def log_structure(self) -> None:
         """
@@ -58,19 +58,12 @@ class CommGroups:
         if self.rank != 0:
             return
 
-        even_ranks = list(range(0, self.world_size, 2))
-        odd_ranks = list(range(1, self.world_size, 2))
-
-        lines = [
-            "",
-            "=" * 50,
-            "Communication Structure",
-            "=" * 50,
-            f"  world_group  : ranks {list(range(self.world_size))}",
-        ]
+        sep = "=" * 50
+        lines = ["", sep, "Communication Structure", sep, f"  world_group  : ranks {list(range(self.world_size))}"]
         for k in range(self.num_pairs):
             lines.append(f"  pair_group({k}): ranks [{2 * k}, {2 * k + 1}]")
-        lines.append(f"  stage0_group : ranks {even_ranks}")
-        lines.append(f"  stage1_group : ranks {odd_ranks}")
-        lines.append("=" * 50)
+        lines.append(f"  stage0_group : ranks {self.even_ranks}")
+        lines.append(f"  stage1_group : ranks {self.odd_ranks}")
+        lines.append(sep)
+
         g_logger.info("\n".join(lines))

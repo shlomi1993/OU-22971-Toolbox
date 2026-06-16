@@ -27,7 +27,6 @@ class SweepRow:
     percentages are stored as 0-100 values, and stage_imbalance is the odd-stage compute time divided by the even-stage
     compute time.
     """
-
     run_name: str
     local_batch_size: int
     global_batch_size: int
@@ -60,7 +59,7 @@ def summarize_run(run_dir: Path) -> Optional[SweepRow]:
         return None
 
     with open(run_dir / CONFIG_FILENAME) as f:
-        config = json.load(f)
+        config: dict = json.load(f)
 
     analyzer = TraceAnalyzer(run_dir)
     analyzer.load()

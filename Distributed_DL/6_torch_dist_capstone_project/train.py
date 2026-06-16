@@ -1,9 +1,5 @@
 """
 Entry point for distributed SimCLR training with manual ResNet18 sharding.
-
-Launched with torchrun:
-    torchrun --nproc_per_node=4 train.py --local-batch-size 32 --num-steps 10
-    torchrun --nproc_per_node=4 train.py --profile --run-name baseline
 """
 
 import math
@@ -42,8 +38,8 @@ class TrainRunner:
             config (TrainConfig): Training configuration.
             groups (CommGroups): Communication groups and rank metadata.
         """
-        self.config = config
-        self.groups = groups
+        self._config = config
+        self._groups = groups
         self._global_batch = config.global_batch_size(groups.num_pairs)
 
         # Set seed for reproducibility
@@ -67,7 +63,7 @@ class TrainRunner:
         """
         One-time parameter broadcast so all replicas start with identical weights.
         """
-        stage, group = ((self.stage0, self.groups.stage0_group) if self.groups.is_even else (self.stage1, self.groups.stage1_group))
+        stage, group = ((self.stage0, self._groups.stage0_group) if self._groups.is_even else (self.stage1, self._groups.stage1_group))
         for p in stage.parameters():
             dist.broadcast(p.data, src=dist.get_global_rank(group, 0), group=group)
 
@@ -90,7 +86,7 @@ class TrainRunner:
             dt = time.perf_counter() - t0
             times.append(dt)
             losses.append(loss_value if loss_value is not None else float("nan"))
-            if self.groups.rank == 1 and loss_value is not None:
+            if self._groups.rank == 1 and loss_value is not None:
                 g_logger.info(f"step {step_idx:3d} | loss {loss_value:.4f} | time {dt:.3f}s")
         return times, losses
 
@@ -110,9 +106,9 @@ class TrainRunner:
         loss_tensor = torch.tensor(losses, dtype=torch.float64)
 
         # Gather onto rank 0
-        if self.groups.rank == 0:
-            all_times = [torch.zeros_like(time_tensor) for _ in range(self.groups.world_size)]
-            all_losses = [torch.zeros_like(loss_tensor) for _ in range(self.groups.world_size)]
+        if self._groups.rank == 0:
+            all_times = [torch.zeros_like(time_tensor) for _ in range(self._groups.world_size)]
+            all_losses = [torch.zeros_like(loss_tensor) for _ in range(self._groups.world_size)]
         else:
             all_times = None
             all_losses = None
@@ -122,19 +118,19 @@ class TrainRunner:
         dist.gather(loss_tensor, gather_list=all_losses, dst=0)
 
         # Return empty on non-zero ranks
-        if self.groups.rank != 0:
+        if self._groups.rank != 0:
             return []
 
         # Build and return metrics table
         metrics: list[dict] = []
-        for r in range(self.groups.world_size):
-            for s in range(num_steps):
-                loss_val = all_losses[r][s].item()
+        for rank in range(self._groups.world_size):
+            for step in range(num_steps):
+                loss_val = all_losses[rank][step].item()
                 metrics.append({
-                    "step": s,
-                    "rank": r,
+                    "step": step,
+                    "rank": rank,
                     "loss": None if math.isnan(loss_val) else round(loss_val, 6),
-                    "step_time_s": round(all_times[r][s].item(), 6),
+                    "step_time_s": round(all_times[rank][step].item(), 6),
                 })
         return metrics
 
@@ -142,32 +138,32 @@ class TrainRunner:
         """
         Execute the full training run: warmup, profiled training loop, metrics gathering, and persistence.
         """
-        if self.groups.rank == 0:
-            g_logger.info(f"Run training for {self.config.num_steps} steps...")
+        if self._groups.rank == 0:
+            g_logger.info(f"Run training for {self._config.num_steps} steps...")
 
         # Warmup steps outside profiler
-        warmup = min(DEFAULT_PROFILER_WARMUP_STEPS, self.config.num_steps) if self.config.profile else 0
+        warmup = min(DEFAULT_PROFILER_WARMUP_STEPS, self._config.num_steps) if self._config.profile else 0
         if warmup > 0:
             self._run_steps(0, warmup)
 
         # Profiled training loop
         t_start = time.perf_counter()
-        with profiler_context(self.config, self.groups.rank):
-            times, losses = self._run_steps(warmup, self.config.num_steps)
-            if self.config.overlap:
+        with profiler_context(self._config, self._groups.rank):
+            times, losses = self._run_steps(warmup, self._config.num_steps)
+            if self._config.overlap:
                 self._stepper.drain_overlap()
         t_total = time.perf_counter() - t_start
 
         # Gather and save metrics
         metrics = self._gather_metrics(times, losses)
-        if self.groups.rank == 0:
-            save_metrics(metrics, self.config, self.groups.num_pairs, t_total)
+        if self._groups.rank == 0:
+            save_metrics(metrics, self._config, self._groups.num_pairs, t_total)
 
         # Summary
-        if self.groups.rank == 0:
-            profiled_steps = self.config.num_steps - warmup
+        if self._groups.rank == 0:
+            profiled_steps = self._config.num_steps - warmup
             images_per_sec = (profiled_steps * self._global_batch) / t_total
-            g_logger.info(f"Done. {self.config.num_steps} steps in {t_total:.2f}s | {images_per_sec:.1f} images/s")
+            g_logger.info(f"Done. {self._config.num_steps} steps in {t_total:.2f}s | {images_per_sec:.1f} images/s")
 
 
 def main() -> None:

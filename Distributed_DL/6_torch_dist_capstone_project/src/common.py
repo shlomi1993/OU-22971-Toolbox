@@ -45,7 +45,6 @@ class Backend(str, Enum):
     """
     Distributed communication backend.
     """
-
     GLOO = "gloo"
     NCCL = "nccl"
 
@@ -55,7 +54,6 @@ class TrainConfig:
     """
     Runtime configuration for distributed SimCLR training.
     """
-
     dataset_size: int = DEFAULT_DATASET_SIZE
     seed: int = DEFAULT_SEED
     local_batch_size: int = DEFAULT_LOCAL_BATCH_SIZE
