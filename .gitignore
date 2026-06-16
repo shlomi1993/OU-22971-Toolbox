@@ -23,6 +23,9 @@ build/
 # Jupyter
 **/.ipynb_checkpoints/
 
+# Pytest
+**/.pytest_cache/
+
 # Conda / venv
 .conda/
 .venv/
