@@ -1,5 +1,7 @@
 # Distributed DL Capstone - SimCLR Training with Manual ResNet Sharding
 
+<img width="1672" height="941" alt="Distributed DL Capstone" src="https://github.com/user-attachments/assets/0f798911-3f65-4e18-b1a7-89b3bf739789" />
+
 A distributed contrastive-learning training system that manually shards a ResNet18 across device pairs, trains with a SimCLR-like objective on synthetic ImageNet data, captures per-rank profiler traces, and supports batch-size and split-layer tuning through manual analysis or an automated controller sweep.
 
 The implementation uses only raw `torch.distributed` primitives - no `DistributedDataParallel`, `DistributedSampler`, or pipeline helpers.
