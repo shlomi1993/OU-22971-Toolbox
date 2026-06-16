@@ -286,7 +286,7 @@ log_and_run torchrun --standalone --nproc_per_node="${NPROC}" \
     --profile \
     --run-name "${BASELINE_RUN}"
 
-echo -e "${GRAY}  Step 1 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
+echo -e "${GRAY}Step 1 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 log_perfetto_links "Baseline" "${BASELINE_RUN}"
 wait_for_user "Trace analysis"
 
@@ -297,7 +297,7 @@ STEP_START=$SECONDS
 
 log_and_run python analyze.py --run-dir "${OUTPUT_DIR}/${BASELINE_RUN}"
 
-echo -e "${GRAY}  Step 2 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
+echo -e "${GRAY}Step 2 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 wait_for_user "Follow-up run"
 
 # Step 3: Follow-up profiled run
@@ -313,7 +313,7 @@ log_and_run torchrun --standalone --nproc_per_node="${NPROC}" \
     --profile \
     --run-name "${FOLLOWUP_RUN}"
 
-echo -e "${GRAY}  Step 3 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
+echo -e "${GRAY}Step 3 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 log_perfetto_links "Follow-up" "${FOLLOWUP_RUN}"
 wait_for_user "Follow-up analysis"
 
@@ -324,7 +324,7 @@ STEP_START=$SECONDS
 
 log_and_run python analyze.py --run-dir "${OUTPUT_DIR}/${FOLLOWUP_RUN}"
 
-echo -e "${GRAY}  Step 4 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
+echo -e "${GRAY}Step 4 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
 wait_for_user "Comparison"
 
 # Step 5: Side-by-side comparison
