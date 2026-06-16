@@ -101,3 +101,16 @@ class TrainConfig:
             int: Total images per training step.
         """
         return self.local_batch_size * num_pairs
+
+
+def mean_or_zero(values: list[float]) -> float:
+    """
+    Arithmetic mean of a list, or 0.0 for an empty list.
+
+    Args:
+        values (list[float]): Numeric values to average.
+
+    Returns:
+        float: Arithmetic mean, or 0.0 when values is empty.
+    """
+    return sum(values) / len(values) if values else 0.0
