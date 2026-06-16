@@ -22,10 +22,7 @@ Training is orchestrated by the `TrainRunner` class (`train.py`), which encapsul
 
 This section describes how the system **behaves at runtime** - the rank layout, communication groups, the training step, and the loss. The companion [`workflow.mmd`](workflow.mmd) diagram visualizes this end-to-end flow through setup → distributed training step → trace capture → analysis → manual tuning and rerun.
 
-![End-to-end project workflow rendered from workflow.mmd](workflow.png)
-<!-- Placeholder: replace workflow.png with the image rendered from workflow.mmd -->
-
-
+<img width="1672" height="941" alt="Project end-to-end runtime workflow" src="https://github.com/user-attachments/assets/1451f781-e1ca-4aa6-a4f5-0e403248eb4e" />
 
 ### Rank Layout
 
