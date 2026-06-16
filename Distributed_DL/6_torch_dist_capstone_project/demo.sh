@@ -1,23 +1,4 @@
 #!/usr/bin/env bash
-# demo.sh - Execute the full demo flow: baseline run, analysis, tuning decision, follow-up run, comparison.
-#
-# Matches the required demo pattern from the design doc (steps 2-7):
-#   1. Baseline profiled run
-#   2. Trace analysis
-#   3. Tuning decision (pick a better batch size)
-#   4. Follow-up run with updated config
-#   5. Comparison of old vs new
-#
-# Usage:
-#   ./demo.sh [--no-wait] [--nproc N] [--baseline-bs N] [--followup-bs N] [--num-steps N]
-#
-# Options:
-#   --no-wait         Skip pauses between steps (run continuously)
-#   --nproc N         Number of processes (default: 4)
-#   --baseline-bs N   Baseline local batch size (default: 8)
-#   --followup-bs N   Follow-up local batch size (default: 32)
-#   --num-steps N     Training steps per run (default: 10)
-
 set -euo pipefail
 
 TOTAL_START=$SECONDS
@@ -46,15 +27,45 @@ FOLLOWUP_BS=32
 NUM_STEPS=10
 DATASET_SIZE=2048
 
+print_usage() {
+    cat <<'USAGE'
+Usage:
+  ./demo.sh [OPTIONS]
+
+Run the full Distributed SimCLR demo flow: baseline profiled run, trace analysis, follow-up profiled run, follow-up
+analysis, and throughput comparison.
+
+Options:
+  -h, --help          Show this help message and exit
+  --no-wait          Skip pauses between demo steps
+  --nproc N          Number of torchrun processes (default: 4)
+  --baseline-bs N    Baseline local batch size (default: 8)
+  --followup-bs N    Follow-up local batch size (default: 32)
+  --num-steps N      Training steps per run (default: 10)
+
+Environment:
+  PERFETTO_TRACE_PORT  Local HTTP port used to serve trace JSONs (default: 9001)
+  PERFETTO_TRACE_BIND  Address the trace server binds to (default: 0.0.0.0)
+  PERFETTO_TRACE_HOST  Hostname printed in browser URLs (default: 127.0.0.1)
+  PERFETTO_UI_URL      Perfetto UI base URL (default: https://ui.perfetto.dev)
+
+Examples:
+  ./demo.sh
+  ./demo.sh --no-wait --nproc 2 --num-steps 5
+  PERFETTO_TRACE_PORT=9010 ./demo.sh
+USAGE
+}
+
 # Parse CLI arguments
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --no-wait)      NO_WAIT=true; shift ;;
-        --nproc)        NPROC="$2"; shift 2 ;;
-        --baseline-bs)  BASELINE_BS="$2"; shift 2 ;;
-        --followup-bs)  FOLLOWUP_BS="$2"; shift 2 ;;
-        --num-steps)    NUM_STEPS="$2"; shift 2 ;;
-        *) echo "Unknown option: $1" >&2; exit 1 ;;
+        -h|--help)     print_usage; exit 0 ;;
+        --no-wait)     NO_WAIT=true; shift ;;
+        --nproc)       NPROC="$2"; shift 2 ;;
+        --baseline-bs) BASELINE_BS="$2"; shift 2 ;;
+        --followup-bs) FOLLOWUP_BS="$2"; shift 2 ;;
+        --num-steps)   NUM_STEPS="$2"; shift 2 ;;
+        *) echo "Unknown option: $1" >&2; echo "Run ./demo.sh --help for usage." >&2; exit 1 ;;
     esac
 done
 
@@ -67,6 +78,11 @@ OUTPUT_DIR="output"
 BASELINE_RUN="demo_baseline"
 FOLLOWUP_RUN="demo_followup"
 CONDA_ENV="22971-td"
+PERFETTO_TRACE_BIND="${PERFETTO_TRACE_BIND:-0.0.0.0}"
+PERFETTO_TRACE_HOST="${PERFETTO_TRACE_HOST:-127.0.0.1}"
+PERFETTO_TRACE_PORT="${PERFETTO_TRACE_PORT:-9001}"
+PERFETTO_UI_URL="${PERFETTO_UI_URL:-https://ui.perfetto.dev}"
+PERFETTO_SERVER_PID=""
 
 activate_conda_env_if_needed() {
     if [ "${CONDA_DEFAULT_ENV:-}" = "${CONDA_ENV}" ]; then
@@ -109,6 +125,127 @@ format_duration() {
     printf '%dm %02ds' $((secs / 60)) $((secs % 60))
 }
 
+cleanup_perfetto_server() {
+    if [ -n "${PERFETTO_SERVER_PID}" ] && kill -0 "${PERFETTO_SERVER_PID}" >/dev/null 2>&1; then
+        kill "${PERFETTO_SERVER_PID}" >/dev/null 2>&1 || true
+    fi
+}
+trap cleanup_perfetto_server EXIT
+
+choose_perfetto_port() {
+    python - "${PERFETTO_TRACE_BIND}" "${PERFETTO_TRACE_PORT}" <<'PY_PORT'
+import socket
+import sys
+
+host = sys.argv[1]
+preferred = int(sys.argv[2])
+
+for port in [preferred, 0]:
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.bind((host, port))
+            print(sock.getsockname()[1])
+            break
+    except OSError:
+        if port == 0:
+            raise
+PY_PORT
+}
+
+start_perfetto_trace_server() {
+    if [ -n "${PERFETTO_SERVER_PID}" ] && kill -0 "${PERFETTO_SERVER_PID}" >/dev/null 2>&1; then
+        return
+    fi
+
+    PERFETTO_TRACE_PORT="$(choose_perfetto_port)"
+    python - "${PROJECT_DIR}" "${PERFETTO_TRACE_BIND}" "${PERFETTO_TRACE_PORT}" <<'PY_SERVER' >/dev/null 2>&1 &
+from functools import partial
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+import sys
+
+directory, host, port = sys.argv[1], sys.argv[2], int(sys.argv[3])
+
+class TraceHandler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Range, Content-Type")
+        self.send_header("Access-Control-Allow-Private-Network", "true")
+        super().end_headers()
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.end_headers()
+
+    def log_message(self, *_args):
+        pass
+
+handler = partial(TraceHandler, directory=directory)
+ThreadingHTTPServer((host, port), handler).serve_forever()
+PY_SERVER
+    PERFETTO_SERVER_PID=$!
+    sleep 0.2
+
+    if ! kill -0 "${PERFETTO_SERVER_PID}" >/dev/null 2>&1; then
+        echo -e "${RED}ERROR: failed to start local Perfetto trace server on ${PERFETTO_TRACE_BIND}:${PERFETTO_TRACE_PORT}${NC}" >&2
+        exit 1
+    fi
+}
+
+primary_trace_for_run() {
+    local run_dir="${OUTPUT_DIR}/$1"
+    local rank_one_trace="${run_dir}/traces/rank1.json"
+    local rank_zero_trace="${run_dir}/traces/rank0.json"
+
+    if [ -f "${rank_one_trace}" ]; then
+        echo "${rank_one_trace}"
+    elif [ -f "${rank_zero_trace}" ]; then
+        echo "${rank_zero_trace}"
+    else
+        echo ""
+    fi
+}
+
+trace_url_for_trace() {
+    local trace_path="$1"
+    python - "${PERFETTO_TRACE_HOST}" "${PERFETTO_TRACE_PORT}" "${trace_path}" <<'PY_TRACE_URL'
+from urllib.parse import quote
+import sys
+
+host, port, trace_path = sys.argv[1:4]
+print(f"http://{host}:{port}/{quote(trace_path)}")
+PY_TRACE_URL
+}
+
+perfetto_link_for_trace() {
+    local trace_path="$1"
+    python - "${PERFETTO_UI_URL}" "$(trace_url_for_trace "${trace_path}")" <<'PY_LINK'
+from urllib.parse import quote
+import sys
+
+ui_url, trace_url = sys.argv[1:3]
+print(f"{ui_url}/#!/viewer?url={quote(trace_url, safe=':/?=&')}")
+PY_LINK
+}
+
+log_perfetto_links() {
+    local label="$1"
+    local run_name="$2"
+    local run_dir="${OUTPUT_DIR}/${run_name}"
+    local primary_trace
+    primary_trace="$(primary_trace_for_run "${run_name}")"
+
+    if [ -z "${primary_trace}" ]; then
+        echo -e "${YELLOW}Perfetto link unavailable: no trace JSON found under ${run_dir}/traces${NC}"
+        return
+    fi
+
+    start_perfetto_trace_server
+
+    echo ""
+    echo -e "${YELLOW}${label} Perfetto trace:${NC} $(perfetto_link_for_trace "${primary_trace}")"
+}
+
 log_and_run() {
     echo -e "${GREEN}$*${NC}"
     "$@"
@@ -118,7 +255,7 @@ wait_for_user() {
     if [ "$NO_WAIT" = false ]; then
         local next_step="$1"
         echo ""
-        echo -e "${CYAN}Press Enter to continue → ${next_step}${NC}"
+        echo -e "${CYAN}Press Enter to continue to the next step: ${next_step}${NC}"
         read -r
     fi
 }
@@ -133,6 +270,8 @@ echo "baseline bs   : ${BASELINE_BS}"
 echo "follow-up bs  : ${FOLLOWUP_BS}"
 echo "steps/run     : ${NUM_STEPS}"
 echo "dataset size  : ${DATASET_SIZE}"
+echo "perfetto ui   : ${PERFETTO_UI_URL}"
+echo "trace server : ${PERFETTO_TRACE_BIND}:${PERFETTO_TRACE_PORT} -> browser ${PERFETTO_TRACE_HOST}:${PERFETTO_TRACE_PORT}"
 echo ""
 
 # Step 1: Baseline profiled run
@@ -148,6 +287,7 @@ log_and_run torchrun --standalone --nproc_per_node="${NPROC}" \
     --run-name "${BASELINE_RUN}"
 
 echo -e "${GRAY}  Step 1 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
+log_perfetto_links "Baseline" "${BASELINE_RUN}"
 wait_for_user "Trace analysis"
 
 # Step 2: Baseline trace analysis
@@ -174,6 +314,7 @@ log_and_run torchrun --standalone --nproc_per_node="${NPROC}" \
     --run-name "${FOLLOWUP_RUN}"
 
 echo -e "${GRAY}  Step 3 completed in $(format_duration $((SECONDS - STEP_START)))${NC}"
+log_perfetto_links "Follow-up" "${FOLLOWUP_RUN}"
 wait_for_user "Follow-up analysis"
 
 # Step 4: Follow-up trace analysis
@@ -217,4 +358,23 @@ echo "Output artifacts:"
 echo "  ${OUTPUT_DIR}/${BASELINE_RUN}/"
 echo "  ${OUTPUT_DIR}/${FOLLOWUP_RUN}/"
 echo ""
-echo "Trace files can be loaded in chrome://tracing or Perfetto UI."
+BASELINE_TRACE="$(primary_trace_for_run "${BASELINE_RUN}")"
+FOLLOWUP_TRACE="$(primary_trace_for_run "${FOLLOWUP_RUN}")"
+if [ -n "${BASELINE_TRACE}" ] && [ -n "${FOLLOWUP_TRACE}" ]; then
+    start_perfetto_trace_server
+    echo "Perfetto trace links:"
+    echo "  Baseline : $(perfetto_link_for_trace "${BASELINE_TRACE}")"
+    echo "  Follow-up: $(perfetto_link_for_trace "${FOLLOWUP_TRACE}")"
+fi
+
+if [ -n "${PERFETTO_SERVER_PID}" ] && kill -0 "${PERFETTO_SERVER_PID}" >/dev/null 2>&1; then
+    echo ""
+    if [ "${NO_WAIT}" = false ]; then
+        echo -e "${CYAN}Perfetto links stay live while this script is open. Press Enter to stop the local trace server and exit.${NC}"
+        read -r
+    else
+        trap - EXIT
+        echo -e "${YELLOW}Local Perfetto trace server left running as PID ${PERFETTO_SERVER_PID}.${NC}"
+        echo "Stop it with: kill ${PERFETTO_SERVER_PID}"
+    fi
+fi
