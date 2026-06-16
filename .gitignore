@@ -38,7 +38,6 @@ venv/
 # Generated artifacts and run output
 **/runs/
 **/artifacts/
-**/outputs/
 **/traces/
 **/artifact.json
 **/classification_report.txt
