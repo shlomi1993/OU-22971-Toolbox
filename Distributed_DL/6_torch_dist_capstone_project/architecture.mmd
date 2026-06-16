@@ -1,27 +1,34 @@
 graph TB
     subgraph "Data Source"
-        FAKEDATA[FakeData - synthetic ImageNet<br/>deterministic seed · drop_last]
+        FAKEDATA[FakeData - synthetic ImageNet<br/>deterministic seed · drop_last slicing]
     end
 
     subgraph "Entry Point"
         TORCHRUN["torchrun --standalone --nproc_per_node=N"]
-        TRAIN[train.py]
+        TRAIN[train.py → TrainRunner<br/>orchestrates lifecycle]
+    end
+
+    subgraph "Configuration & Infra"
+        CLI[cli.py → parse_config]
+        COMMON[common.py<br/>constants · TrainConfig · Backend]
+        LOGGER[logger.py → g_logger<br/>colored logging]
     end
 
     subgraph "Initialization"
-        CLI[cli.py → TrainConfig]
-        MODEL[model.py → split_resnet18<br/>stage0 · stage1 · ProjectionHead]
         GROUPS[groups.py → CommGroups<br/>pair_group · stage0_group · stage1_group]
+        MODEL[model.py → split_resnet18<br/>stage0 · stage1 · ProjectionHead]
         AUG[augmentation.py<br/>SimCLR transform]
+        ALIGN[align_replicas<br/>broadcast weights across stage group]
     end
 
     subgraph "Distributed Training Loop"
         TSTEP[training_step.py → TrainingStep]
+        WARMUP[warmup steps<br/>outside profiler]
 
         subgraph "Forward Pass (per step)"
             VIEWS[prepare_views<br/>augment ×2 → interleave]
             S0FWD[stage0_forward<br/>conv1→bn1→relu→maxpool→layer1→layer2]
-            SEND_B[send_boundary<br/>activation to odd rank]
+            SEND_B[send_boundary<br/>step id + activation to odd rank]
             RECV_B[recv_boundary<br/>odd rank receives]
             S1FWD[stage1_forward<br/>layer3→layer4→avgpool→flatten→ProjectionHead]
             GATHER[gather_embeddings<br/>all_gather across stage1_group]
@@ -31,7 +38,8 @@ graph TB
         subgraph "Backward Pass"
             S1BWD[loss.backward]
             SEND_G[send_boundary_grad<br/>odd → even]
-            S0BWD[stage0_backward<br/>boundary.backward·grad·]
+            RECV_G[recv_boundary_grad<br/>even receives + step id check]
+            S0BWD[stage0_backward<br/>boundary.backward]
         end
 
         subgraph "Sync & Update"
@@ -39,16 +47,18 @@ graph TB
             GSYNC1[grad_sync_stage1<br/>all_reduce in stage1_group]
             OPT[optimizer_step<br/>SGD on all ranks]
         end
+
+        OVERLAP[[Stretch A: --overlap<br/>even ranks pipeline<br/>backward·t-1· · forward·t·]]
     end
 
     subgraph "Profiling & Output"
         PROF[profiling.py<br/>PyTorch profiler context]
-        METRICS[metrics.py<br/>metrics writer]
+        METRICS[metrics.py → save_metrics<br/>rank-0 writer]
     end
 
     subgraph "Output Artifacts"
         TRACES[traces/rank0..N.json<br/>Chrome trace per rank]
-        CSV[metrics.csv<br/>per-step loss · timing]
+        CSV[metrics.csv<br/>per-step loss · timing · images/s]
         CONFIG[run_config.json<br/>config + images/s]
     end
 
@@ -59,20 +69,26 @@ graph TB
     subgraph "Automation"
         CONTROLLER[controller.py → Controller<br/>sweep batch sizes × split layers<br/>pick best config by images/s]
         CTRLLOG[controller_log.json<br/>decision log]
+        SUMMARIZE[summarize_sweep.py<br/>manual sweep summary + diagnosis]
+        SWEEPOUT[manual_sweep_summary.csv<br/>diagnosis_summary.md]
     end
 
     %% Entry flow
     TORCHRUN --> TRAIN
     TRAIN --> CLI
-    CLI --> MODEL & GROUPS & AUG
+    CLI --> COMMON
+    COMMON --> GROUPS & MODEL & AUG
 
     %% Init → training loop
     FAKEDATA --> VIEWS
-    MODEL --> TSTEP
+    MODEL --> ALIGN
+    ALIGN --> TSTEP
     GROUPS --> TSTEP
     AUG --> TSTEP
 
     %% Forward flow
+    TRAIN --> WARMUP
+    WARMUP --> TSTEP
     TSTEP --> VIEWS
     VIEWS -->|even ranks| S0FWD
     S0FWD --> SEND_B
@@ -84,13 +100,17 @@ graph TB
     %% Backward flow
     LOSS --> S1BWD
     S1BWD --> SEND_G
-    SEND_G -->|pair_group p2p| S0BWD
+    SEND_G -->|pair_group p2p| RECV_G
+    RECV_G --> S0BWD
 
     %% Sync flow
     S0BWD --> GSYNC0
     S1BWD --> GSYNC1
     GSYNC0 --> OPT
     GSYNC1 --> OPT
+
+    %% Overlap mode (Stretch A)
+    OVERLAP -.alternate even-rank schedule.-> TSTEP
 
     %% Profiling & output
     TSTEP --> PROF
@@ -108,10 +128,16 @@ graph TB
     CONTROLLER -->|launches torchrun| TRAIN
     CONTROLLER --> ANALYZE
     CONTROLLER --> CTRLLOG
+    SUMMARIZE --> ANALYZE
+    SUMMARIZE --> SWEEPOUT
+
+    %% Logging is cross-cutting
+    LOGGER -.used everywhere.-> TRAIN
 
     %% Styling
     classDef data fill:#e1f5ff,stroke:#0288d1,stroke-width:2px
     classDef entry fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef config fill:#fffde7,stroke:#fbc02d,stroke-width:2px
     classDef init fill:#fff9c4,stroke:#f57f17,stroke-width:2px
     classDef forward fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
     classDef backward fill:#fce4ec,stroke:#c62828,stroke-width:2px
@@ -123,11 +149,12 @@ graph TB
 
     class FAKEDATA data
     class TORCHRUN,TRAIN entry
-    class CLI,MODEL,GROUPS,AUG init
-    class TSTEP,VIEWS,S0FWD,SEND_B,RECV_B,S1FWD,GATHER,LOSS forward
-    class S1BWD,SEND_G,S0BWD backward
+    class CLI,COMMON,LOGGER config
+    class GROUPS,MODEL,AUG,ALIGN init
+    class TSTEP,WARMUP,VIEWS,S0FWD,SEND_B,RECV_B,S1FWD,GATHER,LOSS,OVERLAP forward
+    class S1BWD,SEND_G,RECV_G,S0BWD backward
     class GSYNC0,GSYNC1,OPT sync
     class PROF,METRICS profiling
-    class TRACES,CSV,CONFIG,CTRLLOG artifact
+    class TRACES,CSV,CONFIG,CTRLLOG,SWEEPOUT artifact
     class ANALYZE analysis
-    class CONTROLLER automation
+    class CONTROLLER,SUMMARIZE automation
