@@ -20,6 +20,8 @@ Training is orchestrated by the `TrainRunner` class (`train.py`), which encapsul
 
 ## Architecture Overview
 
+Two Mermaid diagrams accompany this section: [`architecture.mmd`](architecture.mmd) shows the module/component view, and [`workflow.mmd`](workflow.mmd) shows the end-to-end project flow (setup → distributed training step → trace capture → analysis → manual tuning and rerun).
+
 
 ### Rank Layout
 
@@ -66,8 +68,8 @@ Each training step follows this sequence:
 The contrastive loss follows the SimCLR formulation. For each view in the local batch:
 
 - Compute cosine similarity (scaled by temperature) against all gathered embeddings
-- The correct class is the view's positive pair; all other views are negatives
-- Apply cross-entropy: take the positive-pair entry of `-log(softmax(similarities))`
+- The correct class is the view's positive pair, all other views are negatives
+- Apply cross-entropy by taking the positive-pair entry of `-log(softmax(similarities))`
 - The view itself is excluded from the candidate set via masking
 
 The final loss is the mean over all local view losses.
@@ -86,7 +88,8 @@ analyze.py                      # Post-hoc trace analysis and metrics reporting
 summarize_sweep.py              # Writes manual sweep summary table and diagnosis artifacts
 controller.py                   # Load-balancing controller - automated sweep (Stretch B)
 demo.sh                         # Interactive demo script for the required demo pattern
-architecture.mmd                # Mermaid architecture diagram
+architecture.mmd                # Mermaid project architecture diagram
+workflow.mmd                    # Mermaid project workflow diagram (end-to-end project flow)
 design_doc.md                   # Full project specification
 pytest.ini                      # Pytest configuration
 src/

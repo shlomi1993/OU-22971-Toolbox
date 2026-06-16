@@ -13,8 +13,7 @@ def build_simclr_transform() -> T.Compose:
     Build the fixed SimCLR augmentation pipeline.
 
     Returns:
-        T.Compose: Composed transform applying RandomResizedCrop,
-            RandomHorizontalFlip, ColorJitter, and RandomGrayscale.
+        T.Compose: Composed transform applying RandomResizedCrop, RandomHorizontalFlip, ColorJitter, and RandomGrayscale.
     """
     return T.Compose([
         T.RandomResizedCrop(IMAGE_CROP_SIZE),
