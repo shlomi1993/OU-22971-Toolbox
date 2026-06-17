@@ -82,7 +82,9 @@ PERFETTO_TRACE_BIND="${PERFETTO_TRACE_BIND:-0.0.0.0}"
 PERFETTO_TRACE_HOST="${PERFETTO_TRACE_HOST:-127.0.0.1}"
 PERFETTO_TRACE_PORT="${PERFETTO_TRACE_PORT:-9001}"
 PERFETTO_UI_URL="${PERFETTO_UI_URL:-https://ui.perfetto.dev}"
+PERFETTO_TRACE_PORT_PREFERRED="${PERFETTO_TRACE_PORT}"
 PERFETTO_SERVER_PID=""
+PERFETTO_SERVER_REUSED=false
 
 activate_conda_env_if_needed() {
     if [ "${CONDA_DEFAULT_ENV:-}" = "${CONDA_ENV}" ]; then
@@ -157,8 +159,38 @@ for port in [preferred, 0]:
 PY_PORT
 }
 
+trace_server_is_reusable() {
+    local host="$1" port="$2" probe_path="$3"
+    [ -n "${probe_path}" ] || return 1
+    python - "${host}" "${port}" "${probe_path}" <<'PY_REUSE'
+import sys
+import urllib.request
+from urllib.parse import quote
+
+host, port, probe_path = sys.argv[1], int(sys.argv[2]), sys.argv[3]
+url = f"http://{host}:{port}/{quote(probe_path)}"
+try:
+    req = urllib.request.Request(url, method="HEAD")
+    resp = urllib.request.urlopen(req, timeout=2)
+except Exception:
+    sys.exit(1)
+# Our handler stamps this header; a 200 on the exact trace path means the
+# already-running server serves the files this run just produced.
+ok = resp.status == 200 and resp.headers.get("Access-Control-Allow-Private-Network") == "true"
+sys.exit(0 if ok else 1)
+PY_REUSE
+}
+
 start_perfetto_trace_server() {
+    local probe_path="${1:-}"
+
     if [ -n "${PERFETTO_SERVER_PID}" ] && kill -0 "${PERFETTO_SERVER_PID}" >/dev/null 2>&1; then
+        return
+    fi
+    if trace_server_is_reusable "${PERFETTO_TRACE_HOST}" "${PERFETTO_TRACE_PORT_PREFERRED}" "${probe_path}"; then
+        PERFETTO_TRACE_PORT="${PERFETTO_TRACE_PORT_PREFERRED}"
+        PERFETTO_SERVER_REUSED=true
+        echo -e "${GRAY}Reusing trace server already running on ${PERFETTO_TRACE_HOST}:${PERFETTO_TRACE_PORT}${NC}"
         return
     fi
 
@@ -194,6 +226,12 @@ PY_SERVER
     if ! kill -0 "${PERFETTO_SERVER_PID}" >/dev/null 2>&1; then
         echo -e "${RED}ERROR: failed to start local Perfetto trace server on ${PERFETTO_TRACE_BIND}:${PERFETTO_TRACE_PORT}${NC}" >&2
         exit 1
+    fi
+    if [ "${PERFETTO_TRACE_PORT}" != "${PERFETTO_TRACE_PORT_PREFERRED}" ]; then
+        echo -e "${YELLOW}WARNING: preferred trace port ${PERFETTO_TRACE_PORT_PREFERRED} was busy; serving on ${PERFETTO_TRACE_PORT} instead.${NC}" >&2
+        echo -e "${YELLOW}         If your browser runs outside this container, only the forwarded port (${PERFETTO_TRACE_PORT_PREFERRED}) is reachable —${NC}" >&2
+        echo -e "${YELLOW}         the links below will not load. Free port ${PERFETTO_TRACE_PORT_PREFERRED} (kill the stale server holding it) and re-run,${NC}" >&2
+        echo -e "${YELLOW}         or set PERFETTO_TRACE_PORT to a port you have forwarded.${NC}" >&2
     fi
 }
 
@@ -262,12 +300,14 @@ log_perfetto_links() {
     local run_name="$2"
     local run_dir="${OUTPUT_DIR}/${run_name}"
 
-    if [ -z "$(primary_trace_for_run "${run_name}")" ]; then
+    local probe_trace
+    probe_trace="$(primary_trace_for_run "${run_name}")"
+    if [ -z "${probe_trace}" ]; then
         echo -e "${YELLOW}Perfetto link unavailable: no trace JSON found under ${run_dir}/traces${NC}"
         return
     fi
 
-    start_perfetto_trace_server
+    start_perfetto_trace_server "${probe_trace}"
 
     echo ""
     echo -e "${YELLOW}${label} Perfetto traces:${NC}"
@@ -299,7 +339,7 @@ echo "follow-up bs: ${FOLLOWUP_BS}"
 echo "steps/run   : ${NUM_STEPS}"
 echo "dataset size: ${DATASET_SIZE}"
 echo "perfetto ui : ${PERFETTO_UI_URL}"
-echo "trace server: ${PERFETTO_TRACE_BIND}:${PERFETTO_TRACE_PORT} -> browser ${PERFETTO_TRACE_HOST}:${PERFETTO_TRACE_PORT}"
+echo "trace server: ${PERFETTO_TRACE_BIND}:${PERFETTO_TRACE_PORT} -> browser ${PERFETTO_TRACE_HOST}:${PERFETTO_TRACE_PORT} (preferred; actual port shown with the links below)"
 echo ""
 
 # Step 1: Baseline profiled run
@@ -373,7 +413,7 @@ bl, fu = ${BASELINE_IPS}, ${FOLLOWUP_IPS}
 if bl > 0:
     speedup = fu / bl
     label = 'faster' if speedup > 1 else 'slower'
-    print(f'  Speedup: {speedup:.2f}x ({label})')
+    print(f'Speedup: {speedup:.2f}x ({label})')
 "
 
 # Final summary
@@ -389,7 +429,7 @@ echo ""
 BASELINE_TRACE="$(primary_trace_for_run "${BASELINE_RUN}")"
 FOLLOWUP_TRACE="$(primary_trace_for_run "${FOLLOWUP_RUN}")"
 if [ -n "${BASELINE_TRACE}" ] && [ -n "${FOLLOWUP_TRACE}" ]; then
-    start_perfetto_trace_server
+    start_perfetto_trace_server "${BASELINE_TRACE}"
     echo "Perfetto trace links:"
     print_run_trace_links "Baseline  " "${BASELINE_RUN}"
     print_run_trace_links "Follow-up " "${FOLLOWUP_RUN}"
@@ -402,7 +442,10 @@ if [ -n "${PERFETTO_SERVER_PID}" ] && kill -0 "${PERFETTO_SERVER_PID}" >/dev/nul
         read -r
     else
         trap - EXIT
-        echo -e "${YELLOW}Local Perfetto trace server left running as PID ${PERFETTO_SERVER_PID}.${NC}"
+        echo -e "${YELLOW}Local Perfetto trace server left running as PID ${PERFETTO_SERVER_PID} on port ${PERFETTO_TRACE_PORT}.${NC}"
         echo "Stop it with: kill ${PERFETTO_SERVER_PID}"
     fi
+elif [ "${PERFETTO_SERVER_REUSED}" = true ]; then
+    echo ""
+    echo -e "${YELLOW}Perfetto links served by a pre-existing trace server on port ${PERFETTO_TRACE_PORT}.${NC}"
 fi
