@@ -18,7 +18,7 @@ from src.logger import g_logger
 from src.metrics import save_metrics
 from src.model import split_resnet18
 from src.profiling import profiler_context
-from src.training_step import TrainingStep
+from src.training_step import TrainingStepper
 
 
 StepMetrics = tuple[list[float], list[float]]
@@ -57,7 +57,7 @@ class TrainRunner:
 
         # Build training stepper
         check = config.num_steps <= ALIGNMENT_CHECK_MAX_STEPS
-        self._stepper = TrainingStep(self._dataset, config, groups, self.stage0, self.stage1, self._optimizer, self._transform, check)
+        self._stepper = TrainingStepper(self._dataset, config, groups, self.stage0, self.stage1, self._optimizer, self._transform, check)
 
     def _align_replicas(self) -> None:
         """

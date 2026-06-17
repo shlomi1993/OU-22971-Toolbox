@@ -17,7 +17,7 @@ from src.groups import CommGroups
 from src.model import boundary_shape
 
 
-class TrainingStep:
+class TrainingStepper:
     """
     Encapsulates one distributed training step for the two-stage sharded SimCLR system.
 
@@ -219,7 +219,7 @@ class TrainingStep:
 
         # Run stage 1
         with record_function("stage1_forward"):
-            local_embeddings = self.stage1(boundary_recv)
+            local_embeddings: torch.Tensor = self.stage1(boundary_recv)
 
         self._assert_finite(local_embeddings, "stage1 output")
 
