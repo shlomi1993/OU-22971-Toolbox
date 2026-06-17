@@ -12,6 +12,7 @@ Training is orchestrated by the `TrainRunner` class (`train.py`), which encapsul
 ## Table of Contents
 
 - [Architecture Overview](#architecture-overview)
+- [Workflow](#workflow)
 - [Project Structure](#project-structure)
 - [Setup](#setup)
 - [Execution](#execution)
@@ -22,9 +23,7 @@ Training is orchestrated by the `TrainRunner` class (`train.py`), which encapsul
 
 ## Architecture Overview
 
-This section describes how the system **behaves at runtime** - the rank layout, communication groups, the training step, and the loss. The companion [`workflow.mmd`](workflow.mmd) diagram visualizes this end-to-end flow through setup → distributed training step → trace capture → analysis → manual tuning and rerun.
-
-<img width="1672" height="941" alt="Project end-to-end runtime workflow" src="https://github.com/user-attachments/assets/1451f781-e1ca-4aa6-a4f5-0e403248eb4e" />
+This section describes how the system is **structured** - the rank layout that pairs ranks into model replicas and the communication groups that wire those replicas together. The companion [`architecture.mmd`](architecture.mmd) diagram shows the code modules and how they depend on each other.
 
 ### Rank Layout
 
@@ -47,6 +46,12 @@ The system requires an even number of ranks (minimum 4). Ranks are paired into m
 | `stage0_group` | All even ranks | Stage-0 gradient synchronization (`all_reduce`) |
 | `stage1_group` | All odd ranks | Embedding `all_gather` and stage-1 gradient synchronization |
 
+
+## Workflow
+
+This section describes how the system **behaves at runtime** - the training step sequence, the contrastive loss, and the gradient approximation. The companion [`workflow.mmd`](workflow.mmd) diagram visualizes this end-to-end flow through setup → distributed training step → trace capture → analysis → manual tuning and rerun.
+
+<img width="1672" height="941" alt="Project end-to-end runtime workflow" src="https://github.com/user-attachments/assets/1451f781-e1ca-4aa6-a4f5-0e403248eb4e" />
 
 ### Training Step
 
@@ -85,7 +90,7 @@ Computing exact gradients through the `all_gather` would require differentiable 
 
 ## Project Structure
 
-This section describes how the **code is organized on disk**. The companion [`architecture.mmd`](architecture.mmd) diagram shows these same modules and how they depend on each other.
+This section describes how the **code is organized on disk**. For how these modules depend on each other, see the [`architecture.mmd`](architecture.mmd) diagram referenced under [Architecture Overview](#architecture-overview).
 
 ```
 train.py                        # Distributed training entry point (TrainRunner class, launched via torchrun)
