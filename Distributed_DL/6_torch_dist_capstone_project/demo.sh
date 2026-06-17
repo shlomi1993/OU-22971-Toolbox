@@ -228,14 +228,36 @@ print(f"{ui_url}/#!/viewer?url={quote(trace_url, safe=':/?=&')}")
 PY_LINK
 }
 
+trace_for_run_rank() {
+    local trace_path="${OUTPUT_DIR}/$1/traces/rank$2.json"
+    if [ -f "${trace_path}" ]; then
+        echo "${trace_path}"
+    else
+        echo ""
+    fi
+}
+
+# Print Perfetto links for both ranks of one run: rank1 (stage 1) and rank0 (stage 0).
+print_run_trace_links() {
+    local prefix="$1"
+    local run_name="$2"
+    local rank1_trace rank0_trace
+    rank1_trace="$(trace_for_run_rank "${run_name}" 1)"
+    rank0_trace="$(trace_for_run_rank "${run_name}" 0)"
+    if [ -n "${rank1_trace}" ]; then
+        echo "  ${prefix}rank1 (stage 1): $(perfetto_link_for_trace "${rank1_trace}")"
+    fi
+    if [ -n "${rank0_trace}" ]; then
+        echo "  ${prefix}rank0 (stage 0): $(perfetto_link_for_trace "${rank0_trace}")"
+    fi
+}
+
 log_perfetto_links() {
     local label="$1"
     local run_name="$2"
     local run_dir="${OUTPUT_DIR}/${run_name}"
-    local primary_trace
-    primary_trace="$(primary_trace_for_run "${run_name}")"
 
-    if [ -z "${primary_trace}" ]; then
+    if [ -z "$(primary_trace_for_run "${run_name}")" ]; then
         echo -e "${YELLOW}Perfetto link unavailable: no trace JSON found under ${run_dir}/traces${NC}"
         return
     fi
@@ -243,7 +265,8 @@ log_perfetto_links() {
     start_perfetto_trace_server
 
     echo ""
-    echo -e "${YELLOW}${label} Perfetto trace:${NC} $(perfetto_link_for_trace "${primary_trace}")"
+    echo -e "${YELLOW}${label} Perfetto traces:${NC}"
+    print_run_trace_links "" "${run_name}"
 }
 
 log_and_run() {
@@ -363,8 +386,8 @@ FOLLOWUP_TRACE="$(primary_trace_for_run "${FOLLOWUP_RUN}")"
 if [ -n "${BASELINE_TRACE}" ] && [ -n "${FOLLOWUP_TRACE}" ]; then
     start_perfetto_trace_server
     echo "Perfetto trace links:"
-    echo "  Baseline : $(perfetto_link_for_trace "${BASELINE_TRACE}")"
-    echo "  Follow-up: $(perfetto_link_for_trace "${FOLLOWUP_TRACE}")"
+    print_run_trace_links "Baseline  " "${BASELINE_RUN}"
+    print_run_trace_links "Follow-up " "${FOLLOWUP_RUN}"
 fi
 
 if [ -n "${PERFETTO_SERVER_PID}" ] && kill -0 "${PERFETTO_SERVER_PID}" >/dev/null 2>&1; then
