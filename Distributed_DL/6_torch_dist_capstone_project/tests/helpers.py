@@ -4,6 +4,7 @@ Shared utilities for integration tests.
 
 import csv
 import json
+import os
 import subprocess
 
 from dataclasses import dataclass
@@ -75,7 +76,10 @@ def run_torchrun(output_dir: Path, run_name: str, nproc: int = DEFAULT_NPROC,
     if overlap:
         cmd.append("--overlap")
 
-    proc = subprocess.run(cmd, timeout=timeout, capture_output=True, text=True, cwd=PROJECT_ROOT)
+    env = os.environ.copy()
+    env.setdefault("OMP_NUM_THREADS", str(max(1, (os.cpu_count() or nproc) // nproc)))
+
+    proc = subprocess.run(cmd, timeout=timeout, capture_output=True, text=True, cwd=PROJECT_ROOT, env=env)
     return RunResult(
         run_dir=output_dir / run_name,
         stdout=proc.stdout,
