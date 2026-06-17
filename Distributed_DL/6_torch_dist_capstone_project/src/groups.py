@@ -39,7 +39,7 @@ class CommGroups:
         self.is_even = self.rank % 2 == 0
         self.pair_rank = self.rank + 1 if self.is_even else self.rank - 1
 
-        # Create one pair group per (even, odd) pair; keep the one this rank belongs to
+        # Create one pair group per (even, odd) pair and keep the one this rank belongs to
         self.pair_group = None
         for k in range(self.num_pairs):
             group = dist.new_group(ranks=[2 * k, 2 * k + 1])

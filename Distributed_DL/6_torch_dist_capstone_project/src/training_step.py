@@ -192,7 +192,7 @@ class TrainingStep:
 
         # Step B: Run stage 0
         with record_function("stage0_forward"):
-            boundary = self.stage0(views)
+            boundary: torch.Tensor = self.stage0(views)
 
         assert boundary.shape == self._bshape, f"Stage 0 output shape {boundary.shape} != expected {self._bshape}"
         self._assert_finite(boundary, "stage0 output")
@@ -240,7 +240,6 @@ class TrainingStep:
 
         self.loss_value = loss.item()
         self._loss = loss
-
 
     def _odd_backward(self) -> None:
         """
