@@ -119,6 +119,11 @@ fi
 
 export KMP_DUPLICATE_LIB_OK=TRUE
 
+if [ -z "${OMP_NUM_THREADS:-}" ]; then
+    _cores=$(nproc 2>/dev/null || echo "${NPROC}")
+    export OMP_NUM_THREADS=$(( _cores / NPROC > 0 ? _cores / NPROC : 1 ))
+fi
+
 # Helpers
 format_duration() {
     local secs=$1

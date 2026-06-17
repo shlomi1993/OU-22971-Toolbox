@@ -20,6 +20,12 @@ BATCH_SIZES=(4 8 16 32 64 128)
 
 export KMP_DUPLICATE_LIB_OK=TRUE
 
+NPROC=4
+if [[ -z "${OMP_NUM_THREADS:-}" ]]; then
+    _cores=$(nproc 2>/dev/null || echo "${NPROC}")
+    export OMP_NUM_THREADS=$(( _cores / NPROC > 0 ? _cores / NPROC : 1 ))
+fi
+
 for BS in "${BATCH_SIZES[@]}"; do
     RUN_NAME="sweep_bs${BS}"
     echo ""
