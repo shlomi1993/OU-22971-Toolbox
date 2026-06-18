@@ -10,6 +10,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from prettytable import PrettyTable
+
 from src.common import CONFIG_FILENAME, METRICS_FILENAME, TRACES_DIR
 from src.logger import g_logger
 
@@ -23,7 +25,8 @@ COMPUTE_SPANS = {
     "stage0_forward",
     "stage1_forward",
     "loss_calculation",
-    "stage0_backward"
+    "stage0_backward",
+    "stage1_backward"
 }
 
 COMM_SPANS = {
@@ -128,14 +131,20 @@ class TraceAnalyzer:
         config_path = self.run_dir / CONFIG_FILENAME
         csv_path = self.run_dir / METRICS_FILENAME
 
-        # Log run config
-        lines = ["Run configuration"]
+        table = PrettyTable()
+        table.title = "Run configuration"
+        table.field_names = ["key", "value"]
+        table.align["key"] = "l"
+        table.align["value"] = "r"
+        table.header = False
+
+        # Add run config rows
         if config_path.exists():
             with open(config_path) as f:
                 config = json.load(f)
             for key in CONFIG_DISPLAY_KEYS:
                 if key in config:
-                    lines.append(f"  {key:<20s}: {config[key]}")
+                    table.add_row([key, config[key]])
 
         # Append mean loss
         if csv_path.exists():
@@ -143,23 +152,25 @@ class TraceAnalyzer:
                 rows = list(csv.DictReader(f))
             losses = [float(r["loss"]) for r in rows if r["loss"]]
             if losses:
-                lines.append(f"  {'mean_loss':<20s}: {sum(losses) / len(losses):.4f}")
+                table.add_row(["mean_loss", f"{sum(losses) / len(losses):.4f}"])
 
-        if len(lines) > 1:
-            g_logger.info("\n" + "\n".join(lines))
+        if table.rows:
+            g_logger.info("\n" + table.get_string())
 
     def _log_span_tables(self) -> None:
         """
         Log per-rank span summary tables.
         """
         for rank, summary in self.summaries.items():
-            lines = [
-                f"Rank {rank} span summary",
-                f"  {'span':<25s} {'count':>5s} {'total_ms':>10s} {'mean_ms':>10s}"
-            ]
+            table = PrettyTable()
+            table.title = f"Rank {rank} span summary"
+            table.field_names = ["span", "count", "total_ms", "mean_ms"]
+            table.align["span"] = "l"
+            for col in ("count", "total_ms", "mean_ms"):
+                table.align[col] = "r"
             for name, stats in summary.items():
-                lines.append(f"  {name:<25s} {stats['count']:>5d} {stats['total_us'] / 1000:>10.1f} {stats['mean_us'] / 1000:>10.1f}")
-            g_logger.info("\n" + "\n".join(lines))
+                table.add_row([name, stats["count"], f"{stats['total_us'] / 1000:.1f}", f"{stats['mean_us'] / 1000:.1f}"])
+            g_logger.info("\n" + table.get_string())
 
     @staticmethod
     def compute_breakdown(summary: dict[str, dict]) -> TimeBreakdown:
@@ -182,11 +193,15 @@ class TraceAnalyzer:
         """
         Log compute vs communication vs optimizer time breakdown per rank.
         """
-        lines = ["Time breakdown"]
+        table = PrettyTable()
+        table.title = "Time breakdown"
+        table.field_names = ["rank", "compute %", "comm %", "opt %"]
+        for col in table.field_names:
+            table.align[col] = "r"
         for rank, summary in self.summaries.items():
             bd = self.compute_breakdown(summary)
-            lines.append(f"  Rank {rank}: compute={bd.compute_pct:.1f}%  comm={bd.comm_pct:.1f}%  opt={bd.optimizer_pct:.1f}%")
-        g_logger.info("\n" + "\n".join(lines))
+            table.add_row([rank, f"{bd.compute_pct:.1f}", f"{bd.comm_pct:.1f}", f"{bd.optimizer_pct:.1f}"])
+        g_logger.info("\n" + table.get_string())
 
     def calc_mean_span_ms(self, ranks: list[int], span_names: set[str]) -> float:
         """
@@ -203,7 +218,11 @@ class TraceAnalyzer:
 
     def _log_stage_imbalance(self) -> None:
         """
-        Compare stage0 compute (even ranks) vs stage1+loss compute (odd ranks).
+        Compare the stage-0 compute region (even ranks) against the stage-1-plus-loss region (odd ranks).
+
+        Per the design doc, the balance metric compares ``stage0_forward`` against ``stage1_forward + loss_calculation``.
+        Backward spans are deliberately excluded so the two sides are measured symmetrically (the odd-rank backward is
+        reported separately in the per-rank span tables, not folded into one side of this ratio).
         """
         even_ranks, odd_ranks = [], []
         for rank in self.summaries.keys():
@@ -212,17 +231,20 @@ class TraceAnalyzer:
             else:
                 odd_ranks.append(rank)
 
-        stage0_ms = self.calc_mean_span_ms(even_ranks, {"stage0_forward", "stage0_backward"})
+        stage0_ms = self.calc_mean_span_ms(even_ranks, {"stage0_forward"})
         stage1_ms = self.calc_mean_span_ms(odd_ranks, {"stage1_forward", "loss_calculation"})
 
-        lines = [
-            "Stage imbalance",
-            f"  Stage 0 (even): {stage0_ms:>8.1f} ms",
-            f"  Stage 1 (odd) : {stage1_ms:>8.1f} ms"
-        ]
+        table = PrettyTable()
+        table.title = "Stage imbalance"
+        table.field_names = ["metric", "value"]
+        table.align["metric"] = "l"
+        table.align["value"] = "r"
+        table.header = False
+        table.add_row(["Stage 0 (even)", f"{stage0_ms:.1f} ms"])
+        table.add_row(["Stage 1 (odd)", f"{stage1_ms:.1f} ms"])
         if stage0_ms > 0:
-            lines.append(f"  Ratio         : {stage1_ms / stage0_ms:>8.2f}x")
-        g_logger.info("\n".join(lines))
+            table.add_row(["Ratio", f"{stage1_ms / stage0_ms:.2f}x"])
+        g_logger.info("\n" + table.get_string())
 
     def report(self) -> None:
         """
