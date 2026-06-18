@@ -174,12 +174,15 @@ Reports per-rank span tables, compute vs. communication vs. optimizer time break
 
 ### Follow-up Run
 
-After inspecting the baseline traces, pick a better batch size and rerun:
+After inspecting the baseline traces, pick the batch size that maximizes `images/s` and rerun. The
+[Batch-Size Sweep](#batch-size-sweep) below is the proper evidence base for this choice: a single baseline-vs-follow-up
+pair drifts within run-to-run noise at this scale, whereas the multi-point sweep shows the real trend (here `images/s`
+declines monotonically as the batch grows, so the smallest batch wins).
 
 ```bash
 torchrun --standalone --nproc_per_node=4 \
     train.py \
-    --local-batch-size 32 \
+    --local-batch-size 4 \
     --num-steps 10 \
     --dataset-size 2048 \
     --profile \
@@ -197,7 +200,7 @@ Run a manual sweep across multiple batch sizes:
 bash scripts/sweep.sh
 ```
 
-Sweeps batch sizes `4 8 16 32 64 128` with 4 processes, runs `analyze.py` after each, then writes `output/manual_sweep_summary.csv` and `output/diagnosis_summary.md`.
+Sweeps batch sizes `4 8 16 32 64 128` with 4 processes, runs `analyze.py` after each, then writes `output/manual_sweep_summary.csv` and `output/diagnosis_summary.md`. Any batch size that fails to fit in memory (the largest sizes can OOM on constrained machines) is logged and skipped, and the summary is still written from the runs that completed.
 
 
 ### Controller Sweep (Stretch B)
@@ -240,8 +243,8 @@ Options:
 |------|---------|-------------|
 | `--no-wait` | off | Skip interactive pauses between steps |
 | `--nproc N` | 4 | Number of processes |
-| `--baseline-bs N` | 8 | Baseline local batch size |
-| `--followup-bs N` | 32 | Follow-up local batch size |
+| `--baseline-bs N` | 32 | Baseline local batch size |
+| `--followup-bs N` | 4 | Follow-up local batch size |
 | `--num-steps N` | 10 | Training steps per run |
 
 

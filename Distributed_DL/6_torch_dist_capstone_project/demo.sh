@@ -22,8 +22,8 @@ trap 'error_handler $LINENO' ERR
 # Defaults
 NO_WAIT=false
 NPROC=4
-BASELINE_BS=8
-FOLLOWUP_BS=32
+BASELINE_BS=32
+FOLLOWUP_BS=4
 NUM_STEPS=10
 DATASET_SIZE=2048
 
@@ -32,15 +32,15 @@ print_usage() {
 Usage:
   ./demo.sh [OPTIONS]
 
-Run the full Distributed SimCLR demo flow: baseline profiled run, trace analysis, follow-up profiled run, follow-up
-analysis, and throughput comparison.
+Run the full Distributed SimCLR demo flow: baseline profiled run, trace analysis, follow-up profiled run at the
+batch size chosen to maximize images/s, follow-up analysis, and throughput comparison.
 
 Options:
   -h, --help          Show this help message and exit
   --no-wait          Skip pauses between demo steps
   --nproc N          Number of torchrun processes (default: 4)
-  --baseline-bs N    Baseline local batch size (default: 8)
-  --followup-bs N    Follow-up local batch size (default: 32)
+  --baseline-bs N    Baseline local batch size (default: 32)
+  --followup-bs N    Follow-up local batch size (default: 4)
   --num-steps N      Training steps per run (default: 10)
 
 Environment:
