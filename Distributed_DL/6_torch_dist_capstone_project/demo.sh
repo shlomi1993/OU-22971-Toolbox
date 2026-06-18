@@ -280,18 +280,18 @@ trace_for_run_rank() {
     fi
 }
 
-# Print Perfetto links for both ranks of one run: rank1 (stage 1) and rank0 (stage 0).
+# Print Perfetto links for both ranks of one run: rank0 (stage 0) then rank1 (stage 1).
 print_run_trace_links() {
     local prefix="$1"
     local run_name="$2"
     local rank1_trace rank0_trace
     rank1_trace="$(trace_for_run_rank "${run_name}" 1)"
     rank0_trace="$(trace_for_run_rank "${run_name}" 0)"
-    if [ -n "${rank1_trace}" ]; then
-        echo "  ${prefix}rank1 (stage 1): $(perfetto_link_for_trace "${rank1_trace}")"
-    fi
     if [ -n "${rank0_trace}" ]; then
         echo "  ${prefix}rank0 (stage 0): $(perfetto_link_for_trace "${rank0_trace}")"
+    fi
+    if [ -n "${rank1_trace}" ]; then
+        echo "  ${prefix}rank1 (stage 1): $(perfetto_link_for_trace "${rank1_trace}")"
     fi
 }
 
