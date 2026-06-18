@@ -135,7 +135,7 @@ class TraceAnalyzer:
         table.title = "Run configuration"
         table.field_names = ["key", "value"]
         table.align["key"] = "l"
-        table.align["value"] = "r"
+        table.align["value"] = "l"
         table.header = False
 
         # Add run config rows
@@ -165,9 +165,8 @@ class TraceAnalyzer:
             table = PrettyTable()
             table.title = f"Rank {rank} span summary"
             table.field_names = ["span", "count", "total_ms", "mean_ms"]
-            table.align["span"] = "l"
-            for col in ("count", "total_ms", "mean_ms"):
-                table.align[col] = "r"
+            for col in table.field_names:
+                table.align[col] = "l"
             for name, stats in summary.items():
                 table.add_row([name, stats["count"], f"{stats['total_us'] / 1000:.1f}", f"{stats['mean_us'] / 1000:.1f}"])
             g_logger.info("\n" + table.get_string())
@@ -197,7 +196,7 @@ class TraceAnalyzer:
         table.title = "Time breakdown"
         table.field_names = ["rank", "compute %", "comm %", "opt %"]
         for col in table.field_names:
-            table.align[col] = "r"
+            table.align[col] = "l"
         for rank, summary in self.summaries.items():
             bd = self.compute_breakdown(summary)
             table.add_row([rank, f"{bd.compute_pct:.1f}", f"{bd.comm_pct:.1f}", f"{bd.optimizer_pct:.1f}"])
@@ -238,7 +237,7 @@ class TraceAnalyzer:
         table.title = "Stage imbalance"
         table.field_names = ["metric", "value"]
         table.align["metric"] = "l"
-        table.align["value"] = "r"
+        table.align["value"] = "l"
         table.header = False
         table.add_row(["Stage 0 (even)", f"{stage0_ms:.1f} ms"])
         table.add_row(["Stage 1 (odd)", f"{stage1_ms:.1f} ms"])
