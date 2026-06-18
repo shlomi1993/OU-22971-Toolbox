@@ -8,6 +8,8 @@ The implementation uses only raw `torch.distributed` primitives - no `Distribute
 
 Training is orchestrated by the `TrainRunner` class (`train.py`), which encapsulates model construction, replica alignment, the training loop, metric gathering, and persistence. Communication groups are managed by the `CommGroups` class (`src/groups.py`).
 
+📹 **[Introduction Video](https://drive.google.com/file/d/1EMBy9tVjQK6_PKNz48Z7VJj_9Mwcb7h6/view?usp=sharing)**
+
 
 ## Table of Contents
 
