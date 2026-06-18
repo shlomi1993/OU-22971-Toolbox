@@ -33,14 +33,18 @@ for BS in "${BATCH_SIZES[@]}"; do
     echo "Sweeping local_batch_size=${BS}  run: ${RUN_NAME}"
     echo "============================================================"
 
-    torchrun \
+    if ! torchrun \
         --standalone \
         --nproc_per_node=4 "${SCRIPT_PATH}" \
         --local-batch-size "${BS}" \
         --num-steps "${NUM_STEPS}" \
         --dataset-size "${DATASET_SIZE}" \
         --profile \
-        --run-name "${RUN_NAME}"
+        --run-name "${RUN_NAME}"; then
+        echo "WARNING: run failed for local_batch_size=${BS} (likely out of memory), skipping and continuing." >&2
+        rm -rf "${OUTPUT_DIR:?}/${RUN_NAME}"
+        continue
+    fi
 
     echo ""
     echo "Analysis for local_batch_size=${BS}"
