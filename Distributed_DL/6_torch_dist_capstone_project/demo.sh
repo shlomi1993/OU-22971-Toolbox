@@ -448,4 +448,5 @@ if [ -n "${PERFETTO_SERVER_PID}" ] && kill -0 "${PERFETTO_SERVER_PID}" >/dev/nul
 elif [ "${PERFETTO_SERVER_REUSED}" = true ]; then
     echo ""
     echo -e "${YELLOW}Perfetto links served by a pre-existing trace server on port ${PERFETTO_TRACE_PORT}.${NC}"
+    echo "Stop it with: kill \$(lsof -ti tcp:${PERFETTO_TRACE_PORT})"
 fi
