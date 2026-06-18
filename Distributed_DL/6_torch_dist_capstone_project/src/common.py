@@ -7,6 +7,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional
 
+from prettytable import PrettyTable
+
 
 # Dataset defaults
 DEFAULT_DATASET_SIZE = 1024
@@ -72,13 +74,20 @@ class TrainConfig:
 
     def describe(self) -> str:
         """
-        Multi-line description of all config fields.
+        Multi-line description of all config fields, rendered as a table.
 
         Returns:
-            str: Formatted string like "TrainConfig(\n    field=value\n    ...)".
+            str: A PrettyTable string titled with the class name, with one row per field.
         """
-        body = "\n    ".join(f"{f.name}={getattr(self, f.name)}" for f in fields(self))
-        return f"{self.__class__.__name__}(\n    {body}\n)"
+        table = PrettyTable()
+        table.title = self.__class__.__name__
+        table.field_names = ["field", "value"]
+        table.align["field"] = "l"
+        table.align["value"] = "l"
+        table.header = False
+        for f in fields(self):
+            table.add_row([f.name, getattr(self, f.name)])
+        return table.get_string()
 
     @property
     def output_path(self) -> Path:
