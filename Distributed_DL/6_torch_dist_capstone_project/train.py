@@ -176,7 +176,7 @@ def main() -> None:
     groups.log_structure()
 
     if groups.rank == 0:
-        g_logger.info(f"Configuration:\n{config.describe()}")
+        g_logger.info("\n" + config.describe() + "\n")
 
     runner = TrainRunner(config, groups)
     runner.run()
