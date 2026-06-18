@@ -4,6 +4,8 @@ Communication group setup for the two-stage sharded training system.
 
 import torch.distributed as dist
 
+from prettytable import PrettyTable
+
 from src.common import Backend
 from src.logger import g_logger
 
@@ -58,12 +60,16 @@ class CommGroups:
         if self.rank != 0:
             return
 
-        sep = "=" * 50
-        lines = ["", sep, "Communication Structure", sep, f"  world_group  : ranks {list(range(self.world_size))}"]
+        table = PrettyTable()
+        table.title = "Communication Structure"
+        table.field_names = ["group", "ranks"]
+        table.align["group"] = "l"
+        table.align["ranks"] = "l"
+        table.header = False
+        table.add_row(["world_group", list(range(self.world_size))])
         for k in range(self.num_pairs):
-            lines.append(f"  pair_group({k}): ranks [{2 * k}, {2 * k + 1}]")
-        lines.append(f"  stage0_group : ranks {self.even_ranks}")
-        lines.append(f"  stage1_group : ranks {self.odd_ranks}")
-        lines.append(sep)
+            table.add_row([f"pair_group({k})", [2 * k, 2 * k + 1]])
+        table.add_row(["stage0_group", self.even_ranks])
+        table.add_row(["stage1_group", self.odd_ranks])
 
-        g_logger.info("\n".join(lines))
+        g_logger.info("\n" + table.get_string() + "\n")
