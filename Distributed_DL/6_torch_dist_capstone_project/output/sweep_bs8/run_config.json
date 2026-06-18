@@ -1,7 +1,7 @@
 {
   "dataset_size": 2048,
   "seed": 42,
-  "local_batch_size": 4,
+  "local_batch_size": 8,
   "num_steps": 10,
   "lr": 0.03,
   "momentum": 0.9,
@@ -13,7 +13,7 @@
   "profile": true,
   "output_dir": "output",
   "overlap": false,
-  "run_name": "demo_followup",
-  "global_batch_size": 8,
-  "images_per_sec": 5.52
+  "run_name": "sweep_bs8",
+  "global_batch_size": 16,
+  "images_per_sec": 5.65
 }
