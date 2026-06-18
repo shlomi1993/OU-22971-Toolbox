@@ -15,5 +15,5 @@
   "overlap": false,
   "run_name": "demo_followup",
   "global_batch_size": 8,
-  "images_per_sec": 5.52
+  "images_per_sec": 5.59
 }
